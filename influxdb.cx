@@ -1,0 +1,10 @@
+#package /influxdb
+
+class Connector: core/mount,hidden::
+  alias mount: mount/mount
+  alias policy: mount/policy
+  alias mask: mount/mask
+  host: string
+  int16 construct()
+  core/resultIter onRequest(core/request r)
+  void onUpdate(object observable)
