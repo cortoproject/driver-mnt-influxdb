@@ -3,6 +3,6 @@ PACKAGE = 'influxdb'
 
 LIB = ['curl']
 
-COMPONENTS = [] << "influx"
+COMPONENTS = ["influx", "examples"]
 
 require "#{ENV['CORTO_BUILD']}/package"

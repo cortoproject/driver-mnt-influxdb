@@ -20,6 +20,8 @@ corto_string influx_fromCorto(corto_object o);
  * will never be used. */
 corto_int16 influx_toCorto(corto_object o, corto_string data);
 
+void influx_release(corto_string data);
+
 #ifdef __cplusplus
 }
 #endif
@@ -33,4 +35,3 @@ extern "C" {
 }
 #endif
 #endif
-

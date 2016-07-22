@@ -87,7 +87,9 @@ corto_int16 influx_toCorto(corto_object o, corto_string data) {
     return -1;
 }
 
-
+void influx_release(corto_string data) {
+    corto_release(data);
+}
 
 int influxMain(int argc, char *argv[]) {
 

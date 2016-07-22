@@ -5,6 +5,7 @@ class Connector: core/mount,hidden::
   alias policy: mount/policy
   alias mask: mount/mask
   host: string
+  db: string
   int16 construct()
   core/resultIter onRequest(core/request r)
   void onUpdate(object observable)
