@@ -16,6 +16,18 @@ corto_int16 influx_serScalar(
     corto_type t = corto_value_getType(info);
     corto_string str = NULL;
 
+    /* Only serialize types supported by influxdb */
+    switch(corto_primitive(t)->kind) {
+    case CORTO_BOOLEAN:
+    case CORTO_INTEGER:
+    case CORTO_UINTEGER:
+    case CORTO_FLOAT:
+    case CORTO_TEXT:
+      break;
+    default:
+      goto unsupported;
+    }
+
     if (data->fieldCount) {
         corto_buffer_appendstr(&data->b, ",");
     }
@@ -27,22 +39,27 @@ corto_int16 influx_serScalar(
     }
 
     switch(corto_primitive(t)->kind) {
+    case CORTO_BOOLEAN:
     case CORTO_INTEGER:
     case CORTO_UINTEGER:
     case CORTO_FLOAT:
         corto_convert(t, ptr, corto_string_o, &str);
         corto_buffer_appendstr(&data->b, str);
-        if (corto_primitive(t)->kind != CORTO_FLOAT) {
+        if ((corto_primitive(t)->kind != CORTO_FLOAT) && (corto_primitive(t)->kind != CORTO_BOOLEAN)) {
             corto_buffer_appendstr(&data->b, "i");
         }
         corto_dealloc(str);
         break;
     case CORTO_TEXT:
-        corto_buffer_append(&data->b, "\"%s\"", *(corto_string*)ptr);
+        if (*(corto_string*)ptr) {
+            corto_buffer_append(&data->b, "\"%s\"", *(corto_string*)ptr);
+        } else {
+            corto_buffer_append(&data->b, "\"\"");
+        }
         break;
     default:
-        /* Unsupported type */
-        goto unsupported;
+        corto_assert(0, "unreachable code");
+        break;
     }
 
     data->fieldCount ++;
@@ -73,6 +90,8 @@ corto_string influx_fromCorto(corto_object o) {
     corto_serializerInit(&s);
 
     /* Only serialize scalars */
+    s.access = CORTO_LOCAL|CORTO_PRIVATE;
+    s.accessKind = CORTO_NOT;
     s.metaprogram[CORTO_OBJECT] = influx_serObject;
     s.program[CORTO_PRIMITIVE] = influx_serScalar;
 
