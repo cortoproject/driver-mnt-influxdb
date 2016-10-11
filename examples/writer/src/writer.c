@@ -2,18 +2,19 @@
 
 int writerMain(int argc, char *argv[]) {
 
-    corto_voidCreateChild_auto(root_o, measurements);
+    corto_verbosity(CORTO_TRACE);
+
+    corto_voidCreateChild_auto(root_o, temperature);
 
     influxdb_ConnectorCreate_auto(
       influxdb,       /* name */
-      measurements,   /* connect to data in measurements scope */
+      temperature,    /* connect to data in temperature scope */
       "sampleRate=1", /* store at most updates at 1 second intervals */
-      CORTO_ON_SCOPE, /* trigger on updates in scope */
       "http://localhost:8086",  /* hostname */
       "mydb");        /* database name */
 
-    corto_float32DeclareChild_auto(measurements, temp1);
-    corto_float32DeclareChild_auto(measurements, temp2);
+    corto_float32DeclareChild_auto(temperature, temp1);
+    corto_float32DeclareChild_auto(temperature, temp2);
 
     corto_float32 t = 0;
     while (1) {

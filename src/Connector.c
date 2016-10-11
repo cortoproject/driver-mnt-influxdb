@@ -16,6 +16,7 @@ corto_int16 _influxdb_Connector_construct(
 
     corto_mount(this)->kind = CORTO_HISTORIAN;
     corto_setstr(&corto_mount(this)->contentType, "text/json");
+    corto_mount(this)->mask = CORTO_ON_TREE;
 
     /* Make sure that database exists */
     corto_asprintf(&url, "%s/query", this->host);

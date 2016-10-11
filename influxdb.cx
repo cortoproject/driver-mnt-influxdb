@@ -3,7 +3,6 @@
 class Connector: core/mount,hidden::
   alias mount: mount/mount
   alias policy: mount/policy
-  alias mask: mount/mask
   host: string
   db: string
   int16 construct()
