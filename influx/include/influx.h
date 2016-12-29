@@ -22,6 +22,8 @@ corto_int16 influx_toCorto(corto_object o, corto_string data);
 
 void influx_release(corto_string data);
 
+corto_string influx_copy(corto_string data);
+
 #ifdef __cplusplus
 }
 #endif

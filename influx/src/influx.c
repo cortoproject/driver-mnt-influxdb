@@ -110,6 +110,10 @@ void influx_release(corto_string data) {
     corto_release(data);
 }
 
+corto_string influx_copy(corto_string data) {
+    return corto_strdup(data);
+}
+
 int influxMain(int argc, char *argv[]) {
 
     return 0;

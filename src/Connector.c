@@ -15,8 +15,13 @@ corto_int16 _influxdb_Connector_construct(
     corto_string url, query;
 
     corto_mount(this)->kind = CORTO_HISTORIAN;
-    corto_setstr(&corto_subscriber(this)->contentType, "text/json");
-    corto_mount(this)->mask = CORTO_ON_TREE;
+    corto_observer(this)->mask = CORTO_ON_TREE;
+    if (corto_mount_setContentTypeIn(this, "text/influx")) {
+        goto error;
+    }
+    if (corto_mount_setContentTypeOut(this, "text/json")) {
+        goto error;
+    }
 
     /* Make sure that database exists */
     corto_asprintf(&url, "%s/query", this->host);
@@ -26,12 +31,30 @@ corto_int16 _influxdb_Connector_construct(
     corto_dealloc(query);
 
     return corto_mount_construct(this);
+error:
+    return -1;
+/* $end */
+}
+
+corto_void _influxdb_Connector_onNotify(
+    influxdb_Connector this,
+    corto_eventMask event,
+    corto_result *object)
+{
+/* $begin(influxdb/Connector/onNotify) */
+    corto_string url;
+
+    corto_asprintf(&url, "%s/write?db=%s", this->host, this->db);
+    corto_trace("influxdb: %s: POST %s", url, (corto_string)object->value);
+    web_client_post(url, (corto_string)object->value);
+    corto_dealloc(url);
+
 /* $end */
 }
 
 corto_resultIter _influxdb_Connector_onRequest(
     influxdb_Connector this,
-    corto_request *r)
+    corto_request *request)
 {
 /* $begin(influxdb/Connector/onRequest) */
     /* TODO !! */
@@ -45,62 +68,62 @@ corto_resultIter _influxdb_Connector_onRequest(
     corto_string query;
 
     /* Create id filter */
-    if (strcmp(r->expr, "*")) {
-        sprintf(idFilter, "id = '%s'", r->expr);
+    if (strcmp(request->expr, "*")) {
+        sprintf(idFilter, "id = '%s'", request->expr);
     }
 
     /* Use path as measurement */
-    sprintf(from, "%s/%s", corto_idof(corto_mount(this)->mount), r->parent);
+    sprintf(from, "%s/%s", corto_idof(corto_mount(this)->mount), request->parent);
     corto_cleanpath(from, from);
 
-    if (r->from.kind == CORTO_FRAME_NOW) {
-        if (r->to.kind == CORTO_FRAME_TIME) {
-            corto_time t = corto_frame_getTime(&r->to);
+    if (request->from.kind == CORTO_FRAME_NOW) {
+        if (request->to.kind == CORTO_FRAME_TIME) {
+            corto_time t = corto_frame_getTime(&request->to);
             sprintf(timeLimit, "WHERE time > %ds", t.sec);
-        } else if (r->to.kind == CORTO_FRAME_DURATION) {
-            corto_time t = corto_frame_getTime(&r->to);
+        } else if (request->to.kind == CORTO_FRAME_DURATION) {
+            corto_time t = corto_frame_getTime(&request->to);
             sprintf(timeLimit, "WHERE time > (now() - %ds)", t.sec);
-        } else if (r->to.kind == CORTO_FRAME_SAMPLE) {
-            if (r->to.value) {
-                sprintf(sampleLimit, "OFFSET %ld", r->to.value);
+        } else if (request->to.kind == CORTO_FRAME_SAMPLE) {
+            if (request->to.value) {
+                sprintf(sampleLimit, "OFFSET %ld", request->to.value);
             }
-        } else if (r->to.kind == CORTO_FRAME_DEPTH) {
-            sprintf(depthLimit, "ORDER BY time DESC LIMIT %ld", r->to.value);
+        } else if (request->to.kind == CORTO_FRAME_DEPTH) {
+            sprintf(depthLimit, "ORDER BY time DESC LIMIT %ld", request->to.value);
         }
-    } else if (r->from.kind == CORTO_FRAME_TIME) {
-        corto_time from = corto_frame_getTime(&r->from);
-        if (r->to.kind == CORTO_FRAME_TIME) {
-            corto_time to = corto_frame_getTime(&r->to);
+    } else if (request->from.kind == CORTO_FRAME_TIME) {
+        corto_time from = corto_frame_getTime(&request->from);
+        if (request->to.kind == CORTO_FRAME_TIME) {
+            corto_time to = corto_frame_getTime(&request->to);
             sprintf(timeLimit, "WHERE time < %ds AND time > %ds", from.sec, to.sec);
-        } else if (r->to.kind == CORTO_FRAME_DURATION) {
-            corto_time to = corto_frame_getTime(&r->to);
+        } else if (request->to.kind == CORTO_FRAME_DURATION) {
+            corto_time to = corto_frame_getTime(&request->to);
             sprintf(timeLimit, "WHERE time < %ds AND time > %ds",
               from.sec,
               from.sec - to.sec);
-        } else if (r->to.kind == CORTO_FRAME_SAMPLE) {
+        } else if (request->to.kind == CORTO_FRAME_SAMPLE) {
             sprintf(timeLimit, "WHERE time < %ds", from.sec);
-            if (r->to.value) {
-                sprintf(sampleLimit, "OFFSET %ld", r->to.value);
+            if (request->to.value) {
+                sprintf(sampleLimit, "OFFSET %ld", request->to.value);
             }
-        } else if (r->to.kind == CORTO_FRAME_DEPTH) {
+        } else if (request->to.kind == CORTO_FRAME_DEPTH) {
             sprintf(timeLimit, "WHERE time < %ds", from.sec);
-            sprintf(depthLimit, "ORDER BY time DESC LIMIT %ld", r->to.value);
+            sprintf(depthLimit, "ORDER BY time DESC LIMIT %ld", request->to.value);
         }
-    } else if (r->from.kind == CORTO_FRAME_SAMPLE) {
-        if (r->from.value) {
-            sprintf(sampleLimit, "OFFSET %ld", r->from.value);
+    } else if (request->from.kind == CORTO_FRAME_SAMPLE) {
+        if (request->from.value) {
+            sprintf(sampleLimit, "OFFSET %ld", request->from.value);
         }
-        if (r->to.kind == CORTO_FRAME_TIME) {
-            corto_time to = corto_frame_getTime(&r->to);
+        if (request->to.kind == CORTO_FRAME_TIME) {
+            corto_time to = corto_frame_getTime(&request->to);
             sprintf(timeLimit, "WHERE time < %ds", to.sec);
-        } else if (r->to.kind == CORTO_FRAME_DURATION) {
+        } else if (request->to.kind == CORTO_FRAME_DURATION) {
             /* Unsupported */
-        } else if (r->to.kind == CORTO_FRAME_SAMPLE) {
-            if (r->to.value) {
-                sprintf(depthLimit, "LIMIT %ld", r->to.value - r->from.value);
+        } else if (request->to.kind == CORTO_FRAME_SAMPLE) {
+            if (request->to.value) {
+                sprintf(depthLimit, "LIMIT %ld", request->to.value - request->from.value);
             }
-        } else if (r->to.kind == CORTO_FRAME_DEPTH) {
-            sprintf(depthLimit, "ORDER BY time DESC LIMIT %ld", r->to.value);
+        } else if (request->to.kind == CORTO_FRAME_DEPTH) {
+            sprintf(depthLimit, "ORDER BY time DESC LIMIT %ld", request->to.value);
         }
     }
 
@@ -111,21 +134,5 @@ corto_resultIter _influxdb_Connector_onRequest(
         sampleLimit);*/
 
     return CORTO_ITERATOR_EMPTY;
-/* $end */
-}
-
-corto_void _influxdb_Connector_onUpdate(
-    influxdb_Connector this,
-    corto_object observable)
-{
-/* $begin(influxdb/Connector/onUpdate) */
-    corto_string url, content;
-
-    corto_asprintf(&url, "%s/write?db=%s", this->host, this->db);
-    content = corto_contentof(NULL, "text/influx", observable);
-    corto_trace("influxdb: %s: POST %s", url, content);
-    web_client_post(url, content);
-    corto_dealloc(url);
-
 /* $end */
 }

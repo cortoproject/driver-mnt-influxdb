@@ -6,5 +6,5 @@ class Connector: core/mount,hidden::
   host: string
   db: string
   int16 construct()
-  core/resultIter onRequest(core/request r)
-  void onUpdate(object observable)
+  core/resultIter onRequest(core/request request)
+  void onNotify(core/eventMask event, core/result object)
