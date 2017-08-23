@@ -1,0 +1,9 @@
+{
+  "id" : "driver/fmt/influxdb",
+  "type" : "package",
+  "value" : {
+    "description" : "InfluxDB Line Protocol formatter for Corto",
+    "version" : "1.3.0",
+    "noapi": true
+  }
+}

@@ -1,19 +1,18 @@
+#include <driver/fmt/influxdb/influxdb.h>
 
-#include "corto/fmt/influx/influx.h"
-
-typedef struct influxSer_t {
+typedef struct influxdbSer_t {
     corto_buffer b;
     corto_uint32 fieldCount;
-} influxSer_t;
+} influxdbSer_t;
 
-corto_int16 influx_serScalar(
-    corto_serializer s,
+corto_int16 influxdb_serScalar(
+    corto_walk_opt *walk,
     corto_value *info,
     void *userData)
 {
-    influxSer_t *data = userData;
-    void *ptr = corto_value_getPtr(info);
-    corto_type t = corto_value_getType(info);
+    influxdbSer_t *data = userData;
+    void *ptr = corto_value_ptrof(info);
+    corto_type t = corto_value_typeof(info);
     corto_string str = NULL;
 
     /* Only serialize types supported by influxdb */
@@ -43,7 +42,7 @@ corto_int16 influx_serScalar(
     case CORTO_INTEGER:
     case CORTO_UINTEGER:
     case CORTO_FLOAT:
-        corto_convert(t, ptr, corto_string_o, &str);
+        corto_ptr_cast(t, ptr, corto_string_o, &str);
         corto_buffer_appendstr(&data->b, str);
         if ((corto_primitive(t)->kind != CORTO_FLOAT) && (corto_primitive(t)->kind != CORTO_BOOLEAN)) {
             corto_buffer_appendstr(&data->b, "i");
@@ -68,49 +67,55 @@ unsupported:
     return 0;
 }
 
-corto_int16 influx_serObject(
-    corto_serializer s,
+int16_t influxdb_serObject(
+    corto_walk_opt *walk,
     corto_value *info,
     void *userData)
 {
-    influxSer_t *data = userData;
-    corto_object o = corto_value_getObject(info);
+    influxdbSer_t *data = userData;
+    corto_object o = corto_value_objectof(info);
 
     /* Map measurement & tag to parent and id */
     corto_buffer_append(&data->b, "%s,id=%s ",
       corto_idof(corto_parentof(o)),
       corto_idof(o));
 
-    return corto_serializeValue(s, info, userData);
+      if (corto_walk_value(walk, info, userData)) {
+          goto error;
+      }
+
+      return 0;
+  error:
+      return -1;
 }
 
-corto_string influx_fromCorto(corto_object o) {
-    influxSer_t walkData = {CORTO_BUFFER_INIT, 0};
-    struct corto_serializer_s s;
-    corto_serializerInit(&s);
+corto_string influxdb_fromCorto(corto_object o) {
+    influxdbSer_t walkData = {CORTO_BUFFER_INIT, 0};
+    corto_walk_opt walk;
+    corto_walk_init(&walk);
 
     /* Only serialize scalars */
-    s.access = CORTO_LOCAL|CORTO_PRIVATE;
-    s.accessKind = CORTO_NOT;
-    s.metaprogram[CORTO_OBJECT] = influx_serObject;
-    s.program[CORTO_PRIMITIVE] = influx_serScalar;
+    walk.access = CORTO_LOCAL|CORTO_PRIVATE;
+    walk.accessKind = CORTO_NOT;
+    walk.metaprogram[CORTO_OBJECT] = influxdb_serObject;
+    walk.program[CORTO_PRIMITIVE] = influxdb_serScalar;
 
-    corto_serialize(&s, o, &walkData);
+    corto_walk(&walk, o, &walkData);
 
     return corto_buffer_str(&walkData.b);
 }
 
 /* Not supported */
-corto_int16 influx_toCorto(corto_object o, corto_string data) {
+corto_int16 influxdb_toCorto(corto_object o, corto_string data) {
     corto_seterr("conversion from influx to corto not supported");
     return -1;
 }
 
-void influx_release(corto_string data) {
+void influxdb_release(corto_string data) {
     corto_release(data);
 }
 
-corto_string influx_copy(corto_string data) {
+corto_string influxdb_copy(corto_string data) {
     return corto_strdup(data);
 }
 
