@@ -1,10 +1,11 @@
-#package /influxdb
+in package /driver/mnt/influxdb
 
-class Connector: core/mount,hidden::
-  alias mount: mount/mount
-  alias policy: mount/policy
-  host: string
-  db: string
-  int16 construct()
-  core/resultIter onRequest(core/request request)
-  void onNotify(core/eventMask event, core/result object)
+class Mount: core/mount, hidden:/
+    host: string
+    db: string
+    int16 construct()
+
+    // App Publishes Data
+    void onNotify(core/subscriberEvent event) override
+    // App Requests Data (corto_select)
+    core/resultIter onQuery(core/query query) override

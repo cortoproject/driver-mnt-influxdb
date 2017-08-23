@@ -1,27 +1,30 @@
 /* influxdb.h
  *
- * This file contains generated code. Do not modify!
+ * This is the main package file. Include this file in other projects.
+ * Only modify inside the header-end and body-end sections.
  */
 
-#ifndef INFLUXDB_H
-#define INFLUXDB_H
+#ifndef DRIVER_MNT_INFLUXDB_H
+#define DRIVER_MNT_INFLUXDB_H
 
 #include <corto/corto.h>
-#include <influxdb/_project.h>
+#include <corto/corto.h>
+#include <driver/mnt/influxdb/_project.h>
 #include <corto/web/client/client.h>
+#include <corto/c/c.h>
 
-#include <influxdb/_type.h>
+/* $header() */
+/* Definitions that are required by package headers (native types) go here. */
+/* $end */
 
-#include <influxdb/_api.h>
-#include <influxdb/_load.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <driver/mnt/influxdb/_type.h>
+#include <driver/mnt/influxdb/_interface.h>
+#include <driver/mnt/influxdb/_load.h>
+#include <driver/mnt/influxdb/c/_api.h>
 
-#include <influxdb/Connector.h>
+/* $body() */
+/* Definitions here that need your package headers go here. */
+/* $end */
 
-#ifdef __cplusplus
-}
-#endif
 #endif
 
