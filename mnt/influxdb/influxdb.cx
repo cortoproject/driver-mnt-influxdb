@@ -4,8 +4,5 @@ class Mount: core/mount, hidden:/
     host: string
     db: string
     int16 construct()
-
-    // App Publishes Data
-    void onNotify(core/subscriberEvent event) override
-    // App Requests Data (corto_select)
-    core/resultIter onQuery(core/query query) override
+    void onNotify(core/subscriberEvent event) override // App Publishes Data
+    core/resultIter onQuery(core/query query) override // App Requests Data (corto_select)

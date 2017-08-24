@@ -1,6 +1,8 @@
 #include "include/writer.h"
 
 const corto_id INFLUX_MOUNT_ID = "influx";
+const corto_string INFLUX_DB_HOST = "http://localhost:8086";
+const corto_string INFLUX_DB_NAME = "mydb";
 
 int writerMain(int argc, char *argv[])
 {
@@ -9,10 +11,10 @@ int writerMain(int argc, char *argv[])
     corto_voidCreateChild_auto(root_o, temperature);
 
     influxdb_MountCreateChild_auto(
-        temperature,    /* connect to data in temperature scope */
-        INFLUX_MOUNT_ID,       /* name */
-        "http://localhost:8086",  /* hostname */
-        "mydb");        /* database name */
+        temperature,        /* connect to data in temperature scope */
+        INFLUX_MOUNT_ID,    /* name */
+        INFLUX_DB_HOST,     /* hostname */
+        INFLUX_DB_NAME);    /* database name */
 
     //"sampleRate=1", /* store at most updates at 1 second intervals */
     corto_float32DeclareChild_auto(temperature, temp1);
