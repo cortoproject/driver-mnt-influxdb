@@ -1,18 +1,20 @@
-#include "writer.h"
+#include "include/writer.h"
 
-int writerMain(int argc, char *argv[]) {
+const corto_id INFLUX_MOUNT_ID = "influx";
 
+int writerMain(int argc, char *argv[])
+{
     corto_verbosity(CORTO_TRACE);
 
     corto_voidCreateChild_auto(root_o, temperature);
 
-    influxdb_ConnectorCreate_auto(
-      influxdb,       /* name */
-      temperature,    /* connect to data in temperature scope */
-      "sampleRate=1", /* store at most updates at 1 second intervals */
-      "http://localhost:8086",  /* hostname */
-      "mydb");        /* database name */
+    influxdb_MountCreateChild_auto(
+        temperature,    /* connect to data in temperature scope */
+        INFLUX_MOUNT_ID,       /* name */
+        "http://localhost:8086",  /* hostname */
+        "mydb");        /* database name */
 
+    //"sampleRate=1", /* store at most updates at 1 second intervals */
     corto_float32DeclareChild_auto(temperature, temp1);
     corto_float32DeclareChild_auto(temperature, temp2);
 

@@ -1,5 +1,5 @@
 COMPONENTS = %w(
-    mnt fmt examples
+    influxdb
 )
 
 require "#{ENV['CORTO_BUILD']}/forward"

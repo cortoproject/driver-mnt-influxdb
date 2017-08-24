@@ -1,0 +1,16 @@
+{
+    "id": "influxdb/writer",
+    "type": "application",
+    "value": {
+        "description": "Example writer for InfluxDB",
+        "author": "Sander Mertens",
+        "version": "1.3.0",
+        "language": "c",
+        "lib" : [
+            "m"
+        ],
+        "dependencies": [
+            "driver/mnt/influxdb"
+        ]
+    }
+}

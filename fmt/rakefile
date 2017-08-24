@@ -1,3 +1,0 @@
-PACKAGE = 'driver/fmt/influxdb'
-NOAPI = true
-require "#{ENV['CORTO_BUILD']}/package"

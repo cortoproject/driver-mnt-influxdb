@@ -1,4 +1,4 @@
-in package /driver/mnt/influxdb
+in package driver/mnt/influxdb
 
 class Mount: core/mount, hidden:/
     host: string
