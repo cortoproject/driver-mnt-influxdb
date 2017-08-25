@@ -42,3 +42,4 @@ corto_string influxdb_copy(corto_string data);
 /* $end */
 
 #endif
+

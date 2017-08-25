@@ -53,15 +53,7 @@ corto_resultIter influxdb_Mount_onQuery(
     corto_id timeLimit = {'\0'};
     corto_id depthLimit = {'\0'};
     corto_id sampleLimit = {'\0'};
-    /* corto_string select
-       corto_string from
-       corto_string type
-       corto_string member
-       corto_string where
-       uint64_t     offset
-       uint64_t     limit
-       corto_frame* timeBegin
-       corto_frame* timeEnd */
+
     /* Create id filter */
     if (strcmp(query->select, "*")) {
         sprintf(idFilter, "id = '%s'", query->select);
