@@ -22,8 +22,8 @@ int CreateManualMount(void)
         INFLUX_MOUNT_ID,    /* name */
         INFLUX_DB_HOST,     /* hostname */
         INFLUX_DB_NAME);    /* database name */
+    influxMount->super.policy.sampleRate=1; /* store at most updates at 1 second intervals */
 
-    // "sampleRate=1", /* store at most updates at 1 second intervals */
     if (!influxMount)
     {
         return -1;
