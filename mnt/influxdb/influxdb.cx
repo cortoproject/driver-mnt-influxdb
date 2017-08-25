@@ -5,4 +5,5 @@ class Mount: core/mount, hidden:/
     db: string
     int16 construct()
     void onNotify(core/subscriberEvent event) override // App Publishes Data
+    void onBatchNotify(core/subscriberEventIter data) override // App Publishes Downsampled data
     core/resultIter onQuery(core/query query) override // App Requests Data (corto_select)

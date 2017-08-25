@@ -89,7 +89,34 @@ int16_t influxdb_serObject(
       return -1;
 }
 
-corto_string influxdb_fromCorto(corto_object o) {
+corto_string influxdb_fromValue(corto_value *v) {
+    influxdbSer_t walkData = {CORTO_BUFFER_INIT, 0};
+    corto_walk_opt walk;
+    corto_walk_init(&walk);
+
+    /* Only serialize scalars */
+    walk.access = CORTO_LOCAL|CORTO_PRIVATE;
+    walk.accessKind = CORTO_NOT;
+    walk.metaprogram[CORTO_OBJECT] = influxdb_serObject;
+    walk.program[CORTO_PRIMITIVE] = influxdb_serScalar;
+
+    corto_walk_value(&walk, v, &walkData);
+
+    return corto_buffer_str(&walkData.b);
+}
+
+/* Not supported */
+corto_int16 influxdb_toValue(corto_value *v, corto_string data) {
+    corto_seterr("conversion from influx to corto not supported");
+    return -1;
+}
+
+corto_int16 influxdb_toObject(corto_object* o, corto_string s) {
+    corto_seterr("conversion from influx to corto not supported");
+    return -1;
+}
+
+corto_string influxdb_fromObject(corto_object o) {
     influxdbSer_t walkData = {CORTO_BUFFER_INIT, 0};
     corto_walk_opt walk;
     corto_walk_init(&walk);
@@ -105,21 +132,26 @@ corto_string influxdb_fromCorto(corto_object o) {
     return corto_buffer_str(&walkData.b);
 }
 
-/* Not supported */
-corto_int16 influxdb_toCorto(corto_object o, corto_string data) {
+corto_word influxdb_fromResult(corto_result *r) {
+    CORTO_UNUSED(r);
+    return 0;
+}
+
+corto_int16 influxdb_toResult(corto_result *r, corto_string influx) {
     corto_seterr("conversion from influx to corto not supported");
     return -1;
 }
 
 void influxdb_release(corto_string data) {
-    corto_release(data);
+    corto_dealloc(data);
 }
 
 corto_string influxdb_copy(corto_string data) {
     return corto_strdup(data);
 }
 
-int influxMain(int argc, char *argv[]) {
-
+int influxdbMain(int argc, char *argv[]) {
+    CORTO_UNUSED(argc);
+    CORTO_UNUSED(argv);
     return 0;
 }
