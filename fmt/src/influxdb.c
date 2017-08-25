@@ -22,9 +22,9 @@ corto_int16 influxdb_serScalar(
     case CORTO_UINTEGER:
     case CORTO_FLOAT:
     case CORTO_TEXT:
-      break;
+        break;
     default:
-      goto unsupported;
+        goto unsupported;
     }
 
     if (data->fieldCount) {
@@ -37,10 +37,27 @@ corto_int16 influxdb_serScalar(
         corto_buffer_appendstr(&data->b, "value=");
     }
 
+    corto_info("Walk Scalar fieldCount[%i] [%s=]", data->fieldCount,
+        corto_idof(info->is.member.t));
+
     switch(corto_primitive(t)->kind) {
     case CORTO_BOOLEAN:
+        corto_ptr_cast(t, ptr, corto_string_o, &str);
+        corto_buffer_appendstr(&data->b, str);
+        corto_dealloc(str);
+        break;
     case CORTO_INTEGER:
+        corto_ptr_cast(t, ptr, corto_string_o, &str);
+        corto_buffer_appendstr(&data->b, str);
+        corto_dealloc(str);
+        corto_buffer_appendstr(&data->b, "i");
+        break;
     case CORTO_UINTEGER:
+        corto_ptr_cast(t, ptr, corto_string_o, &str);
+        corto_buffer_appendstr(&data->b, str);
+        corto_dealloc(str);
+        corto_buffer_appendstr(&data->b, "i");
+        break;
     case CORTO_FLOAT:
         corto_ptr_cast(t, ptr, corto_string_o, &str);
         corto_buffer_appendstr(&data->b, str);
@@ -77,16 +94,19 @@ int16_t influxdb_serObject(
 
     /* Map measurement & tag to parent and id */
     corto_buffer_append(&data->b, "%s,id=%s ",
-      corto_idof(corto_parentof(o)),
-      corto_idof(o));
+    corto_idof(corto_parentof(o)),
+    corto_idof(o));
 
-      if (corto_walk_value(walk, info, userData)) {
-          goto error;
-      }
+    corto_info("Walk Object [%s] [%s,id=%s]", corto_fullpath(NULL, o),
+        corto_idof(corto_parentof(o)), corto_idof(o));
 
-      return 0;
-  error:
-      return -1;
+    if (corto_walk_value(walk, info, userData)) {
+        goto error;
+    }
+
+    return 0;
+error:
+    return -1;
 }
 
 corto_string influxdb_fromValue(corto_value *v) {

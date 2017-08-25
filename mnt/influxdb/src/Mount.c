@@ -36,7 +36,13 @@ void influxdb_Mount_onNotify(
     corto_string url;
 
     corto_asprintf(&url, "%s/write?db=%s", this->host, this->db);
-    corto_trace("influxdb: %s: POST %s", url, corto_result_getText(&event->data));
+    corto_info(
+        "On Notify '%s' from '%s' with type '%s'",
+        event->data.id,
+        event->data.parent,
+        event->data.type);
+        
+    corto_info("influxdb: %s: POST %s", url, corto_result_getText(&event->data));
     web_client_post(url, corto_result_getText(&event->data));
     corto_dealloc(url);
 }
@@ -132,5 +138,6 @@ void influxdb_Mount_onBatchNotify(
     influxdb_Mount this,
     corto_subscriberEventIter data)
 {
+    corto_error("onBatchNotify not implemented.");
     return CORTO_ITER_EMPTY;
 }

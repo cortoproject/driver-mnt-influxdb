@@ -1,6 +1,6 @@
 in package driver/mnt/influxdb
 
-class Mount: core/mount, hidden:/
+class Mount: core/mount:/
     host: string
     db: string
     int16 construct()
