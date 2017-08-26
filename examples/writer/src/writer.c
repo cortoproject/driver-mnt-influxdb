@@ -20,7 +20,7 @@ int CreateManualMount(corto_object mountPoint)
     corto_string fromPath = corto_fullpath(NULL, mountPoint);
     corto_query* query = corto_queryCreate("//", fromPath, NULL, NULL, NULL, 0, 0, NULL, NULL);
     corto_mountPolicy *policy = corto_mountPolicyCreate(CORTO_LOCAL_OWNER,
-         CORTO_BATCH_NOTIFY,
+         CORTO_NOTIFY,
          1,
          0);
 

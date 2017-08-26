@@ -13,6 +13,7 @@ corto_int16 influxdb_serScalar(
     influxdbSer_t *data = userData;
     void *ptr = corto_value_ptrof(info);
     corto_type t = corto_value_typeof(info);
+    corto_object o = corto_value_objectof(info);
     corto_string str = NULL;
 
     /* Only serialize types supported by influxdb */
@@ -34,7 +35,12 @@ corto_int16 influxdb_serScalar(
     if (info->kind == CORTO_MEMBER) {
         corto_buffer_append(&data->b, "%s=", corto_idof(info->is.member.t));
     } else {
-        corto_buffer_appendstr(&data->b, "value=");
+        corto_string line;
+        corto_asprintf(&line, "%s %s=",
+            corto_fullpath(NULL, corto_parentof(o)), corto_idof(o));
+        corto_buffer_append(&data->b, "%s", line);
+        corto_info("POST [%s] FULLPATH [%s]", line, corto_fullpath(NULL, o));
+        // corto_buffer_appendstr(&data->b, line);
     }
 
     corto_info("Walk Scalar fieldCount[%i] [%s=]", data->fieldCount,
@@ -78,7 +84,9 @@ corto_int16 influxdb_serScalar(
         break;
     }
 
-    data->fieldCount ++;
+    data->fieldCount++;
+
+    // corto_release(o);
 
 unsupported:
     return 0;
