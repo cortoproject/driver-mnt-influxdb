@@ -1,4 +1,6 @@
 
-COMPONENTS = ["writer"]
+COMPONENTS = %W(
+    writer object_writer
+)
 
 require "#{ENV['CORTO_BUILD']}/forward"
