@@ -1,5 +1,5 @@
 {
-    "id": "influxdb/object_writer",
+    "id": "driver/mnt/influxdb/object_writer",
     "type": "application",
     "value": {
         "description": "Example writer for InfluxDB using Weather class",

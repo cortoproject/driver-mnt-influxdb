@@ -4,8 +4,8 @@
  * Only modify inside the header-end and body-end sections.
  */
 
-#ifndef INFLUXDB_OBJECT_WRITER_H
-#define INFLUXDB_OBJECT_WRITER_H
+#ifndef DRIVER_MNT_INFLUXDB_OBJECT_WRITER_H
+#define DRIVER_MNT_INFLUXDB_OBJECT_WRITER_H
 
 #include <corto/corto.h>
 #include <corto/corto.h>

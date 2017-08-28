@@ -60,10 +60,13 @@ int writerMain(int argc, char *argv[])
 
     corto_float32DeclareChild_auto(config, temp1);
     corto_float32DeclareChild_auto(config, temp2);
-    corto_info("Created Temperature 1 - [%s]", corto_fullpath(NULL, temp1));
+    corto_trace("Created Temperature 1 - [%s]", corto_fullpath(NULL, temp1));
+    corto_trace("Created Temperature 2 - [%s]", corto_fullpath(NULL, temp2));
     corto_float32DeclareChild_auto(manual, temp3);
     corto_float32DeclareChild_auto(manual, temp4);
-    corto_info("Created Temperature 3 - [%s]", corto_fullpath(NULL, temp3));
+    corto_string *humidity = corto_stringCreateChild(manual, "humidity", "MISERABLE");
+    corto_trace("Created Temperature 3 - [%s]", corto_fullpath(NULL, temp3));
+    corto_trace("Created Temperature 4 - [%s]", corto_fullpath(NULL, temp4));
 
     corto_float32 t = 0;
     while (1) {
@@ -80,6 +83,7 @@ int writerMain(int argc, char *argv[])
         corto_sleep(0, 200000000); /* Update 5 times a second */
     }
 
+    corto_release(humidity);
     corto_release(influxdbMount);
 
     return 0;

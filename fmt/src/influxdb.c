@@ -5,6 +5,12 @@ typedef struct influxdbSer_t {
     corto_uint32 fieldCount;
 } influxdbSer_t;
 
+corto_string influxdb_safeString(corto_string source)
+{
+    /* Measurements and Tags names cannot contain non-espaced spaces */
+    return corto_replace(source, " ", "\\ ");
+}
+
 corto_int16 influxdb_serScalar(
     corto_walk_opt *walk,
     corto_value *info,
@@ -33,18 +39,12 @@ corto_int16 influxdb_serScalar(
     }
 
     if (info->kind == CORTO_MEMBER) {
-        corto_buffer_append(&data->b, "%s=", corto_idof(info->is.member.t));
+        corto_buffer_append(&data->b, "%s=",
+            influxdb_safeString(corto_idof(info->is.member.t)));
     } else {
-        corto_string line;
-        corto_asprintf(&line, "%s %s=",
-            corto_fullpath(NULL, corto_parentof(o)), corto_idof(o));
-        corto_buffer_append(&data->b, "%s", line);
-        corto_info("POST [%s] FULLPATH [%s]", line, corto_fullpath(NULL, o));
-        // corto_buffer_appendstr(&data->b, line);
+        corto_buffer_append(&data->b, "%s=",
+            influxdb_safeString(corto_idof(o)));
     }
-
-    corto_info("Walk Scalar fieldCount[%i] [%s=]", data->fieldCount,
-        corto_idof(info->is.member.t));
 
     switch(corto_primitive(t)->kind) {
     case CORTO_BOOLEAN:
@@ -101,12 +101,10 @@ int16_t influxdb_serObject(
     corto_object o = corto_value_objectof(info);
 
     /* Map measurement & tag to parent and id */
-    corto_buffer_append(&data->b, "%s,id=%s ",
-    corto_idof(corto_parentof(o)),
-    corto_idof(o));
-
-    corto_info("Walk Object [%s] [%s,id=%s]", corto_fullpath(NULL, o),
-        corto_idof(corto_parentof(o)), corto_idof(o));
+    corto_buffer_append(&data->b, "%s,parent=%s,id=%s ",
+        influxdb_safeString(corto_fullpath(NULL, corto_typeof(o))),
+        influxdb_safeString(corto_fullpath(NULL, corto_parentof(o))),
+        influxdb_safeString(corto_idof(o)));
 
     if (corto_walk_value(walk, info, userData)) {
         goto error;
@@ -128,7 +126,13 @@ corto_string influxdb_fromValue(corto_value *v) {
     walk.metaprogram[CORTO_OBJECT] = influxdb_serObject;
     walk.program[CORTO_PRIMITIVE] = influxdb_serScalar;
 
-    corto_walk_value(&walk, v, &walkData);
+    if (v->kind == CORTO_OBJECT) {
+        corto_object o = corto_value_objectof(v);
+        corto_walk(&walk, o, &walkData);
+    }
+    else {
+        corto_walk_value(&walk, v, &walkData);
+    }
 
     return corto_buffer_str(&walkData.b);
 }
