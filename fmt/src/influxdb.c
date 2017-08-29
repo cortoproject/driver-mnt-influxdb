@@ -86,8 +86,6 @@ corto_int16 influxdb_serScalar(
 
     data->fieldCount++;
 
-    // corto_release(o);
-
 unsupported:
     return 0;
 }

@@ -6,7 +6,6 @@ int16_t influxdb_Mount_construct(
 {
     corto_string url, query;
 
-    // corto_mount(this)->kind = CORTO_HISTORIAN;
     corto_observer(this)->mask = CORTO_ON_TREE;
     if (corto_mount_setContentTypeIn(this, "text/influxdb")) {
         corto_error("Failed to set content type in.");
