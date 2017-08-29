@@ -1,8 +1,5 @@
+COMPONENTS = %w(
+    mnt fmt examples
+)
 
-PACKAGE = 'influxdb'
-
-LIB = ['curl']
-
-COMPONENTS = ["influx", "examples"]
-
-require "#{ENV['CORTO_BUILD']}/package"
+require "#{ENV['CORTO_BUILD']}/forward"

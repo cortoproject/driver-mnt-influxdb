@@ -1,0 +1,16 @@
+{
+    "id": "driver/mnt/influxdb",
+    "type": "package",
+    "value": {
+        "description": "Mount driver for InfluxDB, a time-series database",
+        "author": "Sander Mertens",
+        "version": "1.3.0",
+        "language": "c",
+        "lib": [
+            "curl"
+        ],
+        "dependencies": [
+            "corto/web/client"
+        ]
+    }
+}

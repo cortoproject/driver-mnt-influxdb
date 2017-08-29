@@ -1,6 +1,5 @@
-
-COMPONENTS = %W(
-    writer object_writer
+COMPONENTS = %w(
+    influxdb
 )
 
 require "#{ENV['CORTO_BUILD']}/forward"

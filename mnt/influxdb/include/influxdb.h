@@ -1,20 +1,26 @@
-/* writer.h
+/* influxdb.h
  *
  * This is the main package file. Include this file in other projects.
  * Only modify inside the header-end and body-end sections.
  */
 
-#ifndef INFLUXDB_WRITER_H
-#define INFLUXDB_WRITER_H
+#ifndef DRIVER_MNT_INFLUXDB_H
+#define DRIVER_MNT_INFLUXDB_H
 
 #include <corto/corto.h>
-#include <include/_project.h>
+#include <corto/corto.h>
+#include <driver/mnt/influxdb/_project.h>
 #include <corto/c/c.h>
-#include <driver/mnt/influxdb/influxdb.h>
+#include <corto/web/client/client.h>
 
 /* $header() */
 /* Definitions that are required by package headers (native types) go here. */
 /* $end */
+
+#include <driver/mnt/influxdb/_type.h>
+#include <driver/mnt/influxdb/_interface.h>
+#include <driver/mnt/influxdb/_load.h>
+#include <driver/mnt/influxdb/c/_api.h>
 
 /* $body() */
 /* Definitions here that need your package headers go here. */

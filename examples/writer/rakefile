@@ -1,6 +1,0 @@
-
-TARGET = 'writer'
-
-LIB = ['m']
-
-require "#{ENV['CORTO_BUILD']}/application"

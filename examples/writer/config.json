@@ -1,0 +1,15 @@
+{
+    "id": "writerDemo",
+    "type": "driver/mnt/influxdb/Mount",
+    "value": {
+        "host": "http://localhost:8086",
+        "db": "writer_demo",
+        "contentType": "text/json",
+        "query": {
+            "from": "/temperature/config"
+        },
+        "policy": {
+            "sampleRate": 1.0
+        }
+    }
+}
