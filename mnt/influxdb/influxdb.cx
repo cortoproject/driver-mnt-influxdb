@@ -5,5 +5,5 @@ class Mount: vstore/mount:/
     db: string
     int16 construct()
     void onNotify(vstore/subscriberEvent event) override // App Publishes Data
-    void onBatchNotify(vstore/subscriberEventIter data) override // App Publishes Downsampled data
+    void onBatchNotify(vstore/subscriberEventIter events) override // App Publishes Downsampled data
     vstore/resultIter onQuery(vstore/query query) override // App Requests Data (corto_select)

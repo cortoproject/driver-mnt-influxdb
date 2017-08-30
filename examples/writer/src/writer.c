@@ -19,9 +19,11 @@ int CreateManualMount(corto_object mountPoint)
     influxdbMount = influxdb_MountDeclareChild(root_o, INFLUX_MOUNT_ID);
     corto_string fromPath = corto_fullpath(NULL, mountPoint);
     corto_query* query = corto_queryCreate("//", fromPath, NULL, NULL, NULL, 0, 0, NULL, NULL);
+    corto_queuePolicy *queue = corto_queuePolicyCreate(25);
     corto_mountPolicy *policy = corto_mountPolicyCreate(CORTO_LOCAL_OWNER,
          CORTO_MOUNT_NOTIFY,
          1,
+         queue,
          0);
 
     if (influxdb_MountDefine(influxdbMount,
@@ -36,6 +38,7 @@ int CreateManualMount(corto_object mountPoint)
     }
 
     corto_release(query);
+    corto_release(queue);
     corto_release(policy);
 
     return 0;

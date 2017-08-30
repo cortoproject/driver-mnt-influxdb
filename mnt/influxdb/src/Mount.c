@@ -1,6 +1,5 @@
 
 #include <driver/mnt/influxdb/influxdb.h>
-
 int16_t influxdb_Mount_construct(
     influxdb_Mount this)
 {
@@ -52,7 +51,6 @@ corto_resultIter influxdb_Mount_onQuery(
     corto_id timeLimit = {'\0'};
     corto_id depthLimit = {'\0'};
     corto_id sampleLimit = {'\0'};
-
     /* Create id filter */
     if (strcmp(query->select, "*")) {
         sprintf(idFilter, "id = '%s'", query->select);
@@ -129,7 +127,7 @@ corto_resultIter influxdb_Mount_onQuery(
 
 void influxdb_Mount_onBatchNotify(
     influxdb_Mount this,
-    corto_subscriberEventIter data)
+    corto_subscriberEventIter events)
 {
     corto_error("onBatchNotify not implemented.");
 }
