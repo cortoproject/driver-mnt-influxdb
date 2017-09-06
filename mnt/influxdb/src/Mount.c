@@ -89,7 +89,7 @@ corto_resultIter influxdb_Mount_onQuery(
 
         } else if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
             sprintf(timeLimit, "WHERE time < %ds", from.sec);
-            sprintf(depthLimit, "ORDER BYeah ultimately part of the value we can provide is keeping track of all that data which is something that the hardware vendors don't really want to deal withY time DESC LIMIT %ld", query->timeEnd.value);
+            sprintf(depthLimit, "ORDER BY time DESC LIMIT %ld", query->timeEnd.value);
         }
 
     } else if (query->timeBegin.kind == CORTO_FRAME_SAMPLE) {
