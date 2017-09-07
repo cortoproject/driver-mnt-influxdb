@@ -3,8 +3,6 @@
 int16_t influxdb_Mount_construct(
     influxdb_Mount this)
 {
-    corto_string url, query;
-
     corto_observer(this)->mask = CORTO_ON_TREE;
     if (corto_mount_setContentTypeIn(this, "text/influxdb")) {
         corto_error("Failed to set content type in.");
@@ -17,8 +15,8 @@ int16_t influxdb_Mount_construct(
     }
 
     /* Make sure that database exists */
-    corto_asprintf(&url, "%s/query", this->host);
-    corto_asprintf(&query, "q=CREATE DATABASE %s", this->db);
+    corto_string url = corto_asprintf("%s/query", this->host);
+    corto_string query = corto_asprintf("q=CREATE DATABASE %s", this->db);
     web_client_post(url, query);
     corto_dealloc(url);
     corto_dealloc(query);
@@ -31,9 +29,7 @@ void influxdb_Mount_onNotify(
     influxdb_Mount this,
     corto_subscriberEvent *event)
 {
-    corto_string url;
-
-    corto_asprintf(&url, "%s/write?db=%s", this->host, this->db);
+    corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
     corto_trace("influxdb: %s: POST %s", url, corto_result_getText(&event->data));
     web_client_post(url, corto_result_getText(&event->data));
     corto_dealloc(url);
@@ -129,5 +125,50 @@ void influxdb_Mount_onBatchNotify(
     influxdb_Mount this,
     corto_subscriberEventIter events)
 {
-    corto_error("onBatchNotify not implemented.");
+    corto_buffer buffer = CORTO_BUFFER_INIT;
+
+    while (corto_iter_hasNext(&events)) {
+        corto_subscriberEvent *e = corto_iter_next(&events);
+
+        corto_buffer_appendstr(&buffer, corto_result_getText(&e->data));
+        if (corto_iter_hasNext(&events) != 0)
+        {
+            corto_buffer_appendstr(&buffer, ", ");
+        }
+    }
+
+    corto_string bufferStr = corto_buffer_str(&buffer);
+
+    corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
+    corto_trace("influxdb: %s: POST %s", url, bufferStr);
+    web_client_post(url, bufferStr);
+
+    corto_dealloc(url);
+    corto_dealloc(bufferStr);
+}
+
+void influxdb_Mount_onHistoryBatchNotify(
+    influxdb_Mount this,
+    corto_subscriberEventIter events)
+{
+    corto_buffer buffer = CORTO_BUFFER_INIT;
+
+    while (corto_iter_hasNext(&events)) {
+        corto_subscriberEvent *e = corto_iter_next(&events);
+
+        corto_buffer_appendstr(&buffer, corto_result_getText(&e->data));
+        if (corto_iter_hasNext(&events) != 0)
+        {
+            corto_buffer_appendstr(&buffer, ", ");
+        }
+    }
+
+    corto_string bufferStr = corto_buffer_str(&buffer);
+
+    corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
+    corto_trace("influxdb: %s: POST %s", url, bufferStr);
+    web_client_post(url, bufferStr);
+
+    corto_dealloc(url);
+    corto_dealloc(bufferStr);
 }

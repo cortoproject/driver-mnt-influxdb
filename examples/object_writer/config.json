@@ -9,7 +9,8 @@
             "from": "/weather"
         },
         "policy": {
-            "sampleRate": 1.0
+            "sampleRate": 1.0,
+            "mask": "MOUNT_HISTORY_BATCH_NOTIFY"
         }
     }
 }
