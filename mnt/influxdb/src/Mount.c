@@ -133,7 +133,7 @@ void influxdb_Mount_onBatchNotify(
         corto_buffer_appendstr(&buffer, corto_result_getText(&e->data));
         if (corto_iter_hasNext(&events) != 0)
         {
-            corto_buffer_appendstr(&buffer, ", ");
+            corto_buffer_appendstr(&buffer, "\n");
         }
     }
 
@@ -159,7 +159,7 @@ void influxdb_Mount_onHistoryBatchNotify(
         corto_buffer_appendstr(&buffer, corto_result_getText(&e->data));
         if (corto_iter_hasNext(&events) != 0)
         {
-            corto_buffer_appendstr(&buffer, ", ");
+            corto_buffer_appendstr(&buffer, "\n");
         }
     }
 
