@@ -17,7 +17,7 @@ int16_t influxdb_Mount_construct(
     /* Make sure that database exists */
     corto_string url = corto_asprintf("%s/query", this->host);
     corto_string query = corto_asprintf("q=CREATE DATABASE %s", this->db);
-    web_client_post(url, query);
+    httpclient_post(url, query);
     corto_dealloc(url);
     corto_dealloc(query);
     return corto_super_construct(this);
@@ -31,7 +31,7 @@ void influxdb_Mount_onNotify(
 {
     corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
     corto_trace("influxdb: %s: POST %s", url, corto_result_getText(&event->data));
-    web_client_post(url, corto_result_getText(&event->data));
+    httpclient_post(url, corto_result_getText(&event->data));
     corto_dealloc(url);
 }
 
@@ -141,7 +141,7 @@ void influxdb_Mount_onBatchNotify(
 
     corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
     corto_trace("influxdb: %s: POST %s", url, bufferStr);
-    web_client_post(url, bufferStr);
+    httpclient_post(url, bufferStr);
 
     corto_dealloc(url);
     corto_dealloc(bufferStr);
@@ -167,7 +167,7 @@ void influxdb_Mount_onHistoryBatchNotify(
 
     corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
     corto_trace("influxdb: %s: POST %s", url, bufferStr);
-    web_client_post(url, bufferStr);
+    httpclient_post(url, bufferStr);
 
     corto_dealloc(url);
     corto_dealloc(bufferStr);

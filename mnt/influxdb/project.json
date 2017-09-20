@@ -10,7 +10,7 @@
             "curl"
         ],
         "dependencies": [
-            "corto/web/client"
+            "corto/httpclient"
         ]
     }
 }
