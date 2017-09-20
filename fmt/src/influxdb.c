@@ -1,5 +1,10 @@
 #include <driver/fmt/influxdb/influxdb.h>
 
+const uint32_t SEC_TO_NANOSEC = 1000000000;
+const corto_string TIMESTAMP_MEMBER = "timestamp";
+const corto_string TIMESTAMP_SEC_MEMBER = "sec";
+const corto_string TIMESTAMP_NANOSEC_MEMBER = "nanosec";
+
 typedef struct influxdbSer_t {
     corto_buffer b;
     corto_uint32 fieldCount;
@@ -21,6 +26,15 @@ corto_int16 influxdb_serScalar(
     corto_type t = corto_value_typeof(info);
     corto_object o = corto_value_objectof(info);
     corto_string str = NULL;
+
+    /* Do not add timestamp members to the update buffer. sec and nanosec will
+        be redundant */
+    if (info->kind == CORTO_MEMBER) {
+        if ((strcmp(TIMESTAMP_SEC_MEMBER, corto_idof(info->is.member.t)) == 0) ||
+            (strcmp(TIMESTAMP_NANOSEC_MEMBER, corto_idof(info->is.member.t)) == 0)) {
+            goto unsupported;
+        }
+    }
 
     /* Only serialize types supported by influxdb */
     switch(corto_primitive(t)->kind) {
@@ -106,6 +120,22 @@ int16_t influxdb_serObject(
 
     if (corto_walk_value(walk, info, userData)) {
         goto error;
+    }
+
+    if (corto_instanceof(corto_interface_o, corto_typeof(o)) == true) {
+        corto_member m = corto_interface_resolveMember(corto_typeof(o), TIMESTAMP_MEMBER);
+        if ((m != NULL) && (corto_instanceofType(corto_time_o, m->type) == true)) {
+            corto_time *time_o = (corto_time*)CORTO_OFFSET(o, m->offset);
+            if (time_o == NULL)
+            {
+                goto error;
+            }
+
+            corto_string str = corto_asprintf(" %"PRIu64,
+                (uint64_t) time_o->sec * SEC_TO_NANOSEC + (uint64_t) time_o->nanosec);
+            corto_buffer_appendstr(&data->b, str);
+            corto_dealloc(str);
+        }
     }
 
     return 0;
