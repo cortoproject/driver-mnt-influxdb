@@ -112,11 +112,13 @@ int16_t influxdb_serObject(
     influxdbSer_t *data = userData;
     corto_object o = corto_value_objectof(info);
 
-    /* Map measurement & tag to parent and id */
-    corto_buffer_append(&data->b, "%s,parent=%s,id=%s ",
-        influxdb_safeString(corto_fullpath(NULL, corto_typeof(o))),
+    /* Map measurement & tag to parent and id
+     * Format: measurement(path),type
+     */
+    corto_buffer_append(&data->b, "%s/%s,type=%s ",
         influxdb_safeString(corto_fullpath(NULL, corto_parentof(o))),
-        influxdb_safeString(corto_idof(o)));
+        influxdb_safeString(corto_idof(o)),
+        influxdb_safeString(corto_fullpath(NULL, corto_typeof(o))));
 
     if (corto_walk_value(walk, info, userData)) {
         goto error;

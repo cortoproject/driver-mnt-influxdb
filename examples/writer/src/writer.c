@@ -24,7 +24,8 @@ int CreateManualMount(corto_object mountPoint)
          CORTO_MOUNT_NOTIFY,
          1,
          queue,
-         0);
+         0,
+         false);
 
     if (influxdb_MountDefine(influxdbMount,
         query,
