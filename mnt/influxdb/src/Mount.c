@@ -1,5 +1,5 @@
-
 #include <driver/mnt/influxdb/influxdb.h>
+
 int16_t influxdb_Mount_construct(
     influxdb_Mount this)
 {
@@ -35,90 +35,196 @@ void influxdb_Mount_onNotify(
     corto_dealloc(url);
 }
 
+/* Use path as measurement */
+// sprintf(from, "%s/%s", corto_idof(corto_mount(this)->mount), query->from);
+// corto_cleanpath(from, from);
+// if (query->timeBegin.kind == CORTO_FRAME_NOW) {
+//     if (query->timeBegin.kind == CORTO_FRAME_TIME) {
+//         corto_time t = corto_frame_getTime(&query->timeBegin);
+//         sprintf(timeLimit, "WHERE time > %ds", t.sec);
+//     } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
+//         corto_time t = corto_frame_getTime(&query->timeEnd);
+//         sprintf(timeLimit, "WHERE time > (now() - %ds)", t.sec);
+//     } else if (query->timeEnd.kind == CORTO_FRAME_SAMPLE) {
+//         if (query->timeEnd.value) {
+//             sprintf(sampleLimit, "OFFSET %ld", query->timeEnd.value);
+//         }
+//
+//     } else if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
+//         sprintf(depthLimit, "ORDER BY time DESC LIMIT %ld", query->timeEnd.value);
+//     }
+//
+// } else if (query->timeBegin.kind == CORTO_FRAME_TIME) {
+//     corto_time from = corto_frame_getTime(&query->timeBegin);
+//     if (query->timeEnd.kind == CORTO_FRAME_TIME) {
+//         corto_time to = corto_frame_getTime(&query->timeEnd);
+//         sprintf(timeLimit, "WHERE time < %ds AND time > %ds", from.sec, to.sec);
+//     } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
+//         corto_time to = corto_frame_getTime(&query->timeEnd);
+//         sprintf(timeLimit, "WHERE time < %ds AND time > %ds",
+//           from.sec,
+//           from.sec - to.sec);
+//     } else if (query->timeEnd.kind == CORTO_FRAME_SAMPLE) {
+//         sprintf(timeLimit, "WHERE time < %ds", from.sec);
+//         if (query->timeEnd.value) {
+//             sprintf(sampleLimit, "OFFSET %ld", query->timeEnd.value);
+//         }
+//
+//     } else if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
+//         sprintf(timeLimit, "WHERE time < %ds", from.sec);
+//         sprintf(depthLimit, "ORDER BY time DESC LIMIT %ld", query->timeEnd.value);
+//     }
+//
+// } else if (query->timeBegin.kind == CORTO_FRAME_SAMPLE) {
+//     if (query->timeBegin.value) {
+//         sprintf(sampleLimit, "OFFSET %ld", query->timeBegin.value);
+//     }
+//
+//     if (query->timeEnd.kind == CORTO_FRAME_TIME) {
+//         corto_time to = corto_frame_getTime(&query->timeEnd);
+//         sprintf(timeLimit, "WHERE time < %ds", to.sec);
+//     } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
+//         /* Unsupported */
+//     } else if (query->timeEnd.kind == CORTO_FRAME_SAMPLE) {
+//         if (query->timeEnd.value) {
+//             sprintf(depthLimit, "LIMIT %ld", query->timeEnd.value - query->timeBegin.value);
+//         }
+//
+//     } else if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
+//         sprintf(depthLimit, "ORDER BY time DESC LIMIT %ld", query->timeEnd.value);
+//     }
+//
+// }
+
+// corto_string select;
+// corto_string from;
+// corto_string type;
+// corto_string member;
+// corto_string where;
+
+// struct corto_mount_s {
+//     struct corto_subscriber_s super;
+//     corto_mountPolicy policy;
+//     corto_object mount;
+//     corto_attr attr;
+//     corto_mountStats sent;
+//     corto_mountStats received;
+//     corto_mountStats sentDiscarded;
+//     corto_mountSubscriptionList subscriptions;
+//     corto_objectlist events;
+//     corto_objectlist historicalEvents;
+//     corto_time lastPoll;
+//     corto_time lastPost;
+//     corto_time lastSleep;
+//     corto_time dueSleep;
+//     uint32_t lastQueueSize;
+//     bool passThrough;
+//     bool explicitResume;
+//     uintptr_t thread;
+//     bool quit;
+//     corto_string contentTypeOut;
+//     uintptr_t contentTypeOutHandle;
+// };
+
+// struct corto_subscriber_s {
+//     struct corto_observer_s super;
+//     corto_query query;
+//     corto_string contentType;
+//     uintptr_t contentTypeHandle;
+//     uintptr_t idmatch;
+// };
+
+
 corto_resultIter influxdb_Mount_onQuery(
     influxdb_Mount this,
     corto_query *query)
 {
+    corto_info("MOUNT_FROM [%s]", this->super.super.query.from);
+    corto_info("SELECT [%s]", query->select);
+    corto_info("FROM [%s]", query->from);
+    corto_info("TYPE [%s]", query->type);
+    corto_info("MEMBER [%s]", query->member);
+    corto_info("WHERE [%s]", query->where);
+
+    corto_buffer buffer = CORTO_BUFFER_INIT;
+
     /* TODO !! */
     // curl -GET 'http://localhost:8086/query?pretty=true'
     //    --data-urlencode "db=mydb" --data-urlencode "q=SELECT value FROM cpu_load_short WHERE region='us-west'"
-    corto_id from;
-    corto_id idFilter = {'\0'};
-    corto_id timeLimit = {'\0'};
-    corto_id depthLimit = {'\0'};
-    corto_id sampleLimit = {'\0'};
+    // corto_id timeLimit = {'\0'};
+    // corto_id depthLimit = {'\0'};
+    // corto_id sampleLimit = {'\0'};
     /* Create id filter */
-    if (strcmp(query->select, "*")) {
-        sprintf(idFilter, "id = '%s'", query->select);
+
+    /* Build SELECT Data Fields (members) */
+    corto_buffer_appendstr(&buffer, " ");
+    if (strcmp(query->select, "*") != 0) {
+        // sprintf(idFilter, "id = '%s'", query->select);
+        //TODO Handle Select targets
+        corto_buffer_appendstr(&buffer, query->select);
+    }
+    else {
+        corto_buffer_appendstr(&buffer, query->select);
     }
 
-    /* Use path as measurement */
-    sprintf(from, "%s/%s", corto_idof(corto_mount(this)->mount), query->from);
-    corto_cleanpath(from, from);
-    if (query->timeBegin.kind == CORTO_FRAME_NOW) {
-        if (query->timeBegin.kind == CORTO_FRAME_TIME) {
-            corto_time t = corto_frame_getTime(&query->timeBegin);
-            sprintf(timeLimit, "WHERE time > %ds", t.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
-            corto_time t = corto_frame_getTime(&query->timeEnd);
-            sprintf(timeLimit, "WHERE time > (now() - %ds)", t.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_SAMPLE) {
-            if (query->timeEnd.value) {
-                sprintf(sampleLimit, "OFFSET %ld", query->timeEnd.value);
-            }
 
-        } else if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
-            sprintf(depthLimit, "ORDER BY time DESC LIMIT %ld", query->timeEnd.value);
+    /* FROM */
+    corto_string mountFrom = this->super.super.query.from;
+    if (strcmp(query->from, ".") != 0) {
+        corto_string from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s/%s\"",
+            this->db, mountFrom, query->from);
+        if (from) {
+            corto_buffer_appendstr(&buffer, from);
+            corto_dealloc(from);
         }
-
-    } else if (query->timeBegin.kind == CORTO_FRAME_TIME) {
-        corto_time from = corto_frame_getTime(&query->timeBegin);
-        if (query->timeEnd.kind == CORTO_FRAME_TIME) {
-            corto_time to = corto_frame_getTime(&query->timeEnd);
-            sprintf(timeLimit, "WHERE time < %ds AND time > %ds", from.sec, to.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
-            corto_time to = corto_frame_getTime(&query->timeEnd);
-            sprintf(timeLimit, "WHERE time < %ds AND time > %ds",
-              from.sec,
-              from.sec - to.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_SAMPLE) {
-            sprintf(timeLimit, "WHERE time < %ds", from.sec);
-            if (query->timeEnd.value) {
-                sprintf(sampleLimit, "OFFSET %ld", query->timeEnd.value);
-            }
-
-        } else if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
-            sprintf(timeLimit, "WHERE time < %ds", from.sec);
-            sprintf(depthLimit, "ORDER BY time DESC LIMIT %ld", query->timeEnd.value);
+        else {
+            corto_seterr("Failed to create InfluxDB FROM statement.");
+            goto error;
         }
-
-    } else if (query->timeBegin.kind == CORTO_FRAME_SAMPLE) {
-        if (query->timeBegin.value) {
-            sprintf(sampleLimit, "OFFSET %ld", query->timeBegin.value);
-        }
-
-        if (query->timeEnd.kind == CORTO_FRAME_TIME) {
-            corto_time to = corto_frame_getTime(&query->timeEnd);
-            sprintf(timeLimit, "WHERE time < %ds", to.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
-            /* Unsupported */
-        } else if (query->timeEnd.kind == CORTO_FRAME_SAMPLE) {
-            if (query->timeEnd.value) {
-                sprintf(depthLimit, "LIMIT %ld", query->timeEnd.value - query->timeBegin.value);
-            }
-
-        } else if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
-            sprintf(depthLimit, "ORDER BY time DESC LIMIT %ld", query->timeEnd.value);
-        }
-
     }
+    else {
+        corto_string from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s\"",
+            this->db, mountFrom);
+        if (from) {
+            corto_buffer_appendstr(&buffer, from);
+            corto_dealloc(from);
+        }
+        else {
+            corto_seterr("Failed to create InfluxDB FROM statement.");
+            goto error;
+        }
+    }
+
+
+
+
 
     /*corto_asprintf(&query, "SELECT * FROM %s %s %s %s",
         from,
         timeLimit,
         depthLimit,
         sampleLimit);*/
+
+
+    corto_string bufferStr = corto_buffer_str(&buffer);
+    char *encodedBuffer = httpclient_encode_fields(bufferStr);
+    corto_string queryStr = corto_asprintf("q=SELECT%s", encodedBuffer);
+    corto_dealloc(encodedBuffer);
+
+    corto_string url = corto_asprintf("%s/query?db=%s", this->host, this->db);
+    corto_trace("influxdb: %s: GET %s", url, queryStr);
+    httpclient_Result result = httpclient_get(url, queryStr);
+
+    corto_info("GET Result STATUS [%d] RESPONSE [%s]", result.status, result.response);
+
+    corto_dealloc(url);
+    corto_dealloc(bufferStr);
+    corto_dealloc(queryStr);
+
     return CORTO_ITER_EMPTY; /* Using corto_mount_return */
+error:
+    corto_error("InfluxDB Query Failed. Corto Error: [%s]", corto_lasterr());
+    return CORTO_ITER_EMPTY;
 }
 
 void influxdb_Mount_onBatchNotify(
