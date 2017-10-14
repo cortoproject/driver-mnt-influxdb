@@ -1,0 +1,7 @@
+{
+    "id": "config/servers/websocket",
+    "type": "corto/ws/service",
+    "value": {
+        "port": 9090
+    }
+}
