@@ -74,7 +74,7 @@ corto_resultIter influxdb_Mount_onQuery(
 
     /* Publish Query */
     corto_string bufferStr = corto_buffer_str(&buffer);
-    corto_info("Buffer [%s]", bufferStr);
+    corto_trace("Decoded Fields [%s]", bufferStr);
     char *encodedBuffer = httpclient_encode_fields(bufferStr);
     corto_string queryStr = corto_asprintf("q=SELECT%s", encodedBuffer);
     corto_dealloc(encodedBuffer);

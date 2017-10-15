@@ -53,6 +53,7 @@ int16_t influxdb_Mount_query_response_build_result(
 error:
     return -1;
 }
+
 /*
  * Process Value Array Index from influxdb_Mount_query_response_process_values
  * ["valueA", "valueB", "ValueC", ...]
@@ -183,7 +184,7 @@ int16_t influxdb_Mount_query_response_handler(
     influxdb_response_mount = this;
     influxdb_response_query = query;
 
-    corto_info("GET Result STATUS [%d] RESPONSE [%s]",
+    corto_trace("GET Result STATUS [%d] RESPONSE [%s]",
         result->status, result->response);
 
     if (result->status != 200) {
