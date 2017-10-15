@@ -33,7 +33,7 @@ corto_string influxdb_Mount_query_response_column_name(int pos);
 int16_t influxdb_Mount_query_response_build_result(
     corto_result *result,
     JSON_Value *value,
-    JSON_Object *jsonResult,
+    JSON_Object *resultJson,
     corto_string name)
 {
     if (strcmp(name, "type") == 0) {
@@ -43,7 +43,7 @@ int16_t influxdb_Mount_query_response_build_result(
         return 0;
     }
 
-    JSON_Status ret = json_object_set_value(jsonResult, name, value);
+    JSON_Status ret = json_object_set_value(resultJson, name, json_value_deep_copy(value));
     if (ret != JSONSuccess) {
         corto_seterr("Failed to set JSON result value.");
         goto error;
@@ -83,17 +83,12 @@ int16_t influxdb_Mount_query_response_process_value(JSON_Array *values)
         }
     }
 
-    char *pretty = json_serialize_to_string_pretty(jsonValue);
-    corto_info("Processed:\n%s\n", pretty);
-    json_free_serialized_string(pretty);
+    corto_ptr_setstr(&result->id, influxdb_response_name);
+    corto_ptr_setstr(&result->parent, ".");
 
-    // if (corto_result_fromcontent(r, "text/json", json)) {
-    //     corto_error("filestore: %s", corto_lasterr());
-    //     continue;
-    // }
-    // if (!isDir) {
-    //     r->flags = CORTO_RESULT_LEAF;
-    // }
+    corto_string jsonStr = json_serialize_to_string(jsonValue);
+    result->value = (corto_word)corto_strdup(jsonStr);
+    json_free_serialized_string(jsonStr);
 
     corto_mount_return(influxdb_response_mount, result);
     corto_ptr_free(result, corto_result_o);
@@ -138,21 +133,41 @@ int16_t influxdb_Mount_query_response_process_columns(JSON_Array *columns)
     return 0;
 }
 
-int16_t influxdb_Mount_query_response_parse_results(JSON_Object *result)
+int16_t influxdb_Mount_query_response_parse_series(JSON_Object *series)
 {
-    const char *name = json_object_get_string(result, "name");
-    VERIFY_JSON_PTR(name,  "Failed to find [name] in response object.")
+    const char *name = json_object_get_string(series, "name");
+    VERIFY_JSON_PTR(name, "Failed to find [name] in series object.")
     influxdb_response_name = (corto_string)name;
-    JSON_Array *columns = json_object_get_array(result, "columns");
-    VERIFY_JSON_PTR(columns, "Failed to find [columns] object in response.")
+    JSON_Array *columns = json_object_get_array(series, "columns");
+    VERIFY_JSON_PTR(columns, "Failed to find [columns] object in series.")
     if (influxdb_Mount_query_response_process_columns(columns) != 0) {
         goto error;
     }
 
-    JSON_Array *values = json_object_get_array(result, "values");
-    VERIFY_JSON_PTR(values, "Failed to find [values] object in response.")
+    JSON_Array *values = json_object_get_array(series, "values");
+    VERIFY_JSON_PTR(values, "Failed to find [values] object in series.")
     if (influxdb_Mount_query_response_process_values(values) != 0) {
         goto error;
+    }
+
+    return 0;
+error:
+    return -1;
+}
+
+int16_t influxdb_Mount_query_response_parse_results(JSON_Object *result)
+{
+    JSON_Array *series = json_object_get_array(result, "series");
+    VERIFY_JSON_PTR(series, "Failed to find [series] array in response.")
+
+    size_t cnt = json_array_get_count(series);
+    size_t i;
+    for (i = 0; i < cnt; i++) {
+        JSON_Object *o = json_array_get_object(series, i);
+        VERIFY_JSON_PTR(o, "Failed to resolve series response JSON object.");
+        if (influxdb_Mount_query_response_parse_series(o) != 0) {
+            goto error;
+        }
     }
 
     return 0;
@@ -206,6 +221,7 @@ error:
         json_value_free(responseVal);
         responseVal = NULL;
     }
+    corto_error("Failed to process response. Error: [%s]", corto_lasterr());
     return -1;
 }
 

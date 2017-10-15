@@ -52,7 +52,7 @@ corto_resultIter influxdb_Mount_onQuery(
     corto_buffer_appendstr(&buffer, " ");
 
     /* Build SELECT Data Fields (members) */
-    corto_string select = influxdb_Mount_query_builder_from(this, query);
+    corto_string select = influxdb_Mount_query_builder_select(this, query);
     if (select) {
         corto_buffer_appendstr(&buffer, select);
         corto_dealloc(select);
@@ -74,6 +74,7 @@ corto_resultIter influxdb_Mount_onQuery(
 
     /* Publish Query */
     corto_string bufferStr = corto_buffer_str(&buffer);
+    corto_info("Buffer [%s]", bufferStr);
     char *encodedBuffer = httpclient_encode_fields(bufferStr);
     corto_string queryStr = corto_asprintf("q=SELECT%s", encodedBuffer);
     corto_dealloc(encodedBuffer);
