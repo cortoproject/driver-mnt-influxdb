@@ -36,46 +36,6 @@ void influxdb_Mount_onNotify(
     corto_dealloc(url);
 }
 
-
-// corto_string select;
-// corto_string from;
-// corto_string type;
-// corto_string member;
-// corto_string where;
-
-// struct corto_mount_s {
-//     struct corto_subscriber_s super;
-//     corto_mountPolicy policy;
-//     corto_object mount;
-//     corto_attr attr;
-//     corto_mountStats sent;
-//     corto_mountStats received;
-//     corto_mountStats sentDiscarded;
-//     corto_mountSubscriptionList subscriptions;
-//     corto_objectlist events;
-//     corto_objectlist historicalEvents;
-//     corto_time lastPoll;
-//     corto_time lastPost;
-//     corto_time lastSleep;
-//     corto_time dueSleep;
-//     uint32_t lastQueueSize;
-//     bool passThrough;
-//     bool explicitResume;
-//     uintptr_t thread;
-//     bool quit;
-//     corto_string contentTypeOut;
-//     uintptr_t contentTypeOutHandle;
-// };
-
-// struct corto_subscriber_s {
-//     struct corto_observer_s super;
-//     corto_query query;
-//     corto_string contentType;
-//     uintptr_t contentTypeHandle;
-//     uintptr_t idmatch;
-// };
-
-
 corto_resultIter influxdb_Mount_onQuery(
     influxdb_Mount this,
     corto_query *query)
