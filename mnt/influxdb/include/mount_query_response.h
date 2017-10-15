@@ -3,7 +3,7 @@
 
 #include <include/influxdb.h>
 
-void influxdb_Mount_query_response_handler(
+int16_t influxdb_Mount_query_response_handler(
     influxdb_Mount this,
     corto_query *query,
     httpclient_Result *result);

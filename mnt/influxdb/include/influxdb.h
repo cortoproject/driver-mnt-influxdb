@@ -12,6 +12,7 @@
 #include <driver/mnt/influxdb/_project.h>
 #include <corto/c/c.h>
 #include <corto/httpclient/httpclient.h>
+#include <driver/fmt/json/json.h>
 
 /* $header() */
 /* Definitions that are required by package headers (native types) go here. */

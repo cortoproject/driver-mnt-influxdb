@@ -10,6 +10,7 @@
             "curl"
         ],
         "dependencies": [
+            "driver/fmt/json",
             "corto/httpclient"
         ]
     }
