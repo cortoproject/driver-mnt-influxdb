@@ -5,6 +5,18 @@
     corto_seterr(msg); \
     goto error; }
 
+struct influxdb_Mount_response_column {
+    int             pos;
+    corto_string    name;
+};
+
+influxdb_Mount influxdb_response_mount = NULL;
+corto_query *influxdb_response_query = NULL;
+JSON_Array *influxdb_response_columns = NULL;
+corto_string influxdb_response_name = NULL;
+
+corto_string influxdb_Mount_query_response_column_name(int pos);
+
 ///TODO REMOVE NOTES
 // struct corto_result {
 //     corto_string id;
@@ -18,20 +30,98 @@
 //     corto_object owner;
 // };
 
-struct influxdb_Mount_response_column {
-    int             pos;
-    corto_string    name;
-};
+int16_t influxdb_Mount_query_response_build_result(
+    corto_result *result,
+    JSON_Value *value,
+    JSON_Object *jsonResult,
+    corto_string name)
+{
+    if (strcmp(name, "type") == 0) {
+        const char* type = json_value_get_string(value);
+        VERIFY_JSON_PTR(type, "Failed to identify result type. Expected [str].")
+        corto_ptr_setstr(&result->type, (corto_string)type);
+        return 0;
+    }
 
-influxdb_Mount influxdb_response_mount = NULL;
-corto_query *influxdb_response_query = NULL;
-corto_ll influxdb_response_columns = NULL;
-///TODO Ensure Columns are clear
+    JSON_Status ret = json_object_set_value(jsonResult, name, value);
+    if (ret != JSONSuccess) {
+        corto_seterr("Failed to set JSON result value.");
+        goto error;
+    }
 
-void influxdb_Mount_query_response_destruct_columns(void);
+    return 0;
+error:
+    return -1;
+}
+/*
+ * Process Value Array Index from influxdb_Mount_query_response_process_values
+ * ["valueA", "valueB", "ValueC", ...]
+ */
+int16_t influxdb_Mount_query_response_process_value(JSON_Array *values)
+{
+    corto_result *result = corto_ptr_new(corto_result_o);
 
+    JSON_Value *jsonValue = json_value_init_object();
+    VERIFY_JSON_PTR(jsonValue, "Failed to create result JSON Value.")
+    JSON_Object *jsonResult = json_value_get_object(jsonValue);
+    VERIFY_JSON_PTR(jsonResult, "Failed to retrieve JSON result object.")
+
+    size_t i;
+    size_t cnt = json_array_get_count(values);
+    for (i = 0; i < cnt; i++) {
+        corto_string name = influxdb_Mount_query_response_column_name(i);
+        if (!name) {
+            goto error;
+        }
+
+        JSON_Value *targetValue = json_array_get_value(values, i);
+        VERIFY_JSON_PTR(targetValue, "Failed to get response JSON value.")
+
+        if (influxdb_Mount_query_response_build_result(
+            result, targetValue, jsonResult, name) != 0) {
+            goto error;
+        }
+    }
+
+    char *pretty = json_serialize_to_string_pretty(jsonValue);
+    corto_info("Processed:\n%s\n", pretty);
+    json_free_serialized_string(pretty);
+
+    // if (corto_result_fromcontent(r, "text/json", json)) {
+    //     corto_error("filestore: %s", corto_lasterr());
+    //     continue;
+    // }
+    // if (!isDir) {
+    //     r->flags = CORTO_RESULT_LEAF;
+    // }
+
+    corto_mount_return(influxdb_response_mount, result);
+    corto_ptr_free(result, corto_result_o);
+    return 0;
+error:
+    if (jsonValue) {
+        json_value_free(jsonValue);
+        jsonValue = NULL;
+    }
+    corto_ptr_free(result, corto_result_o);
+    return -1;
+}
+
+/*
+ * Process Values Array
+ * "values": []
+ */
 int16_t influxdb_Mount_query_response_process_values(JSON_Array *values)
 {
+    size_t i;
+    size_t cnt = json_array_get_count(values);
+    for (i = 0; i < cnt; i++) {
+        JSON_Array *value = json_array_get_array(values, i);
+        VERIFY_JSON_PTR(value, "Failed to parse response values JSON array.")
+        if (influxdb_Mount_query_response_process_value(value) != 0) {
+            goto error;
+        }
+    }
 
     return 0;
 error:
@@ -43,29 +133,16 @@ error:
  */
 int16_t influxdb_Mount_query_response_process_columns(JSON_Array *columns)
 {
-    influxdb_Mount_query_response_destruct_columns(); // Clear existing columns
-    influxdb_response_columns = corto_ll_new();
-
-    size_t cnt = json_array_get_count(columns);
-    size_t i;
-    for (i = 0; i < cnt; i++) {
-        const char *columnName = json_array_get_string(columns, i);
-        VERIFY_JSON_PTR(columnName, "Failed to parse results [columns].")
-
-        struct influxdb_Mount_response_column *column = malloc(sizeof(struct influxdb_Mount_response_column));
-        column->pos = i;
-        column->name = corto_asprintf("%s", columnName);
-
-        corto_ll_append(influxdb_response_columns, (void*)column);
-    }
+    influxdb_response_columns = columns;
 
     return 0;
-error:
-    return -1;
 }
 
 int16_t influxdb_Mount_query_response_parse_results(JSON_Object *result)
 {
+    const char *name = json_object_get_string(result, "name");
+    VERIFY_JSON_PTR(name,  "Failed to find [name] in response object.")
+    influxdb_response_name = (corto_string)name;
     JSON_Array *columns = json_object_get_array(result, "columns");
     VERIFY_JSON_PTR(columns, "Failed to find [columns] object in response.")
     if (influxdb_Mount_query_response_process_columns(columns) != 0) {
@@ -132,19 +209,16 @@ error:
     return -1;
 }
 
-void influxdb_Mount_query_response_destruct_columns(void) {
+corto_string influxdb_Mount_query_response_column_name(int pos) {
     if (!influxdb_response_columns) {
-        return;
+        return NULL;
     }
 
-    while (corto_ll_size(influxdb_response_columns) > 0) {
-        struct influxdb_Mount_response_column *column =
-            (struct influxdb_Mount_response_column*)corto_ll_takeFirst(influxdb_response_columns);
-        corto_dealloc(column->name);
-        free(column);
-    }
+    corto_string column = (corto_string)json_array_get_string(
+        influxdb_response_columns, pos);
+    VERIFY_JSON_PTR(column, "Failed to get column name from JSON columns.")
 
-    corto_ll_clear(influxdb_response_columns); // Ensure list is empty
-    corto_ll_free(influxdb_response_columns);
-    influxdb_response_columns = NULL;
+    return column;
+error:
+    return NULL;
 }

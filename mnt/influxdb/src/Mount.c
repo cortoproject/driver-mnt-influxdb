@@ -1,5 +1,6 @@
 #include <driver/mnt/influxdb/influxdb.h>
 #include <include/mount_query_builder.h>
+#include <include/mount_query_response.h>
 
 int16_t influxdb_Mount_construct(
     influxdb_Mount this)
