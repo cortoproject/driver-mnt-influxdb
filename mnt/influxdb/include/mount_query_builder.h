@@ -1,9 +1,3 @@
-/* influxdb.h
- *
- * This is the main package file. Include this file in other projects.
- * Only modify inside the header-end and body-end sections.
- */
-
 #ifndef DRIVER_MNT_INFLUXDB_MOUNT_QUERY_BUILDER_H
 #define DRIVER_MNT_INFLUXDB_MOUNT_QUERY_BUILDER_H
 

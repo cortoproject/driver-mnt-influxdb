@@ -79,13 +79,14 @@ corto_resultIter influxdb_Mount_onQuery(
 
     corto_string url = corto_asprintf("%s/query?db=%s", this->host, this->db);
     corto_trace("influxdb: %s: GET %s", url, queryStr);
-    httpclient_Result result = httpclient_get(url, queryStr);
 
-    corto_info("GET Result STATUS [%d] RESPONSE [%s]", result.status, result.response);
+    httpclient_Result result = httpclient_get(url, queryStr);
 
     corto_dealloc(url);
     corto_dealloc(bufferStr);
     corto_dealloc(queryStr);
+
+    influxdb_Mount_query_response_handler(this, query, &result);
 
     return CORTO_ITER_EMPTY; /* Using corto_mount_return */
 }
