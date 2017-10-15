@@ -1,5 +1,5 @@
 #include <driver/mnt/influxdb/influxdb.h>
-#include <include/mount_query.h>
+#include <include/mount_query_builder.h>
 
 int16_t influxdb_Mount_construct(
     influxdb_Mount this)
@@ -51,21 +51,21 @@ corto_resultIter influxdb_Mount_onQuery(
     corto_buffer_appendstr(&buffer, " ");
 
     /* Build SELECT Data Fields (members) */
-    corto_string select = influxdb_Mount_query_from(this, query);
+    corto_string select = influxdb_Mount_query_builder_from(this, query);
     if (select) {
         corto_buffer_appendstr(&buffer, select);
         corto_dealloc(select);
     }
 
     /* FROM */
-    corto_string from = influxdb_Mount_query_from(this, query);
+    corto_string from = influxdb_Mount_query_builder_from(this, query);
     if (from) {
         corto_buffer_appendstr(&buffer, from);
         corto_dealloc(from);
     }
 
     /* WHERE */
-    corto_string where = influxdb_Mount_query_where(this, query);
+    corto_string where = influxdb_Mount_query_builder_where(this, query);
     if (where) {
         corto_buffer_appendstr(&buffer, where);
         corto_dealloc(where);

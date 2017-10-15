@@ -4,20 +4,20 @@
  * Only modify inside the header-end and body-end sections.
  */
 
-#ifndef DRIVER_MNT_INFLUXDB_MOUNT_QUERY_H
-#define DRIVER_MNT_INFLUXDB_MOUNT_QUERY_H
+#ifndef DRIVER_MNT_INFLUXDB_MOUNT_QUERY_BUILDER_H
+#define DRIVER_MNT_INFLUXDB_MOUNT_QUERY_BUILDER_H
 
 #include <include/influxdb.h>
 
-corto_string influxdb_Mount_query_select(
+corto_string influxdb_Mount_query_builder_select(
     influxdb_Mount this,
     corto_query *query);
-corto_string influxdb_Mount_query_from(
+corto_string influxdb_Mount_query_builder_from(
     influxdb_Mount this,
     corto_query *query);
-corto_string influxdb_Mount_query_where(
+corto_string influxdb_Mount_query_builder_where(
     influxdb_Mount this,
     corto_query *query);
 
 
-#endif //DRIVER_MNT_INFLUXDB_MOUNT_QUERY_H
+#endif //DRIVER_MNT_INFLUXDB_MOUNT_QUERY_BUILDER_H

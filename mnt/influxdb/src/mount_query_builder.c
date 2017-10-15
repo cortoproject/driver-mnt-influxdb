@@ -1,6 +1,6 @@
-#include <include/mount_query.h>
+#include <include/mount_query_builder.h>
 
-corto_string influxdb_Mount_query_select(
+corto_string influxdb_Mount_query_builder_select(
     influxdb_Mount this,
     corto_query *query)
 {
@@ -18,7 +18,7 @@ corto_string influxdb_Mount_query_select(
     return corto_buffer_str(&buffer);
 }
 
-corto_string influxdb_Mount_query_from(
+corto_string influxdb_Mount_query_builder_from(
     influxdb_Mount this,
     corto_query *query)
 {
@@ -56,7 +56,7 @@ error:
     return NULL;
 }
 
-corto_string influxdb_Mount_query_where(
+corto_string influxdb_Mount_query_builder_where(
     influxdb_Mount this,
     corto_query *query)
 {
