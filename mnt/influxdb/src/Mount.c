@@ -1,4 +1,5 @@
 #include <driver/mnt/influxdb/influxdb.h>
+#include <include/mount_query.h>
 
 int16_t influxdb_Mount_construct(
     influxdb_Mount this)
@@ -87,122 +88,27 @@ corto_resultIter influxdb_Mount_onQuery(
     corto_info("WHERE [%s]", query->where);
 
     corto_buffer buffer = CORTO_BUFFER_INIT;
-
-    /* TODO !! */
-    // curl -GET 'http://localhost:8086/query?pretty=true'
-    //    --data-urlencode "db=mydb" --data-urlencode "q=SELECT value FROM cpu_load_short WHERE region='us-west'"
-    // corto_id timeLimit = {'\0'};
-    // corto_id depthLimit = {'\0'};
-    // corto_id sampleLimit = {'\0'};
-    /* Create id filter */
+    corto_buffer_appendstr(&buffer, " ");
 
     /* Build SELECT Data Fields (members) */
-    corto_buffer_appendstr(&buffer, " ");
-    if (strcmp(query->select, "*") != 0) {
-        // sprintf(idFilter, "id = '%s'", query->select);
-        //TODO Handle Select targets
-        corto_buffer_appendstr(&buffer, query->select);
-    }
-    else {
-        corto_buffer_appendstr(&buffer, query->select);
+    corto_string select = influxdb_Mount_query_from(this, query);
+    if (select) {
+        corto_buffer_appendstr(&buffer, select);
+        corto_dealloc(select);
     }
 
     /* FROM */
-    corto_string mountFrom = this->super.super.query.from;
-    if (strcmp(query->from, ".") != 0) {
-        corto_string from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s/%s\"",
-            this->db, mountFrom, query->from);
-        if (from) {
-            corto_buffer_appendstr(&buffer, from);
-            corto_dealloc(from);
-        }
-        else {
-            corto_seterr("Failed to create InfluxDB FROM statement.");
-            goto error;
-        }
-    }
-    else {
-        corto_string from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s\"",
-            this->db, mountFrom);
-        if (from) {
-            corto_buffer_appendstr(&buffer, from);
-            corto_dealloc(from);
-        }
-        else {
-            corto_seterr("Failed to create InfluxDB FROM statement.");
-            goto error;
-        }
+    corto_string from = influxdb_Mount_query_from(this, query);
+    if (from) {
+        corto_buffer_appendstr(&buffer, from);
+        corto_dealloc(from);
     }
 
     /* WHERE */
-    corto_string timeLimit = NULL;
-    corto_string sampleLimit = NULL;
-    corto_string depthLimit = NULL;
-    if (query->timeBegin.kind == CORTO_FRAME_NOW) {
-        if (query->timeBegin.kind == CORTO_FRAME_TIME) {
-            corto_time t = corto_frame_getTime(&query->timeBegin);
-            timeLimit = corto_asprintf(" WHERE time > %ds", t.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
-            corto_time t = corto_frame_getTime(&query->timeEnd);
-            timeLimit = corto_asprintf(" WHERE time > (now() - %ds)", t.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_SAMPLE) {
-            if (query->timeEnd.value) {
-                sampleLimit = corto_asprintf(" OFFSET %ld", query->timeEnd.value);
-            }
-
-        } else if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
-            depthLimit = corto_asprintf(" ORDER BY time DESC LIMIT %ld", query->timeEnd.value);
-        }
-    } else if (query->timeBegin.kind == CORTO_FRAME_TIME) {
-        corto_time from = corto_frame_getTime(&query->timeBegin);
-        if (query->timeEnd.kind == CORTO_FRAME_TIME) {
-            corto_time to = corto_frame_getTime(&query->timeEnd);
-            timeLimit = corto_asprintf(" WHERE time < %ds AND time > %ds", from.sec, to.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
-            corto_time to = corto_frame_getTime(&query->timeEnd);
-            timeLimit = corto_asprintf(" WHERE time < %ds AND time > %ds",
-                from.sec,
-                from.sec - to.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_SAMPLE) {
-            timeLimit = corto_asprintf(" WHERE time < %ds", from.sec);
-            if (query->timeEnd.value) {
-                sampleLimit = corto_asprintf(" OFFSET %ld", query->timeEnd.value);
-            }
-        } else if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
-            timeLimit = corto_asprintf(" WHERE time < %ds", from.sec);
-            depthLimit = corto_asprintf(" ORDER BY time DESC LIMIT %ld", query->timeEnd.value);
-        }
-    } else if (query->timeBegin.kind == CORTO_FRAME_SAMPLE) {
-        if (query->timeBegin.value) {
-            sampleLimit = corto_asprintf(" OFFSET %ld", query->timeBegin.value);
-        }
-        if (query->timeEnd.kind == CORTO_FRAME_TIME) {
-            corto_time to = corto_frame_getTime(&query->timeEnd);
-            timeLimit = corto_asprintf(" WHERE time < %ds", to.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
-            /* Unsupported */
-        } else if (query->timeEnd.kind == CORTO_FRAME_SAMPLE) {
-            if (query->timeEnd.value) {
-                depthLimit = corto_asprintf(" LIMIT %ld", query->timeEnd.value - query->timeBegin.value);
-            }
-        } else if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
-            depthLimit = corto_asprintf(" ORDER BY time DESC LIMIT %ld", query->timeEnd.value);
-        }
-    }
-
-    if (timeLimit) {
-        corto_buffer_appendstr(&buffer, timeLimit);
-        corto_dealloc(timeLimit);
-    }
-
-    if (sampleLimit) {
-        corto_buffer_appendstr(&buffer, sampleLimit);
-        corto_dealloc(sampleLimit);
-    }
-
-    if (depthLimit) {
-        corto_buffer_appendstr(&buffer, depthLimit);
-        corto_dealloc(depthLimit);
+    corto_string where = influxdb_Mount_query_where(this, query);
+    if (where) {
+        corto_buffer_appendstr(&buffer, where);
+        corto_dealloc(where);
     }
 
     /* Publish Query */
@@ -222,9 +128,6 @@ corto_resultIter influxdb_Mount_onQuery(
     corto_dealloc(queryStr);
 
     return CORTO_ITER_EMPTY; /* Using corto_mount_return */
-error:
-    corto_error("InfluxDB Query Failed. Corto Error: [%s]", corto_lasterr());
-    return CORTO_ITER_EMPTY;
 }
 
 void influxdb_Mount_onBatchNotify(
