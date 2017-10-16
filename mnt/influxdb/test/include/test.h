@@ -15,7 +15,7 @@
 #include <driver/mnt/influxdb/influxdb.h>
 
 /* $header() */
-/* Definitions that are required by package headers (native types) go here. */
+#include <include/common.h>
 /* $end */
 
 #include <include/_type.h>
