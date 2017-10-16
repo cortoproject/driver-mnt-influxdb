@@ -55,12 +55,60 @@ error:
 }
 
 /*
+* Hitorical Query Response
  * Process Value Array Index from influxdb_Mount_query_response_process_values
  * ["valueA", "valueB", "ValueC", ...]
  */
-int16_t influxdb_Mount_query_response_process_value(
-    JSON_Array *values,
-    bool historical)
+int16_t influxdb_Mount_query_response_process_history_value(JSON_Array *values)
+{
+    corto_result *result = corto_ptr_new(corto_result_o);
+
+    JSON_Value *jsonValue = json_value_init_object();
+    VERIFY_JSON_PTR(jsonValue, "Failed to create result JSON Value.")
+    JSON_Object *jsonResult = json_value_get_object(jsonValue);
+    VERIFY_JSON_PTR(jsonResult, "Failed to retrieve JSON result object.")
+
+    size_t i;
+    size_t cnt = json_array_get_count(values);
+    for (i = 0; i < cnt; i++) {
+        corto_string name = influxdb_Mount_query_response_column_name(i);
+        if (!name) {
+            goto error;
+        }
+
+        JSON_Value *targetValue = json_array_get_value(values, i);
+        VERIFY_JSON_PTR(targetValue, "Failed to get response JSON value.")
+
+        if (influxdb_Mount_query_response_build_result(
+            result, targetValue, jsonResult, name) != 0) {
+            goto error;
+        }
+    }
+
+    corto_ptr_setstr(&result->id, influxdb_response_name);
+    corto_ptr_setstr(&result->parent, ".");
+
+    corto_string jsonStr = json_serialize_to_string(jsonValue);
+    result->value = (corto_word)corto_strdup(jsonStr);
+    json_free_serialized_string(jsonStr);
+
+    corto_mount_return(influxdb_response_mount, result);
+    corto_ptr_free(result, corto_result_o);
+    return 0;
+error:
+    if (jsonValue) {
+        json_value_free(jsonValue);
+        jsonValue = NULL;
+    }
+    corto_ptr_free(result, corto_result_o);
+    return -1;
+}
+
+/*
+ * Process Value Array Index from influxdb_Mount_query_response_process_values
+ * ["valueA", "valueB", "ValueC", ...]
+ */
+int16_t influxdb_Mount_query_response_process_value(JSON_Array *values)
 {
     corto_result *result = corto_ptr_new(corto_result_o);
 
@@ -113,14 +161,26 @@ int16_t influxdb_Mount_query_response_process_values(
     JSON_Array *values,
     bool historical)
 {
-    size_t i;
     size_t cnt = json_array_get_count(values);
-    for (i = 0; i < cnt; i++) {
-        JSON_Array *value = json_array_get_array(values, i);
-        VERIFY_JSON_PTR(value, "Failed to parse response values JSON array.")
-        if (influxdb_Mount_query_response_process_value(
-            value,
-            historical) != 0) {
+    if (cnt <= 0) {
+        corto_seterr("Response does not contain any values.");
+        goto error;
+    }
+
+    if (historical == true) {
+        size_t i;
+        for (i = 0; i < cnt; i++) {
+            JSON_Array *v = json_array_get_array(values, i);
+            VERIFY_JSON_PTR(v, "Failed to parse response values JSON array.")
+            if (influxdb_Mount_query_response_process_history_value(v) != 0) {
+                goto error;
+            }
+        }
+    }
+    else {
+        JSON_Array *v = json_array_get_array(values, 0);
+        VERIFY_JSON_PTR(v, "Failed to parse query response values JSON array.")
+        if (influxdb_Mount_query_response_process_value(v) != 0) {
             goto error;
         }
     }
