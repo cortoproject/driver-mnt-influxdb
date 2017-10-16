@@ -88,7 +88,7 @@ corto_resultIter influxdb_Mount_onQuery(
     corto_dealloc(bufferStr);
     corto_dealloc(queryStr);
 
-    influxdb_Mount_query_response_handler(this, query, &result);
+    influxdb_Mount_query_response_handler(this, query, &result, false);
 
     return CORTO_ITER_EMPTY; /* Using corto_mount_return */
 }

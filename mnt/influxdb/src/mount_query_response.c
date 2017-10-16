@@ -58,7 +58,9 @@ error:
  * Process Value Array Index from influxdb_Mount_query_response_process_values
  * ["valueA", "valueB", "ValueC", ...]
  */
-int16_t influxdb_Mount_query_response_process_value(JSON_Array *values)
+int16_t influxdb_Mount_query_response_process_value(
+    JSON_Array *values,
+    bool historical)
 {
     corto_result *result = corto_ptr_new(corto_result_o);
 
@@ -107,14 +109,18 @@ error:
  * Process Values Array
  * "values": []
  */
-int16_t influxdb_Mount_query_response_process_values(JSON_Array *values)
+int16_t influxdb_Mount_query_response_process_values(
+    JSON_Array *values,
+    bool historical)
 {
     size_t i;
     size_t cnt = json_array_get_count(values);
     for (i = 0; i < cnt; i++) {
         JSON_Array *value = json_array_get_array(values, i);
         VERIFY_JSON_PTR(value, "Failed to parse response values JSON array.")
-        if (influxdb_Mount_query_response_process_value(value) != 0) {
+        if (influxdb_Mount_query_response_process_value(
+            value,
+            historical) != 0) {
             goto error;
         }
     }
@@ -134,7 +140,9 @@ int16_t influxdb_Mount_query_response_process_columns(JSON_Array *columns)
     return 0;
 }
 
-int16_t influxdb_Mount_query_response_parse_series(JSON_Object *series)
+int16_t influxdb_Mount_query_response_parse_series(
+    JSON_Object *series,
+    bool historical)
 {
     const char *name = json_object_get_string(series, "name");
     VERIFY_JSON_PTR(name, "Failed to find [name] in series object.")
@@ -147,7 +155,7 @@ int16_t influxdb_Mount_query_response_parse_series(JSON_Object *series)
 
     JSON_Array *values = json_object_get_array(series, "values");
     VERIFY_JSON_PTR(values, "Failed to find [values] object in series.")
-    if (influxdb_Mount_query_response_process_values(values) != 0) {
+    if (influxdb_Mount_query_response_process_values(values, historical) != 0) {
         goto error;
     }
 
@@ -156,7 +164,9 @@ error:
     return -1;
 }
 
-int16_t influxdb_Mount_query_response_parse_results(JSON_Object *result)
+int16_t influxdb_Mount_query_response_parse_results(
+    JSON_Object *result,
+    bool historical)
 {
     JSON_Array *series = json_object_get_array(result, "series");
     VERIFY_JSON_PTR(series, "Failed to find [series] array in response.")
@@ -166,7 +176,7 @@ int16_t influxdb_Mount_query_response_parse_results(JSON_Object *result)
     for (i = 0; i < cnt; i++) {
         JSON_Object *o = json_array_get_object(series, i);
         VERIFY_JSON_PTR(o, "Failed to resolve series response JSON object.");
-        if (influxdb_Mount_query_response_parse_series(o) != 0) {
+        if (influxdb_Mount_query_response_parse_series(o, historical) != 0) {
             goto error;
         }
     }
@@ -179,7 +189,8 @@ error:
 int16_t influxdb_Mount_query_response_handler(
     influxdb_Mount this,
     corto_query *query,
-    httpclient_Result *result)
+    httpclient_Result *result,
+    bool historical)
 {
     influxdb_response_mount = this;
     influxdb_response_query = query;
@@ -210,7 +221,9 @@ int16_t influxdb_Mount_query_response_handler(
         if (json_value_get_type(resultVal) == JSONObject) {
             JSON_Object *resultsObj = json_value_get_object(resultVal);
             VERIFY_JSON_PTR(resultsObj, "Failed to resolve results object.")
-            if (influxdb_Mount_query_response_parse_results(resultsObj) != 0) {
+            if (influxdb_Mount_query_response_parse_results(
+                resultsObj,
+                historical) != 0) {
                 goto error;
             }
         }
