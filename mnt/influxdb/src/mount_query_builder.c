@@ -6,13 +6,19 @@ corto_string influxdb_Mount_query_builder_select(
 {
     corto_buffer buffer = CORTO_BUFFER_INIT;
 
-    if (strcmp(query->select, "*") != 0) {
-        // sprintf(idFilter, "id = '%s'", query->select);
-        //TODO Handle Select targets
-        corto_buffer_appendstr(&buffer, query->select);
+    ///TODO TEST MEMBER
+    if (query->member != NULL) {
+        if (strcmp(query->member, "*") != 0) {
+            // sprintf(idFilter, "id = '%s'", query->select);
+            //TODO Handle Select targets
+            corto_buffer_appendstr(&buffer, query->member);
+        }
+        else {
+            corto_buffer_appendstr(&buffer, query->member);
+        }
     }
     else {
-        corto_buffer_appendstr(&buffer, query->select);
+        corto_buffer_appendstr(&buffer, "*");
     }
 
     return corto_buffer_str(&buffer);
@@ -38,8 +44,15 @@ corto_string influxdb_Mount_query_builder_from(
         }
     }
     else {
-        corto_string from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s\"",
+        corto_string from = NULL;
+        if (strcmp(query->select, "*") != 0) {
+            from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s/%s\"",
+            this->db, mountFrom, query->select);
+        }
+        else {
+            from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s\"",
             this->db, mountFrom);
+        }
         if (from) {
             corto_buffer_appendstr(&buffer, from);
             corto_dealloc(from);

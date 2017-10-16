@@ -7,6 +7,9 @@
         "version": "1.0.0",
         "language": "c",
         "local": true,
-        "coverage": false
+        "coverage": false,
+        "dependencies": [
+            "driver/mnt/influxdb"
+        ]
     }
 }

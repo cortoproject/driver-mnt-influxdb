@@ -229,7 +229,10 @@ int16_t influxdb_Mount_query_response_parse_results(
     bool historical)
 {
     JSON_Array *series = json_object_get_array(result, "series");
-    VERIFY_JSON_PTR(series, "Failed to find [series] array in response.")
+    if (series == NULL) {
+        corto_trace("No results matching query.");
+        goto empty;
+    }
 
     size_t cnt = json_array_get_count(series);
     size_t i;
@@ -244,6 +247,8 @@ int16_t influxdb_Mount_query_response_parse_results(
     return 0;
 error:
     return -1;
+empty:
+    return 0;
 }
 
 int16_t influxdb_Mount_query_response_handler(

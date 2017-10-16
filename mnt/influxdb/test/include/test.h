@@ -12,6 +12,7 @@
 #include <include/_project.h>
 #include <corto/test/test.h>
 #include <corto/c/c.h>
+#include <driver/mnt/influxdb/influxdb.h>
 
 /* $header() */
 /* Definitions that are required by package headers (native types) go here. */
