@@ -1,0 +1,7 @@
+in package test
+
+test/Suite Query:/
+    void resolve()
+
+test/Suite HistoricalQuery:/
+    void select()
