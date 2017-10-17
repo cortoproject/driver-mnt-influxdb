@@ -51,6 +51,7 @@ int16_t influxdb_Mount_query_response_build_result(
             json_value_deep_copy(value));
         if (ret == JSONSuccess) {
             return 0;
+        }
         else {
             corto_seterr("Failed to set JSON result value.");
             goto error;
