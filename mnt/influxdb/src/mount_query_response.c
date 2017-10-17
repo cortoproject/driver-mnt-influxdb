@@ -47,7 +47,7 @@ int16_t influxdb_Mount_query_response_build_result(
     if (strcmp(name, "time") == 0) {
         JSON_Status ret = json_object_set_value(
             resultJson,
-            "time",
+            "timestamp",
             json_value_deep_copy(value));
         if (ret == JSONSuccess) {
             return 0;
