@@ -43,7 +43,24 @@ int16_t influxdb_Mount_query_response_build_result(
         return 0;
     }
 
-    JSON_Status ret = json_object_set_value(resultJson, name, json_value_deep_copy(value));
+    /* InfluxDB returns timestamps as "Time" */
+    if (strcmp(name, "time") == 0) {
+        JSON_Status ret = json_object_set_value(
+            resultJson,
+            "time",
+            json_value_deep_copy(value));
+        if (ret == JSONSuccess) {
+            return 0;
+        else {
+            corto_seterr("Failed to set JSON result value.");
+            goto error;
+        }
+    }
+
+    JSON_Status ret = json_object_set_value(
+        resultJson,
+        name,
+        json_value_deep_copy(value));
     if (ret != JSONSuccess) {
         corto_seterr("Failed to set JSON result value.");
         goto error;
@@ -129,7 +146,7 @@ int16_t influxdb_Mount_query_response_process_value(JSON_Array *values)
         VERIFY_JSON_PTR(targetValue, "Failed to get response JSON value.")
 
         if (influxdb_Mount_query_response_build_result(
-            result, targetValue, jsonResult, name) != 0) {
+                result, targetValue, jsonResult, name) != 0) {
             goto error;
         }
     }
@@ -139,6 +156,7 @@ int16_t influxdb_Mount_query_response_process_value(JSON_Array *values)
 
     corto_string jsonStr = json_serialize_to_string(jsonValue);
     result->value = (corto_word)corto_strdup(jsonStr);
+    corto_info("Query Result: %s", jsonStr);
     json_free_serialized_string(jsonStr);
 
     corto_mount_return(influxdb_response_mount, result);

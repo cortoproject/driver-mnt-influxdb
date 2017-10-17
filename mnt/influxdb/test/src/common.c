@@ -27,7 +27,7 @@ int CreateManualMount(corto_object mountPoint)
         INFLUX_DB_NAME))    /* database name */
     {
         corto_error("Failed to define weather mount");
-        return -1;
+        goto error;
     }
 
     corto_release(query);
@@ -35,6 +35,8 @@ int CreateManualMount(corto_object mountPoint)
     corto_release(policy);
 
     return 0;
+error:
+    return -1;
 }
 
 int16_t test_write_weather(corto_object weather)

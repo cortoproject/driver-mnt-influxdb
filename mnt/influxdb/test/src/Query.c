@@ -26,7 +26,8 @@ void test_Query_resolve(
     test_Weather houston = (test_Weather)corto_resolve(weather, "houston");
     test_assert(houston != NULL);
     if (houston != NULL) {
-        corto_info("Resolved houston!");
+        corto_info("Resolved houston: Temperature [%d] Humidity [%f]!",
+            houston->temperature, houston->humidity);
         ///TODO Verify data.
         corto_release(houston);
     }
