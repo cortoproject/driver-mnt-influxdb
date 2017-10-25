@@ -1,0 +1,7 @@
+{
+    "id": "config/servers/file",
+    "type": "corto/ui/service",
+    "value": {
+        "port": 9090
+    }
+}

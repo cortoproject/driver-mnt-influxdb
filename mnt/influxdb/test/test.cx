@@ -1,0 +1,13 @@
+in package test
+
+class Weather:/
+    temperature: int16
+    humidity:    float32
+    uv_index:    int8
+    timestamp:   time
+
+test/Suite Query:/
+    void resolve()
+
+test/Suite HistoricalQuery:/
+    void select()
