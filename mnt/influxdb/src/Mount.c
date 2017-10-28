@@ -113,7 +113,11 @@ void influxdb_Mount_onBatchNotify(
 
     corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
     corto_trace("influxdb: %s: POST %s", url, bufferStr);
-    httpclient_post(url, bufferStr);
+    httpclient_Result result = httpclient_post(url, bufferStr);
+    if (result.status != 204) {
+        corto_seterr("InfluxDB Update Failed. Status [%d] Response:\n%s",
+            result.status, result.response);
+    }
 
     corto_dealloc(url);
     corto_dealloc(bufferStr);
@@ -138,8 +142,12 @@ void influxdb_Mount_onHistoryBatchNotify(
     corto_string bufferStr = corto_buffer_str(&buffer);
 
     corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
-    corto_trace("influxdb: %s: POST %s", url, bufferStr);
-    httpclient_post(url, bufferStr);
+    corto_info("influxdb: %s: POST %s", url, bufferStr);
+    httpclient_Result result = httpclient_post(url, bufferStr);
+    if (result.status != 204) {
+        corto_seterr("InfluxDB Update Failed. Status [%d] Response:\n%s",
+            result.status, result.response);
+    }
 
     corto_dealloc(url);
     corto_dealloc(bufferStr);

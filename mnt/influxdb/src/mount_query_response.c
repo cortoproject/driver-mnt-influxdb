@@ -49,13 +49,18 @@ int16_t influxdb_Mount_parse_rfc3339_string_time(const char *timeStr, struct tim
         ts->tv_nsec = fraction * 1000000000;
     }
     else {
-        corto_seterr("RFC3339 String Format Invalid [%s]", timeStr);
         goto error;
     }
 
     return 0;
 error:
     return -1;
+invalid:
+    ///TODO improve format checks
+    // corto_seterr("RFC3339 String Format Invalid [%s]", timeStr);
+    ts->tv_sec = 0;
+    ts->tv_nsec = 0;
+    return 0;
 }
 
 int16_t influxdb_Mount_query_response_build_result_time(
@@ -63,7 +68,7 @@ int16_t influxdb_Mount_query_response_build_result_time(
     JSON_Value *value)
 {
     struct timespec ts;
-
+    JSON_Value *v = NULL;
     if (json_value_get_type(value) == JSONString) {
         const char *timeStr = json_value_get_string(value);
         if (!timeStr) {
@@ -80,7 +85,7 @@ int16_t influxdb_Mount_query_response_build_result_time(
         corto_info("EPOCH [%lld.%.9ld]", (long long)ts.tv_sec, ts.tv_nsec);
     }
 
-    JSON_Value *v = json_value_init_object();
+    v = json_value_init_object();
     VERIFY_JSON_PTR(v, "Failed to create timestamp JSON Value.")
     JSON_Object *o = json_value_get_object(v);
     VERIFY_JSON_PTR(o, "Failed to retrieve timestamp JSON object.")
