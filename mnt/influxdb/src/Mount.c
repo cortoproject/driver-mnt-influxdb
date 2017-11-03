@@ -31,6 +31,10 @@ void influxdb_Mount_onNotify(
     influxdb_Mount this,
     corto_subscriberEvent *event)
 {
+    if (influxdb_Mount_filterEvent(this, event->data.type)) {
+        return;
+    }
+
     corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
     corto_trace("influxdb: %s: POST %s", url, corto_result_getText(&event->data));
     httpclient_post(url, corto_result_getText(&event->data));
@@ -78,18 +82,13 @@ corto_resultIter influxdb_Mount_onQuery(
     char *encodedBuffer = httpclient_encode_fields(bufferStr);
     corto_string queryStr = corto_asprintf("q=SELECT%s", encodedBuffer);
     corto_dealloc(encodedBuffer);
-
     corto_string url = corto_asprintf("%s/query?db=%s", this->host, this->db);
     corto_trace("influxdb: %s: GET %s", url, queryStr);
-
     httpclient_Result result = httpclient_get(url, queryStr);
-
     corto_dealloc(url);
     corto_dealloc(bufferStr);
     corto_dealloc(queryStr);
-
     influxdb_Mount_query_response_handler(this, query, &result, false);
-
     return CORTO_ITER_EMPTY; /* Using corto_mount_return */
 }
 
@@ -107,10 +106,10 @@ void influxdb_Mount_onBatchNotify(
         {
             corto_buffer_appendstr(&buffer, "\n");
         }
+
     }
 
     corto_string bufferStr = corto_buffer_str(&buffer);
-
     corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
     corto_trace("influxdb: %s: POST %s", url, bufferStr);
     httpclient_Result result = httpclient_post(url, bufferStr);
@@ -132,17 +131,20 @@ void influxdb_Mount_onHistoryBatchNotify(
     while (corto_iter_hasNext(&events)) {
         corto_subscriberEvent *e = corto_iter_next(&events);
 
+        if (influxdb_Mount_filterEvent(this, e->data.type)) {
+            continue;
+        }
         corto_buffer_appendstr(&buffer, corto_result_getText(&e->data));
         if (corto_iter_hasNext(&events) != 0)
         {
             corto_buffer_appendstr(&buffer, "\n");
         }
+
     }
 
     corto_string bufferStr = corto_buffer_str(&buffer);
-
     corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
-    corto_info("influxdb: %s: POST %s", url, bufferStr);
+    // corto_info("influxdb: %s: POST %s", url, bufferStr);
     httpclient_Result result = httpclient_post(url, bufferStr);
     if (result.status != 204) {
         corto_seterr("InfluxDB Update Failed. Status [%d] Response:\n%s",
@@ -151,4 +153,16 @@ void influxdb_Mount_onHistoryBatchNotify(
 
     corto_dealloc(url);
     corto_dealloc(bufferStr);
+}
+
+bool influxdb_Mount_filterEvent(
+    influxdb_Mount this,
+    corto_string type)
+{
+    /* Ignore Void Objets */
+    if (strcmp(type, "void") == 0) {
+        return true;
+    }
+
+    return false;
 }

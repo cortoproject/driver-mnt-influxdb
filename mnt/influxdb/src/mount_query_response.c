@@ -80,9 +80,9 @@ int16_t influxdb_Mount_query_response_build_result_time(
             goto error;
         }
 
-        corto_info("Format [%s] Output Sec [%d] Nano [%d]",
-            timeStr, ts.tv_sec, ts.tv_nsec);
-        corto_info("EPOCH [%lld.%.9ld]", (long long)ts.tv_sec, ts.tv_nsec);
+        // corto_info("Format [%s] Output Sec [%d] Nano [%d]",
+            // timeStr, ts.tv_sec, ts.tv_nsec);
+        // corto_info("EPOCH [%lld.%.9ld]", (long long)ts.tv_sec, ts.tv_nsec);
     }
 
     v = json_value_init_object();
@@ -247,7 +247,7 @@ int16_t influxdb_Mount_query_response_process_value(JSON_Array *values)
 
     corto_string jsonStr = json_serialize_to_string(jsonValue);
     result->value = (corto_word)corto_strdup(jsonStr);
-    corto_info("Query Result: %s", jsonStr);
+    // corto_info("Query Result: %s", jsonStr);
     json_free_serialized_string(jsonStr);
 
     corto_mount_return(influxdb_response_mount, result);

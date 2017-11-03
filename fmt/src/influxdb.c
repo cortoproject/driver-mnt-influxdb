@@ -150,8 +150,6 @@ corto_string influxdb_fromValue(corto_value *v) {
     corto_walk_opt walk;
     corto_walk_init(&walk);
 
-    corto_info("Updating [%d]", v->kind);
-
     /* Only serialize scalars */
     walk.access = CORTO_LOCAL|CORTO_PRIVATE;
     walk.accessKind = CORTO_NOT;
