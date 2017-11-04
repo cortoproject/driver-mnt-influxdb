@@ -1,9 +1,5 @@
 #include <driver/mnt/influxdb/query_response_time.h>
 
-#define VERIFY_JSON_PTR(ptr, msg) if (!ptr) { \
-    corto_seterr(msg); \
-    goto error; }
-
 int16_t influxdb_Mount_time_rfc3339(const char* timeStr, struct timespec *ts);
 
 /* InfluxDB returns timestamps as "Time"
@@ -30,9 +26,9 @@ int16_t influxdb_Mount_response_time(JSON_Object *output, JSON_Value *value)
     }
 
     v = json_value_init_object();
-    VERIFY_JSON_PTR(v, "Failed to create timestamp JSON Value.")
+    JSON_PTR_VERIFY(v, "Failed to create timestamp JSON Value.")
     JSON_Object *o = json_value_get_object(v);
-    VERIFY_JSON_PTR(o, "Failed to retrieve timestamp JSON object.")
+    JSON_PTR_VERIFY(o, "Failed to retrieve timestamp JSON object.")
 
     JSON_Status s;
 

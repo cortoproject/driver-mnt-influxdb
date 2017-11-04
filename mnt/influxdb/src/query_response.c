@@ -1,19 +1,14 @@
 #include <driver/mnt/influxdb/query_response.h>
 #include <driver/mnt/influxdb/query_response_time.h>
 
-#define JSON_PTR_VERIFY(ptr, msg) if (!ptr) { corto_seterr(msg); goto error; }
-#define JSON_SAFE_FREE(v)if (v) { json_value_free(v); v = NULL; }
+corto_string influxdb_Mount_response_column_name(JSON_Array *cols, int pos) {
+    const char* column = json_array_get_string(cols, pos);
+    JSON_PTR_VERIFY(column, "Failed to get column name from JSON columns.")
 
-struct influxdb_Mount_response_column {
-    int             pos;
-    corto_string    name;
-};
-
-JSON_Array *influxdb_response_columns = NULL;
-corto_string influxdb_response_name = NULL;
-
-corto_string influxdb_Mount_response_column_name(
-    int pos);
+    return (corto_string)column;
+error:
+    return NULL;
+}
 
 int16_t influxdb_Mount_response_build_result(
     corto_result *result,
@@ -56,9 +51,11 @@ error:
  * Process Value Array Index
  * ["valueA", "valueB", "ValueC", ...]
  */
-int16_t influxdb_Mount_response_history_value(
+int16_t influxdb_Mount_response_historical(
     influxdb_Mount this,
-    JSON_Array *values)
+    JSON_Array *values,
+    JSON_Array *cols,
+    const char* name)
 {
     corto_result *r = corto_ptr_new(corto_result_o);
 
@@ -70,20 +67,20 @@ int16_t influxdb_Mount_response_history_value(
     size_t i;
     size_t cnt = json_array_get_count(values);
     for (i = 0; i < cnt; i++) {
-        corto_string name = influxdb_Mount_response_column_name(i);
-        if (!name) {
+        corto_string col = influxdb_Mount_response_column_name(cols, i);
+        if (!col) {
             goto error;
         }
 
         JSON_Value *target = json_array_get_value(values, i);
         JSON_PTR_VERIFY(target, "Failed to get response JSON value.")
 
-        if (influxdb_Mount_response_build_result(r, target, json, name) != 0) {
+        if (influxdb_Mount_response_build_result(r, target, json, col) != 0) {
             goto error;
         }
     }
 
-    corto_ptr_setstr(&r->id, influxdb_response_name);
+    corto_ptr_setstr(&r->id, (corto_string)name);
     corto_ptr_setstr(&r->parent, ".");
 
     corto_string jsonStr = json_serialize_to_string(jsonValue);
@@ -108,9 +105,11 @@ error:
  * ["valueA", "valueB", "ValueC", ...]
  *
  */
-int16_t influxdb_Mount_response_query_value(
+int16_t influxdb_Mount_response_query(
     influxdb_Mount this,
-    JSON_Array *values)
+    JSON_Array *values,
+    JSON_Array *cols,
+    const char* name)
 {
     corto_result *r = corto_ptr_new(corto_result_o);
 
@@ -122,20 +121,20 @@ int16_t influxdb_Mount_response_query_value(
     size_t i;
     size_t cnt = json_array_get_count(values);
     for (i = 0; i < cnt; i++) {
-        corto_string name = influxdb_Mount_response_column_name(i);
-        if (!name) {
+        corto_string col = influxdb_Mount_response_column_name(cols, i);
+        if (!col) {
             goto error;
         }
 
         JSON_Value *target = json_array_get_value(values, i);
         JSON_PTR_VERIFY(target, "Failed to get response JSON value.")
 
-        if (influxdb_Mount_response_build_result(r, target, json, name) != 0) {
+        if (influxdb_Mount_response_build_result(r, target, json, col) != 0) {
             goto error;
         }
     }
 
-    corto_ptr_setstr(&r->id, influxdb_response_name);
+    corto_ptr_setstr(&r->id, (corto_string)name);
     corto_ptr_setstr(&r->parent, ".");
 
     corto_string str = json_serialize_to_string(jsonValue);
@@ -158,7 +157,9 @@ error:
  */
 int16_t influxdb_Mount_response_process_values(
     influxdb_Mount this,
-    JSON_Array *values)
+    JSON_Array *values,
+    JSON_Array *cols,
+    const char* name)
 {
     size_t cnt = json_array_get_count(values);
     if (cnt <= 0) {
@@ -171,7 +172,7 @@ int16_t influxdb_Mount_response_process_values(
         for (i = 0; i < cnt; i++) {
             JSON_Array *v = json_array_get_array(values, i);
             JSON_PTR_VERIFY(v, "Failed to parse response values JSON array.")
-            if (influxdb_Mount_response_history_value(this, v) != 0) {
+            if (influxdb_Mount_response_historical(this, v, cols, name) != 0) {
                 goto error;
             }
         }
@@ -179,7 +180,7 @@ int16_t influxdb_Mount_response_process_values(
     else {
         JSON_Array *v = json_array_get_array(values, 0);
         JSON_PTR_VERIFY(v, "Failed to parse query response values JSON array.")
-        if (influxdb_Mount_response_query_value(this, v) != 0) {
+        if (influxdb_Mount_response_query(this, v, cols, name) != 0) {
             goto error;
         }
     }
@@ -189,32 +190,18 @@ error:
     return -1;
 }
 
-/*
- * Build a linked list of column names and their position for parsing values
- */
-int16_t influxdb_Mount_response_process_columns(JSON_Array *columns)
-{
-    influxdb_response_columns = columns;
-
-    return 0;
-}
-
 int16_t influxdb_Mount_response_parse_series(
     influxdb_Mount this,
     JSON_Object *series)
 {
     const char *name = json_object_get_string(series, "name");
     JSON_PTR_VERIFY(name, "Failed to find [name] in series object.")
-    influxdb_response_name = (corto_string)name;
     JSON_Array *columns = json_object_get_array(series, "columns");
-    JSON_PTR_VERIFY(columns, "Failed to find [columns] object in series.")
-    if (influxdb_Mount_response_process_columns(columns) != 0) {
-        goto error;
-    }
+    JSON_PTR_VERIFY(columns, "Failed to find [columns] array.")
 
     JSON_Array *values = json_object_get_array(series, "values");
     JSON_PTR_VERIFY(values, "Failed to find [values] object in series.")
-    if (influxdb_Mount_response_process_values(this, values)) {
+    if (influxdb_Mount_response_process_values(this, values, columns, name)) {
         goto error;
     }
 
@@ -290,17 +277,4 @@ error:
     JSON_SAFE_FREE(responseVal)
     corto_error("Failed to process response. Error: [%s]", corto_lasterr());
     return -1;
-}
-
-corto_string influxdb_Mount_response_column_name(int pos) {
-    if (!influxdb_response_columns) {
-        return NULL;
-    }
-
-    const char* column = json_array_get_string(influxdb_response_columns, pos);
-    JSON_PTR_VERIFY(column, "Failed to get column name from JSON columns.")
-
-    return (corto_string)column;
-error:
-    return NULL;
 }
