@@ -1,6 +1,6 @@
 #include <driver/mnt/influxdb/influxdb.h>
-#include <include/mount_query_builder.h>
-#include <include/mount_query_response.h>
+#include <driver/mnt/influxdb/query_builder.h>
+#include <driver/mnt/influxdb/query_response.h>
 
 #define SAFE_DEALLOC(p)if (p){ corto_dealloc(p); p = NULL; }
 
@@ -92,17 +92,17 @@ corto_resultIter influxdb_Mount_onQuery(
 
     /* Publish Query */
     corto_string bufferStr = corto_buffer_str(&buffer);
-    corto_trace("Decoded Fields [%s]", bufferStr);
+    corto_info("Decoded Fields [%s]", bufferStr);
     char *encodedBuffer = httpclient_encode_fields(bufferStr);
     corto_string queryStr = corto_asprintf("q=SELECT%s", encodedBuffer);
     corto_dealloc(encodedBuffer);
     corto_string url = corto_asprintf("%s/query?db=%s", this->host, this->db);
-    corto_trace("influxdb: %s: GET %s", url, queryStr);
+    corto_info("influxdb: %s: GET %s", url, queryStr);
     httpclient_Result result = httpclient_get(url, queryStr);
     corto_dealloc(url);
     corto_dealloc(bufferStr);
     corto_dealloc(queryStr);
-    influxdb_Mount_query_response_handler(this, query, &result, false);
+    influxdb_Mount_response_handler(this, &result);
     return CORTO_ITER_EMPTY; /* Using corto_mount_return */
 }
 

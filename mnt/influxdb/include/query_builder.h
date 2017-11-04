@@ -1,5 +1,5 @@
-#ifndef DRIVER_MNT_INFLUXDB_MOUNT_QUERY_BUILDER_H
-#define DRIVER_MNT_INFLUXDB_MOUNT_QUERY_BUILDER_H
+#ifndef __DRIVER_MNT_INFLUXDB_QUERY_BUILDER_H__
+#define __DRIVER_MNT_INFLUXDB_QUERY_BUILDER_H__
 
 #include <include/influxdb.h>
 
@@ -14,4 +14,4 @@ corto_string influxdb_Mount_query_builder_where(
     corto_query *query);
 
 
-#endif //DRIVER_MNT_INFLUXDB_MOUNT_QUERY_BUILDER_H
+#endif //__DRIVER_MNT_INFLUXDB_QUERY_BUILDER_H__

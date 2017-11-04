@@ -1,4 +1,4 @@
-#include <include/mount_query_builder.h>
+#include <driver/mnt/influxdb/query_builder.h>
 
 corto_string influxdb_Mount_query_builder_select(
     influxdb_Mount this,
@@ -30,10 +30,9 @@ corto_string influxdb_Mount_query_builder_from(
 {
     corto_buffer buffer = CORTO_BUFFER_INIT;
 
-    corto_string mountFrom = this->super.super.query.from;
     if (strcmp(query->from, ".") != 0) {
-        corto_string from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s/%s\"",
-            this->db, mountFrom, query->from);
+        corto_string from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s\"",
+            this->db, query->from);
         if (from) {
             corto_buffer_appendstr(&buffer, from);
             corto_dealloc(from);
@@ -46,13 +45,14 @@ corto_string influxdb_Mount_query_builder_from(
     else {
         corto_string from = NULL;
         if (strcmp(query->select, "*") != 0) {
-            from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s/%s\"",
-            this->db, mountFrom, query->select);
-        }
-        else {
             from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s\"",
-            this->db, mountFrom);
+            this->db, query->select);
         }
+        // else {
+        //     from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s\"",
+        //     this->db, mountFrom);
+        // }
+
         if (from) {
             corto_buffer_appendstr(&buffer, from);
             corto_dealloc(from);
