@@ -19,6 +19,9 @@ int object_writerMain(int argc, char *argv[]) {
 
     corto_voidCreateChild_auto(weather, voidTest);
     corto_voidCreateChild_auto(weather, voidTest2);
+    object_writer_Weather weatherChild = object_writer_WeatherCreateChild(
+        voidTest2, "test3chidl", 95, 78.8, 6, &now
+    );
     corto_float32 t = 0;
     while (1) {
         t += 0.01;

@@ -53,11 +53,17 @@ corto_int16 influxdb_serScalar(
     }
 
     if (info->kind == CORTO_MEMBER) {
-        corto_buffer_append(&data->b, "%s=",
-            influxdb_safeString(corto_idof(info->is.member.t)));
+        corto_string v = influxdb_safeString(corto_idof(info->is.member.t));
+        if (v) {
+            corto_buffer_append(&data->b, "%s=", v);
+            corto_dealloc(v);
+        }
     } else {
-        corto_buffer_append(&data->b, "%s=",
-            influxdb_safeString(corto_idof(o)));
+        corto_string v = influxdb_safeString(corto_idof(o));
+        if (v) {
+            corto_buffer_append(&data->b, "%s=", v);
+            corto_dealloc(v);
+        }
     }
 
     switch(corto_primitive(t)->kind) {
@@ -111,14 +117,6 @@ int16_t influxdb_serObject(
 {
     influxdbSer_t *data = userData;
     corto_object o = corto_value_objectof(info);
-
-    /* Map measurement & tag to parent and id
-     * Format: measurement(path),type
-     */
-    corto_buffer_append(&data->b, "%s/%s,type=%s ",
-        influxdb_safeString(corto_fullpath(NULL, corto_parentof(o))),
-        influxdb_safeString(corto_idof(o)),
-        influxdb_safeString(corto_fullpath(NULL, corto_typeof(o))));
 
     if (corto_walk_value(walk, info, userData)) {
         goto error;

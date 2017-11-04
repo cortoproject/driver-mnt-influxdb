@@ -2,6 +2,12 @@
 #include <include/mount_query_builder.h>
 #include <include/mount_query_response.h>
 
+#define SAFE_DEALLOC(p)if (p){ corto_dealloc(p); p = NULL; }
+
+bool influxdb_Mount_filterEvent(corto_string type);
+corto_string influxdb_Mount_notifySample(corto_subscriberEvent *event);
+corto_string influxdb_safeString(corto_string source);
+
 int16_t influxdb_Mount_construct(
     influxdb_Mount this)
 {
@@ -31,14 +37,22 @@ void influxdb_Mount_onNotify(
     influxdb_Mount this,
     corto_subscriberEvent *event)
 {
-    if (influxdb_Mount_filterEvent(this, event->data.type)) {
+    if (influxdb_Mount_filterEvent(event->data.type)) {
+        return;
+    }
+
+    corto_string sample = influxdb_Mount_notifySample(event);
+    if (sample == NULL) {
+        corto_seterr("Failed to build udpate sample. Error: %s",
+            corto_lasterr());
         return;
     }
 
     corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
-    corto_trace("influxdb: %s: POST %s", url, corto_result_getText(&event->data));
-    httpclient_post(url, corto_result_getText(&event->data));
+    corto_info("influxdb: %s: POST %s", url, sample);
+    httpclient_post(url, sample);
     corto_dealloc(url);
+    corto_dealloc(sample);
 }
 
 corto_resultIter influxdb_Mount_onQuery(
@@ -99,14 +113,25 @@ void influxdb_Mount_onBatchNotify(
     corto_buffer buffer = CORTO_BUFFER_INIT;
 
     while (corto_iter_hasNext(&events)) {
-        corto_subscriberEvent *e = corto_iter_next(&events);
+        corto_subscriberEvent *event = corto_iter_next(&events);
 
-        corto_buffer_appendstr(&buffer, corto_result_getText(&e->data));
-        if (corto_iter_hasNext(&events) != 0)
-        {
-            corto_buffer_appendstr(&buffer, "\n");
+        if (influxdb_Mount_filterEvent(event->data.type)) {
+            continue;
         }
 
+        corto_string sample = influxdb_Mount_notifySample(event);
+        if (sample == NULL) {
+            corto_seterr("Failed to build udpate sample. Error: %s",
+                corto_lasterr());
+            continue;
+        }
+
+        corto_buffer_appendstr(&buffer, sample);
+        corto_dealloc(sample);
+
+        if (corto_iter_hasNext(&events) != 0) {
+            corto_buffer_appendstr(&buffer, "\n");
+        }
     }
 
     corto_string bufferStr = corto_buffer_str(&buffer);
@@ -129,14 +154,23 @@ void influxdb_Mount_onHistoryBatchNotify(
     corto_buffer buffer = CORTO_BUFFER_INIT;
 
     while (corto_iter_hasNext(&events)) {
-        corto_subscriberEvent *e = corto_iter_next(&events);
+        corto_subscriberEvent *event = corto_iter_next(&events);
 
-        if (influxdb_Mount_filterEvent(this, e->data.type)) {
+        if (influxdb_Mount_filterEvent(event->data.type)) {
             continue;
         }
-        corto_buffer_appendstr(&buffer, corto_result_getText(&e->data));
-        if (corto_iter_hasNext(&events) != 0)
-        {
+
+        corto_string sample = influxdb_Mount_notifySample(event);
+        if (sample == NULL) {
+            corto_seterr("Failed to build udpate sample. Error: %s",
+                corto_lasterr());
+            continue;
+        }
+
+        corto_buffer_appendstr(&buffer, sample);
+        corto_dealloc(sample);
+
+        if (corto_iter_hasNext(&events) != 0) {
             corto_buffer_appendstr(&buffer, "\n");
         }
 
@@ -144,7 +178,7 @@ void influxdb_Mount_onHistoryBatchNotify(
 
     corto_string bufferStr = corto_buffer_str(&buffer);
     corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
-    // corto_info("influxdb: %s: POST %s", url, bufferStr);
+    corto_info("influxdb: %s: POST %s", url, bufferStr);
     httpclient_Result result = httpclient_post(url, bufferStr);
     if (result.status != 204) {
         corto_seterr("InfluxDB Update Failed. Status [%d] Response:\n%s",
@@ -155,9 +189,7 @@ void influxdb_Mount_onHistoryBatchNotify(
     corto_dealloc(bufferStr);
 }
 
-bool influxdb_Mount_filterEvent(
-    influxdb_Mount this,
-    corto_string type)
+bool influxdb_Mount_filterEvent(corto_string type)
 {
     /* Ignore Void Objets */
     if (strcmp(type, "void") == 0) {
@@ -165,4 +197,35 @@ bool influxdb_Mount_filterEvent(
     }
 
     return false;
+}
+
+corto_string influxdb_Mount_notifySample(corto_subscriberEvent *event)
+{
+    corto_string sample = NULL;
+    /* Map measurement & tag to parent and id
+     * Format: measurement(path),type dataFields
+     */
+    corto_string parent = NULL;
+    corto_string id = influxdb_safeString(event->data.id);
+    corto_string t = event->data.type;
+    corto_string r = corto_result_getText(&event->data);
+
+    if (strcmp(".", event->data.parent) == 0) {
+        sample = corto_asprintf("%s,type=%s %s", id, t, r);
+    }
+    else {
+        parent = influxdb_safeString(event->data.parent);
+        sample = corto_asprintf("%s/%s,type=%s %s", parent, id, t, r);
+        SAFE_DEALLOC(parent)
+    }
+
+    SAFE_DEALLOC(id)
+
+    return sample;
+}
+
+corto_string influxdb_safeString(corto_string source)
+{
+    /* Measurements and Tags names cannot contain non-espaced spaces */
+    return corto_replace(source, " ", "\\ ");
 }
