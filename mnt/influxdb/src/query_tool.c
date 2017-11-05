@@ -1,4 +1,5 @@
 #include <driver/mnt/influxdb/query_response_parser.h>
+#include <driver/mnt/influxdb/query_builder.h>
 #include <driver/mnt/influxdb/query_tool.h>
 
 int16_t influxdb_Mount_parse_measurements(
@@ -17,7 +18,6 @@ int16_t influxdb_Mount_parse_measurements(
             JSON_PTR_VERIFY(v, "Failed to get response JSON value.")
             const char* measurement = json_value_get_string(v);
             corto_ll_append(results, (void*)corto_strdup(measurement));
-            corto_info("Value: %s", measurement);
         }
     }
 
@@ -27,12 +27,15 @@ error:
     return -1;
 }
 
+//regex https://regex101.com/r/5N6jwz/1
 int16_t influxdb_Mount_show_measurements(
     influxdb_Mount this,
     corto_string pattern,
     corto_ll results)
 {
-    corto_string request = corto_asprintf("SHOW MEASUREMENTS");
+    corto_string regex = influxdb_Mount_query_builder_regex(pattern);
+    corto_string request = corto_asprintf("SHOW MEASUREMENTS WITH MEASUREMENT =~/%s/",
+        regex);
     char *encodedBuffer = httpclient_encode_fields(request);
     corto_string url = corto_asprintf("%s/query?db=%s", this->host, this->db);
     corto_string queryStr = corto_asprintf("q=%s", encodedBuffer);
@@ -41,18 +44,18 @@ int16_t influxdb_Mount_show_measurements(
     corto_dealloc(url);
     corto_dealloc(encodedBuffer);
     corto_dealloc(request);
+    corto_dealloc(regex);
 
     JSON_Value *response = NULL;
-
-    corto_info("GET Result STATUS [%d] RESPONSE [%s]", r.status, r.response);
 
     if (r.status != 200) {
         corto_error("Show Measurements Query failed. Status [%d] Response [%s]",
             r.status, r.response);
+        corto_seterr("Response Status = 400");
         goto error;
     }
 
-    struct influxdb_Query_Result result;
+    struct influxdb_Query_Result result = {NULL, NULL, NULL, 0};
     response = json_parse_string(r.response);
     JSON_PTR_VERIFY(response, "Parson failed to parse Influxdb JSON response")
 

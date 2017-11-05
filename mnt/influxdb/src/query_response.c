@@ -155,7 +155,12 @@ int16_t influxdb_Mount_response_process_values(
         size_t i;
         for (i = 0; i < result->valueCount; i++) {
             JSON_Array *v = json_array_get_array(result->values, i);
-            JSON_PTR_VERIFY(v, "Failed to parse response values JSON array.")
+            if (v == NULL) {
+                corto_string error =
+                corto_asprintf("Resolved invalid JSON value at index [%zu]", i);
+                JSON_PTR_VERIFY(v, error)
+                corto_dealloc(error);
+            }
             if (influxdb_Mount_response_historical(this, v, result) != 0) {
                 goto error;
             }
@@ -163,7 +168,7 @@ int16_t influxdb_Mount_response_process_values(
     }
     else {
         JSON_Array *v = json_array_get_array(result->values, 0);
-        JSON_PTR_VERIFY(v, "Failed to parse query response values JSON array.")
+        JSON_PTR_VERIFY(v, "Resolved invalid JSON value.")
         if (influxdb_Mount_response_query(this, v, result) != 0) {
             goto error;
         }
@@ -186,15 +191,15 @@ int16_t influxdb_Mount_query_response_handler(
         goto error;
     }
 
-    struct influxdb_Query_Result result;
+    struct influxdb_Query_Result result = {NULL, NULL, NULL, 0};
     JSON_Value *response = json_parse_string(r->response);
     JSON_PTR_VERIFY(response, "Parson failed to parse Influxdb JSON response")
 
-    if (influxdb_Mount_response_parse(response, &result)) {
+    if (influxdb_Mount_response_parse(response, &result) != 0) {
         goto error;
     }
 
-    if (influxdb_Mount_response_process_values(this, &result)) {
+    if (influxdb_Mount_response_process_values(this, &result) != 0) {
         goto error;
     }
 

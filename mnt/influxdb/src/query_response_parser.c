@@ -56,7 +56,7 @@ int16_t influxdb_Mount_response_parse_results(
 error:
     return -1;
 empty:
-    return 0;
+    return 1;
 }
 
 int16_t influxdb_Mount_response_parse(
@@ -77,14 +77,37 @@ int16_t influxdb_Mount_response_parse(
         if (json_value_get_type(resultVal) == JSONObject) {
             JSON_Object *obj = json_value_get_object(resultVal);
             JSON_PTR_VERIFY(obj, "Failed to resolve results object.")
-            if (influxdb_Mount_response_parse_results(obj, result)) {
+            int ret = influxdb_Mount_response_parse_results(obj, result);
+            if (ret == -1) {
                 goto error;
+            }
+            else if (ret == 1) {
+                goto empty;
             }
         }
     }
 
+    if (!result->name) {
+        corto_seterr("Failed to parse [name] in response.");
+        goto error;
+    }
+    if (!result->values) {
+        corto_seterr("Failed to parse [values] in response.");
+        goto error;
+    }
+    if (!result->columns) {
+        corto_seterr("Failed to parse [columns] in response.");
+        goto error;
+    }
+    if (result->valueCount <= 0) {
+        corto_seterr("Empty value count.");
+        goto error;
+    }
+
+    return 0;
+empty:
     return 0;
 error:
-    corto_error("Failed to parse response. Error: [%s]", corto_lasterr());
+    corto_seterr("Failed to parse response. Error: [%s]", corto_lasterr());
     return -1;
 }

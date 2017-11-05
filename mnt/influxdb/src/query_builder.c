@@ -156,3 +156,21 @@ corto_string influxdb_Mount_query_builder_where(
 
     return corto_buffer_str(&buffer);
 }
+
+corto_string influxdb_Mount_query_builder_regex(
+    corto_string pattern)
+{
+    corto_string regex = NULL;
+    if (strcmp(pattern, ".") == 0) {
+        // ROOT
+        regex = corto_asprintf("^[^\\/]+$");
+    }
+    else {
+        /* escape pattern (path) for regex */
+        corto_string escaped = corto_replace(pattern, "/", "\\/");
+        regex = corto_asprintf("^(%s\\/)[^\\/]+$", escaped);
+        corto_dealloc(escaped);
+    }
+
+    return regex;
+}

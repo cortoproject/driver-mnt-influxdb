@@ -2,6 +2,28 @@
 
 #include <include/test.h>
 
+/* $header() */
+bool influxdb_Mount_TestMeasurementQuery(corto_string pattern, int results)
+{
+    corto_ll list = corto_ll_new();
+
+    if (influxdb_Mount_show_measurements(influxdbMount, pattern, list)) {
+        corto_error("Measurement query failed. Error: %s", corto_lasterr());
+        return false;
+    }
+
+    int size = corto_ll_size(list);
+    if (size != results) {
+        corto_error("Results [%d] != List Size [%d]", results, size);
+        return false;
+    }
+
+    corto_ll_free(list);
+
+    return true;
+}
+/* $end */
+
 void test_Tool_measurements(
     test_Tool this)
 {
@@ -12,14 +34,19 @@ void test_Tool_measurements(
         goto error;
     }
 
-    corto_ll list = corto_ll_new();
+    if (test_write_weather(weather))
+    {
+        goto error;
+    }
 
-    test_assert(influxdb_Mount_show_measurements(influxdbMount, "kentucky", list) == 0);
+    test_assert(influxdb_Mount_TestMeasurementQuery("kentucky", 2) == true);
+    test_assert(influxdb_Mount_TestMeasurementQuery("kentucky/lexington", 2) == true);
+    test_assert(influxdb_Mount_TestMeasurementQuery(".", 2) == true);
+    test_assert(influxdb_Mount_TestMeasurementQuery("Ohio", 0) == true);
+    test_assert(influxdb_Mount_TestMeasurementQuery("San Diego", 0) == true);
 
-    corto_ll_free(list);
     corto_release(weather);
     corto_release(influxdbMount);
-
 
     return;
 error:

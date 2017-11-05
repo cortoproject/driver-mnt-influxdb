@@ -14,7 +14,9 @@ struct influxdb_Query_Result {
 };
 
 DRIVER_MNT_INFLUXDB_EXPORT
-corto_string influxdb_Mount_response_column_name(JSON_Array *cols, int pos);
+corto_string influxdb_Mount_response_column_name(
+    JSON_Array *cols,
+    int pos);
 
 DRIVER_MNT_INFLUXDB_EXPORT
 int16_t influxdb_Mount_response_parse(
