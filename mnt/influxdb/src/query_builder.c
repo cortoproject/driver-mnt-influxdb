@@ -1,5 +1,7 @@
 #include <driver/mnt/influxdb/query_builder.h>
 
+#define SAFE_DEALLOC(s) if (s) { corto_dealloc(s); s = NULL; }
+
 corto_string influxdb_Mount_query_builder_select(
     influxdb_Mount this,
     corto_query *query)
@@ -29,42 +31,49 @@ corto_string influxdb_Mount_query_builder_from(
     corto_query *query)
 {
     corto_buffer buffer = CORTO_BUFFER_INIT;
+    corto_string path = NULL;
+    corto_string from = NULL;
+    corto_string db = corto_asprintf("\"%s\"", this->db);
+    corto_string rp = "\"autogen\"";
+    corto_string all = ".*/";
 
-    if (strcmp(query->from, ".") != 0) {
-        corto_string from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s\"",
-            this->db, query->from);
-        if (from) {
-            corto_buffer_appendstr(&buffer, from);
-            corto_dealloc(from);
-        }
-        else {
-            corto_seterr("Failed to create InfluxDB FROM statement.");
-            goto error;
-        }
+    if (strcmp(query->from, ".") == 0) {
+        path = corto_asprintf("");
     }
     else {
-        corto_string from = NULL;
-        if (strcmp(query->select, "*") != 0) {
-            from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s\"",
-            this->db, query->select);
-        }
-        // else {
-        //     from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s\"",
-        //     this->db, mountFrom);
-        // }
-
-        if (from) {
-            corto_buffer_appendstr(&buffer, from);
-            corto_dealloc(from);
-        }
-        else {
-            corto_seterr("Failed to create InfluxDB FROM statement.");
-            goto error;
-        }
+        path = corto_asprintf("%s/", query->from);
     }
+
+    if (path == NULL) {
+        corto_seterr("Failed to specify from path for [%s].", query->from);
+        goto error;
+    }
+
+    if (strcmp(query->select, "*") == 0) {
+        from = corto_asprintf(" FROM %s.%s.\"%s%s\"", db, rp, path, all);
+    }
+    else {
+        from = corto_asprintf(" FROM %s.%s.\"%s%s\"",
+            db, rp, path, query->select);
+    }
+
+    if (from) {
+        corto_buffer_appendstr(&buffer, from);
+    }
+    else {
+        corto_seterr("Error generating FROM expression for [%s]", query->from);
+        goto error;
+    }
+
+    SAFE_DEALLOC(path)
+    SAFE_DEALLOC(from)
+    SAFE_DEALLOC(db)
 
     return corto_buffer_str(&buffer);
 error:
+    SAFE_DEALLOC(path)
+    SAFE_DEALLOC(from)
+    SAFE_DEALLOC(db)
     corto_buffer_reset(&buffer);
     return NULL;
 }

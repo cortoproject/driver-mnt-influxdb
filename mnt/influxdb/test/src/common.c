@@ -49,6 +49,11 @@ int16_t test_write_weather(corto_object weather)
     test_Weather houston = test_WeatherCreateChild(
         weather, "houston", 95, 78.8, 6, &now
     );
+    corto_voidCreateChild_auto(weather, kentucky);
+
+    test_Weather lexington = test_WeatherCreateChild(
+        kentucky, "lexington", 95, 78.8, 6, &now
+    );
     corto_float32 t = 0;
     t += 0.01;
     // corto_float32Update(t1, cos(temperature) * 100);

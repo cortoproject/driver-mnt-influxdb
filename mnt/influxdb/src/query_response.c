@@ -1,14 +1,6 @@
 #include <driver/mnt/influxdb/query_response.h>
+#include <driver/mnt/influxdb/query_response_parser.h>
 #include <driver/mnt/influxdb/query_response_time.h>
-
-corto_string influxdb_Mount_response_column_name(JSON_Array *cols, int pos) {
-    const char* column = json_array_get_string(cols, pos);
-    JSON_PTR_VERIFY(column, "Failed to get column name from JSON columns.")
-
-    return (corto_string)column;
-error:
-    return NULL;
-}
 
 int16_t influxdb_Mount_response_build_result(
     corto_result *result,
@@ -54,10 +46,10 @@ error:
 int16_t influxdb_Mount_response_historical(
     influxdb_Mount this,
     JSON_Array *values,
-    JSON_Array *cols,
-    const char* name)
+    struct influxdb_Query_Result *result)
 {
     corto_result *r = corto_ptr_new(corto_result_o);
+    JSON_Array *cols = result->columns;
 
     JSON_Value *jsonValue = json_value_init_object();
     JSON_PTR_VERIFY(jsonValue, "Failed to create result JSON Value.")
@@ -80,7 +72,7 @@ int16_t influxdb_Mount_response_historical(
         }
     }
 
-    corto_ptr_setstr(&r->id, (corto_string)name);
+    corto_ptr_setstr(&r->id, (corto_string)result->name);
     corto_ptr_setstr(&r->parent, ".");
 
     corto_string jsonStr = json_serialize_to_string(jsonValue);
@@ -108,10 +100,10 @@ error:
 int16_t influxdb_Mount_response_query(
     influxdb_Mount this,
     JSON_Array *values,
-    JSON_Array *cols,
-    const char* name)
+    struct influxdb_Query_Result *result)
 {
     corto_result *r = corto_ptr_new(corto_result_o);
+    JSON_Array *cols = result->columns;
 
     JSON_Value *jsonValue = json_value_init_object();
     JSON_PTR_VERIFY(jsonValue, "Failed to create result JSON Value.")
@@ -134,7 +126,7 @@ int16_t influxdb_Mount_response_query(
         }
     }
 
-    corto_ptr_setstr(&r->id, (corto_string)name);
+    corto_ptr_setstr(&r->id, (corto_string)result->name);
     corto_ptr_setstr(&r->parent, ".");
 
     corto_string str = json_serialize_to_string(jsonValue);
@@ -157,30 +149,22 @@ error:
  */
 int16_t influxdb_Mount_response_process_values(
     influxdb_Mount this,
-    JSON_Array *values,
-    JSON_Array *cols,
-    const char* name)
+    struct influxdb_Query_Result *result)
 {
-    size_t cnt = json_array_get_count(values);
-    if (cnt <= 0) {
-        corto_seterr("Response does not contain any values.");
-        goto error;
-    }
-
     if (this->super.policy.mask == CORTO_MOUNT_HISTORY_QUERY) {
         size_t i;
-        for (i = 0; i < cnt; i++) {
-            JSON_Array *v = json_array_get_array(values, i);
+        for (i = 0; i < result->valueCount; i++) {
+            JSON_Array *v = json_array_get_array(result->values, i);
             JSON_PTR_VERIFY(v, "Failed to parse response values JSON array.")
-            if (influxdb_Mount_response_historical(this, v, cols, name) != 0) {
+            if (influxdb_Mount_response_historical(this, v, result) != 0) {
                 goto error;
             }
         }
     }
     else {
-        JSON_Array *v = json_array_get_array(values, 0);
+        JSON_Array *v = json_array_get_array(result->values, 0);
         JSON_PTR_VERIFY(v, "Failed to parse query response values JSON array.")
-        if (influxdb_Mount_response_query(this, v, cols, name) != 0) {
+        if (influxdb_Mount_response_query(this, v, result) != 0) {
             goto error;
         }
     }
@@ -190,54 +174,7 @@ error:
     return -1;
 }
 
-int16_t influxdb_Mount_response_parse_series(
-    influxdb_Mount this,
-    JSON_Object *series)
-{
-    const char *name = json_object_get_string(series, "name");
-    JSON_PTR_VERIFY(name, "Failed to find [name] in series object.")
-    JSON_Array *columns = json_object_get_array(series, "columns");
-    JSON_PTR_VERIFY(columns, "Failed to find [columns] array.")
-
-    JSON_Array *values = json_object_get_array(series, "values");
-    JSON_PTR_VERIFY(values, "Failed to find [values] object in series.")
-    if (influxdb_Mount_response_process_values(this, values, columns, name)) {
-        goto error;
-    }
-
-    return 0;
-error:
-    return -1;
-}
-
-int16_t influxdb_Mount_response_parse_results(
-    influxdb_Mount this,
-    JSON_Object *result)
-{
-    JSON_Array *series = json_object_get_array(result, "series");
-    if (series == NULL) {
-        corto_trace("No results matching query.");
-        goto empty;
-    }
-
-    size_t cnt = json_array_get_count(series);
-    size_t i;
-    for (i = 0; i < cnt; i++) {
-        JSON_Object *o = json_array_get_object(series, i);
-        JSON_PTR_VERIFY(o, "Failed to resolve series response JSON object.");
-        if (influxdb_Mount_response_parse_series(this, o) != 0) {
-            goto error;
-        }
-    }
-
-    return 0;
-error:
-    return -1;
-empty:
-    return 0;
-}
-
-int16_t influxdb_Mount_response_handler(
+int16_t influxdb_Mount_query_response_handler(
     influxdb_Mount this,
     httpclient_Result *r)
 {
@@ -249,32 +186,23 @@ int16_t influxdb_Mount_response_handler(
         goto error;
     }
 
-    JSON_Value *responseVal = json_parse_string(r->response);
-    JSON_PTR_VERIFY(responseVal, "Failed to parse Influxdb JSON response")
+    struct influxdb_Query_Result result;
+    JSON_Value *response = json_parse_string(r->response);
+    JSON_PTR_VERIFY(response, "Parson failed to parse Influxdb JSON response")
 
-    JSON_Object *response = json_value_get_object(responseVal);
-    JSON_PTR_VERIFY(response, "JSON Response is not an object")
-
-    JSON_Array *results = json_object_get_array(response, "results");
-    JSON_PTR_VERIFY(results, "Could not parse JSON Response for [results]")
-
-    size_t cnt = json_array_get_count(results);
-    size_t i;
-    for (i = 0; i < cnt; i++) {
-        JSON_Value *resultVal = json_array_get_value(results, i);
-        JSON_PTR_VERIFY(resultVal, "Failed to parse results json array.")
-        if (json_value_get_type(resultVal) == JSONObject) {
-            JSON_Object *obj = json_value_get_object(resultVal);
-            JSON_PTR_VERIFY(obj, "Failed to resolve results object.")
-            if (influxdb_Mount_response_parse_results(this, obj)) {
-                goto error;
-            }
-        }
+    if (influxdb_Mount_response_parse(response, &result)) {
+        goto error;
     }
+
+    if (influxdb_Mount_response_process_values(this, &result)) {
+        goto error;
+    }
+
+    JSON_SAFE_FREE(response)
 
     return 0;
 error:
-    JSON_SAFE_FREE(responseVal)
+    JSON_SAFE_FREE(response)
     corto_error("Failed to process response. Error: [%s]", corto_lasterr());
     return -1;
 }

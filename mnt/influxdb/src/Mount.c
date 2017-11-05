@@ -82,6 +82,11 @@ corto_resultIter influxdb_Mount_onQuery(
         corto_buffer_appendstr(&buffer, from);
         corto_dealloc(from);
     }
+    else {
+        corto_error("Failed to create InfluxDB FROM statement. Error %s",
+            corto_lasterr());
+    }
+
 
     /* WHERE */
     corto_string where = influxdb_Mount_query_builder_where(this, query);
@@ -102,7 +107,7 @@ corto_resultIter influxdb_Mount_onQuery(
     corto_dealloc(url);
     corto_dealloc(bufferStr);
     corto_dealloc(queryStr);
-    influxdb_Mount_response_handler(this, &result);
+    influxdb_Mount_query_response_handler(this, &result);
     return CORTO_ITER_EMPTY; /* Using corto_mount_return */
 }
 

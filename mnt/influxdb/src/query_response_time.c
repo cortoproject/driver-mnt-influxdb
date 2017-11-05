@@ -1,4 +1,5 @@
 #include <driver/mnt/influxdb/query_response_time.h>
+#include <driver/mnt/influxdb/query_response_parser.h>
 
 int16_t influxdb_Mount_time_rfc3339(const char* timeStr, struct timespec *ts);
 

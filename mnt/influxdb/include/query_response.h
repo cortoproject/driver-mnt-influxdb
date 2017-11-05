@@ -3,7 +3,8 @@
 
 #include <driver/mnt/influxdb/influxdb.h>
 
-int16_t influxdb_Mount_response_handler(
+DRIVER_MNT_INFLUXDB_EXPORT
+int16_t influxdb_Mount_query_response_handler(
     influxdb_Mount this,
     httpclient_Result *r);
 

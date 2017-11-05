@@ -2,6 +2,7 @@
 #define TEST_COMMON_H
 
 #include <include/test.h>
+#include <driver/mnt/influxdb/query_tool.h>
 
 extern corto_id INFLUX_MOUNT_ID;
 extern corto_string INFLUX_DB_HOST;

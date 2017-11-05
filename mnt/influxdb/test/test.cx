@@ -8,6 +8,12 @@ class Weather:/
 
 test/Suite Query:/
     void resolve()
+    void select()
+    void selectAll()
+    void selectChild()
 
 test/Suite HistoricalQuery:/
     void select()
+
+test/Suite Tool:/
+    void measurements()

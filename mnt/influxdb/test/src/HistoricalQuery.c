@@ -5,7 +5,7 @@
 void test_HistoricalQuery_select(
     test_HistoricalQuery this)
 {
-    corto_verbosity(CORTO_TRACE);
+    // corto_verbosity(CORTO_TRACE);
 
     corto_object weather = corto_voidCreateChild(root_o, "weather");
 
@@ -21,7 +21,7 @@ void test_HistoricalQuery_select(
     corto_iter it;
 
     /* Select children from object (o). */
-    corto_int16 ret = corto_select("houston").from("/weather").iter(&it);
+    corto_int16 ret = corto_select("*").from("/weather").iter(&it);
 
     if (ret != 0) {
         goto error;
@@ -33,7 +33,7 @@ void test_HistoricalQuery_select(
         cnt++;
         corto_result *result = (corto_result*) corto_iter_next(&it);
 
-        corto_info("ID [%s] Name [%s]", result->id, result->name);
+        corto_info("SELECT: ID [%s] Name [%s]", result->id, result->name);
     }
 
     test_assert(cnt > 0);
