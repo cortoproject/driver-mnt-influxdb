@@ -46,7 +46,7 @@ error:
 int16_t influxdb_Mount_response_historical(
     influxdb_Mount this,
     JSON_Array *values,
-    struct influxdb_Query_Result *result)
+    struct influxdb_Query_SeriesResult *result)
 {
     corto_result *r = corto_ptr_new(corto_result_o);
     JSON_Array *cols = result->columns;
@@ -100,7 +100,7 @@ error:
 int16_t influxdb_Mount_response_query(
     influxdb_Mount this,
     JSON_Array *values,
-    struct influxdb_Query_Result *result)
+    struct influxdb_Query_SeriesResult *result)
 {
     corto_result *r = corto_ptr_new(corto_result_o);
     JSON_Array *cols = result->columns;
@@ -149,17 +149,17 @@ error:
  */
 int16_t influxdb_Mount_response_process_values(
     influxdb_Mount this,
-    struct influxdb_Query_Result *result)
+    struct influxdb_Query_SeriesResult *result,
+    void* data)
 {
+    corto_info("\n\n\nMASK [%d]", this->super.policy.mask);
     if (this->super.policy.mask == CORTO_MOUNT_HISTORY_QUERY) {
         size_t i;
         for (i = 0; i < result->valueCount; i++) {
             JSON_Array *v = json_array_get_array(result->values, i);
-            if (v == NULL) {
-                corto_string error =
-                corto_asprintf("Resolved invalid JSON value at index [%zu]", i);
-                JSON_PTR_VERIFY(v, error)
-                corto_dealloc(error);
+            if (!v) {
+                corto_seterr("Resolved invalid JSON value at index [%s]", i);
+                goto error;
             }
             if (influxdb_Mount_response_historical(this, v, result) != 0) {
                 goto error;
@@ -191,15 +191,16 @@ int16_t influxdb_Mount_query_response_handler(
         goto error;
     }
 
-    struct influxdb_Query_Result result = {NULL, NULL, NULL, 0};
+    struct influxdb_Query_Result result = {
+        &influxdb_Mount_response_process_values,
+        this,
+        NULL
+    };
+
     JSON_Value *response = json_parse_string(r->response);
     JSON_PTR_VERIFY(response, "Parson failed to parse Influxdb JSON response")
 
     if (influxdb_Mount_response_parse(response, &result) != 0) {
-        goto error;
-    }
-
-    if (influxdb_Mount_response_process_values(this, &result) != 0) {
         goto error;
     }
 

@@ -9,22 +9,61 @@ error:
     return NULL;
 }
 
+int16_t influxdb_Mount_response_parse_verify_result(
+    struct influxdb_Query_SeriesResult *series)
+{
+    if (!series->name) {
+        corto_seterr("Failed to parse [name] in response.");
+        goto error;
+    }
+    if (!series->values) {
+        corto_seterr("Failed to parse [values] in response.");
+        goto error;
+    }
+    if (!series->columns) {
+        corto_seterr("Failed to parse [columns] in response.");
+        goto error;
+    }
+    if (series->valueCount <= 0) {
+        corto_seterr("Empty value count.");
+        goto error;
+    }
+
+    return 0;
+error:
+    return -1;
+}
+
 int16_t influxdb_Mount_response_parse_series(
     JSON_Object *series,
     struct influxdb_Query_Result *result)
 {
-    result->name = json_object_get_string(series, "name");
-    JSON_PTR_VERIFY(result->name, "Failed to find [name] in series object.")
-    result->columns = json_object_get_array(series, "columns");
-    JSON_PTR_VERIFY(result->columns, "Failed to find [columns] array.")
 
-    result->values = json_object_get_array(series, "values");
-    JSON_PTR_VERIFY(result->values, "Failed to find [values] object in series.")
+    const char* name = json_object_get_string(series, "name");
+    JSON_PTR_VERIFY(name, "Failed to find [name] in series object.")
+    JSON_Array *cols = json_object_get_array(series, "columns");
+    JSON_PTR_VERIFY(cols, "Failed to find [columns] array.")
 
-    result->valueCount = json_array_get_count(result->values);
-    if (result->valueCount <= 0) {
+    JSON_Array *values = json_object_get_array(series, "values");
+    JSON_PTR_VERIFY(values, "Failed to find [values] object in series.")
+
+    size_t cnt = json_array_get_count(values);
+    if (cnt <= 0) {
         corto_seterr("Response does not contain any values.");
         goto error;
+    }
+
+    if (cnt > 0) {
+        struct influxdb_Query_SeriesResult series = {name, cols, values, cnt};
+        if (influxdb_Mount_response_parse_verify_result(&series)) {
+            goto error;
+        }
+        if (result->callback(result->ctx, &series, result->data) != 0) {
+            goto error;
+        }
+    }
+    else {
+        corto_info("No matching samples in [%s] database", result->ctx->db);
     }
 
     return 0;
@@ -42,9 +81,9 @@ int16_t influxdb_Mount_response_parse_results(
         goto empty;
     }
 
-    size_t cnt = json_array_get_count(series);
+    size_t seriesCount = json_array_get_count(series);
     size_t i;
-    for (i = 0; i < cnt; i++) {
+    for (i = 0; i < seriesCount; i++) {
         JSON_Object *o = json_array_get_object(series, i);
         JSON_PTR_VERIFY(o, "Failed to resolve series response JSON object.");
         if (influxdb_Mount_response_parse_series(o, result) != 0) {
@@ -85,23 +124,6 @@ int16_t influxdb_Mount_response_parse(
                 goto empty;
             }
         }
-    }
-
-    if (!result->name) {
-        corto_seterr("Failed to parse [name] in response.");
-        goto error;
-    }
-    if (!result->values) {
-        corto_seterr("Failed to parse [values] in response.");
-        goto error;
-    }
-    if (!result->columns) {
-        corto_seterr("Failed to parse [columns] in response.");
-        goto error;
-    }
-    if (result->valueCount <= 0) {
-        corto_seterr("Empty value count.");
-        goto error;
     }
 
     return 0;

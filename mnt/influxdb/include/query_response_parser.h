@@ -6,11 +6,22 @@
 #define JSON_PTR_VERIFY(ptr, msg) if (!ptr) { corto_seterr(msg); goto error; }
 #define JSON_SAFE_FREE(v)if (v) { json_value_free(v); v = NULL; }
 
-struct influxdb_Query_Result {
+struct influxdb_Query_SeriesResult {
     const char* name;
-    JSON_Array *values;
-    JSON_Array *columns;
-    size_t valueCount;
+    JSON_Array  *values;
+    JSON_Array  *columns;
+    size_t      valueCount;
+};
+
+typedef int16_t (*influxdb_ResultCallback)(
+    influxdb_Mount ctx,
+    struct influxdb_Query_SeriesResult *result,
+    void *data);
+
+struct influxdb_Query_Result {
+    influxdb_ResultCallback callback;
+    influxdb_Mount          ctx;
+    void                    *data;
 };
 
 DRIVER_MNT_INFLUXDB_EXPORT

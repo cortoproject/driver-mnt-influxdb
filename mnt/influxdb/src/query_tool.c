@@ -3,9 +3,11 @@
 #include <driver/mnt/influxdb/query_tool.h>
 
 int16_t influxdb_Mount_parse_measurements(
-    struct influxdb_Query_Result *result,
-    corto_ll results)
+    influxdb_Mount this,
+    struct influxdb_Query_SeriesResult *result,
+    void* data)
 {
+    corto_ll resultList = (corto_ll)data;
     size_t i;
     for (i = 0; i < result->valueCount; i++) {
         JSON_Array *values = json_array_get_array(result->values, i);
@@ -17,7 +19,7 @@ int16_t influxdb_Mount_parse_measurements(
             JSON_Value *v = json_array_get_value(values, j);
             JSON_PTR_VERIFY(v, "Failed to get response JSON value.")
             const char* measurement = json_value_get_string(v);
-            corto_ll_append(results, (void*)corto_strdup(measurement));
+            corto_ll_append(resultList, (void*)corto_strdup(measurement));
         }
     }
 
@@ -55,15 +57,15 @@ int16_t influxdb_Mount_show_measurements(
         goto error;
     }
 
-    struct influxdb_Query_Result result = {NULL, NULL, NULL, 0};
+    struct influxdb_Query_Result result = {
+        &influxdb_Mount_parse_measurements,
+        this,
+        results
+    };
+
     response = json_parse_string(r.response);
     JSON_PTR_VERIFY(response, "Parson failed to parse Influxdb JSON response")
-
     if (influxdb_Mount_response_parse(response, &result)) {
-        goto error;
-    }
-
-    if (influxdb_Mount_parse_measurements(&result, results)) {
         goto error;
     }
 

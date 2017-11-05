@@ -31,30 +31,26 @@ corto_string influxdb_Mount_query_builder_from(
     corto_query *query)
 {
     corto_buffer buffer = CORTO_BUFFER_INIT;
-    corto_string path = NULL;
     corto_string from = NULL;
     corto_string db = corto_asprintf("\"%s\"", this->db);
     corto_string rp = "\"autogen\"";
-    corto_string all = ".*/";
-
-    if (strcmp(query->from, ".") == 0) {
-        path = corto_asprintf("");
-    }
-    else {
-        path = corto_asprintf("%s/", query->from);
-    }
-
-    if (path == NULL) {
-        corto_seterr("Failed to specify from path for [%s].", query->from);
-        goto error;
-    }
 
     if (strcmp(query->select, "*") == 0) {
-        from = corto_asprintf(" FROM %s.%s.\"%s%s\"", db, rp, path, all);
+        corto_string pattern = influxdb_Mount_query_builder_regex(query->from);
+        from = corto_asprintf(" FROM %s.%s./%s/", db, rp, pattern);
+        SAFE_DEALLOC(pattern)
     }
     else {
-        from = corto_asprintf(" FROM %s.%s.\"%s%s\"",
-            db, rp, path, query->select);
+        if (strcmp(query->from, ".") == 0) {
+            from = corto_asprintf(" FROM %s.%s.\"%s\"",
+                db, rp, query->select);
+        }
+        else {
+            from = corto_asprintf(" FROM %s.%s.\"%s/%s\"",
+                db, rp, query->from, query->select);
+        }
+
+
     }
 
     if (from) {
@@ -65,13 +61,11 @@ corto_string influxdb_Mount_query_builder_from(
         goto error;
     }
 
-    SAFE_DEALLOC(path)
     SAFE_DEALLOC(from)
     SAFE_DEALLOC(db)
 
     return corto_buffer_str(&buffer);
 error:
-    SAFE_DEALLOC(path)
     SAFE_DEALLOC(from)
     SAFE_DEALLOC(db)
     corto_buffer_reset(&buffer);
@@ -162,7 +156,6 @@ corto_string influxdb_Mount_query_builder_regex(
 {
     corto_string regex = NULL;
     if (strcmp(pattern, ".") == 0) {
-        // ROOT
         regex = corto_asprintf("^[^\\/]+$");
     }
     else {
