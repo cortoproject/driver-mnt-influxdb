@@ -155,7 +155,7 @@ void test_Query_selectChild(
     }
 
     corto_info("Received [%d] nodes", cnt);
-    test_assert(cnt == 1);
+    test_assert(cnt == 2);
     corto_release(weather);
     corto_release(influxdbMount);
     return;

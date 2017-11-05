@@ -38,32 +38,28 @@ int16_t influxdb_Mount_response_parse_series(
     JSON_Object *series,
     struct influxdb_Query_Result *result)
 {
+    struct influxdb_Query_SeriesResult r = {NULL, NULL, NULL, 0};
+    r.name = json_object_get_string(series, "name");
+    JSON_PTR_VERIFY(r.name, "Failed to find [name] in series object.")
+    r.columns = json_object_get_array(series, "columns");
+    JSON_PTR_VERIFY(r.columns, "Failed to find [columns] array.")
 
-    const char* name = json_object_get_string(series, "name");
-    JSON_PTR_VERIFY(name, "Failed to find [name] in series object.")
-    JSON_Array *cols = json_object_get_array(series, "columns");
-    JSON_PTR_VERIFY(cols, "Failed to find [columns] array.")
+    r.values = json_object_get_array(series, "values");
+    JSON_PTR_VERIFY(r.values, "Failed to find [values] object in series.")
 
-    JSON_Array *values = json_object_get_array(series, "values");
-    JSON_PTR_VERIFY(values, "Failed to find [values] object in series.")
-
-    size_t cnt = json_array_get_count(values);
-    if (cnt <= 0) {
-        corto_seterr("Response does not contain any values.");
+    r.valueCount = json_array_get_count(r.values);
+    if (r.valueCount <= 0) {
+        corto_info("No matching samples in [%s] database", result->ctx->db);
         goto error;
     }
 
-    if (cnt > 0) {
-        struct influxdb_Query_SeriesResult series = {name, cols, values, cnt};
-        if (influxdb_Mount_response_parse_verify_result(&series)) {
-            goto error;
-        }
-        if (result->callback(result->ctx, &series, result->data) != 0) {
-            goto error;
-        }
+    if (influxdb_Mount_response_parse_verify_result(&r) != 0) {
+        goto error;
     }
-    else {
-        corto_info("No matching samples in [%s] database", result->ctx->db);
+    if (result->callback(result->ctx, &r, result->data) != 0) {
+        corto_seterr("Failed to process series response. Callback failed "\
+            "with error [%s]", corto_lasterr());
+        goto error;
     }
 
     return 0;
