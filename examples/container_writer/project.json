@@ -1,0 +1,16 @@
+{
+    "id": "driver/mnt/influxdb/container_writer",
+    "type": "application",
+    "value": {
+        "description": "Example writer for InfluxDB using container",
+        "author": "Alex Hendren",
+        "version": "1.3.0",
+        "language": "c4cpp",
+        "lib" : [
+            "m"
+        ],
+        "dependencies": [
+            "driver/mnt/influxdb"
+        ]
+    }
+}

@@ -1,4 +1,6 @@
-#include <include/mount_query_builder.h>
+#include <driver/mnt/influxdb/query_builder.h>
+
+#define SAFE_DEALLOC(s) if (s) { corto_dealloc(s); s = NULL; }
 
 corto_string influxdb_Mount_query_builder_select(
     influxdb_Mount this,
@@ -29,42 +31,43 @@ corto_string influxdb_Mount_query_builder_from(
     corto_query *query)
 {
     corto_buffer buffer = CORTO_BUFFER_INIT;
+    corto_string from = NULL;
+    corto_string db = corto_asprintf("\"%s\"", this->db);
+    corto_string rp = "\"autogen\"";
 
-    corto_string mountFrom = this->super.super.query.from;
-    if (strcmp(query->from, ".") != 0) {
-        corto_string from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s/%s\"",
-            this->db, mountFrom, query->from);
-        if (from) {
-            corto_buffer_appendstr(&buffer, from);
-            corto_dealloc(from);
-        }
-        else {
-            corto_seterr("Failed to create InfluxDB FROM statement.");
-            goto error;
-        }
+    if (strcmp(query->select, "*") == 0) {
+        corto_string pattern = influxdb_Mount_query_builder_regex(query->from);
+        from = corto_asprintf(" FROM %s.%s./%s/", db, rp, pattern);
+        SAFE_DEALLOC(pattern)
     }
     else {
-        corto_string from = NULL;
-        if (strcmp(query->select, "*") != 0) {
-            from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s/%s\"",
-            this->db, mountFrom, query->select);
+        if (strcmp(query->from, ".") == 0) {
+            from = corto_asprintf(" FROM %s.%s.\"%s\"",
+                db, rp, query->select);
         }
         else {
-            from = corto_asprintf(" FROM \"%s\".\"autogen\".\"%s\"",
-            this->db, mountFrom);
+            from = corto_asprintf(" FROM %s.%s.\"%s/%s\"",
+                db, rp, query->from, query->select);
         }
-        if (from) {
-            corto_buffer_appendstr(&buffer, from);
-            corto_dealloc(from);
-        }
-        else {
-            corto_seterr("Failed to create InfluxDB FROM statement.");
-            goto error;
-        }
+
+
     }
+
+    if (from) {
+        corto_buffer_appendstr(&buffer, from);
+    }
+    else {
+        corto_seterr("Error generating FROM expression for [%s]", query->from);
+        goto error;
+    }
+
+    SAFE_DEALLOC(from)
+    SAFE_DEALLOC(db)
 
     return corto_buffer_str(&buffer);
 error:
+    SAFE_DEALLOC(from)
+    SAFE_DEALLOC(db)
     corto_buffer_reset(&buffer);
     return NULL;
 }
@@ -146,4 +149,21 @@ corto_string influxdb_Mount_query_builder_where(
     }
 
     return corto_buffer_str(&buffer);
+}
+
+corto_string influxdb_Mount_query_builder_regex(
+    corto_string pattern)
+{
+    corto_string regex = NULL;
+    if (strcmp(pattern, ".") == 0) {
+        regex = corto_asprintf("^[^\\/]+$");
+    }
+    else {
+        /* escape pattern (path) for regex */
+        corto_string escaped = corto_replace(pattern, "/", "\\/");
+        regex = corto_asprintf("^(%s\\/)[^\\/]+$", escaped);
+        corto_dealloc(escaped);
+    }
+
+    return regex;
 }

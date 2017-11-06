@@ -39,56 +39,32 @@ error:
     return -1;
 }
 
-int16_t test_write_weather(corto_object weather)
+int16_t CreateWeatherObjects(corto_object weather)
 {
     corto_time now;
     corto_timeGet(&now);
-    test_Weather sanDiego = test_WeatherCreateChild(
-        weather, "San Diego", 82, 45.5, 8, &now
-    );
-    test_Weather houston = test_WeatherCreateChild(
-        weather, "houston", 95, 78.8, 6, &now
-    );
-    corto_float32 t = 0;
-    t += 0.01;
-    // corto_float32Update(t1, cos(temperature) * 100);
-    // corto_float32Update(t2, sin(temperature) * 100);
-    corto_timeGet(&now);
-    if (corto_updateBegin(houston) != 0)
-    {
-        corto_error("corto_updateBegin for houston.");
-        return -1;
-    }
 
-    houston->temperature += cos(houston->temperature + 0.1);
-    houston->humidity += sin(houston->humidity + 0.1);
-    houston->timestamp = now;
+    test_State kentucky = test_StateCreateChild(weather, "kentucky", "south", true);
+    test_State texas =  test_StateCreateChild(weather, "texas", "southwest", false);
+    test_State california =  test_StateCreateChild(weather, "california", "west", false);
+    test_City houston = test_CityCreateChild(texas, "houston", 1837, 8538000);
+    test_City lexington = test_CityCreateChild(kentucky, "lexington", 1782, 318449);
+    test_City nicholasville = test_CityCreateChild(kentucky, "nicholasville", 1798, 30006);
+    test_City sanDiego = test_CityCreateChild(california, "San Diego", 1769, 1407000);
 
-    if (corto_updateEnd(houston) != 0)
-    {
-        corto_error("corto_updateBegin for houston.");
-        return -1;
-    }
-
-    if (corto_updateBegin(sanDiego) != 0)
-    {
-        corto_error("corto_updateBegin for houston.");
-        return -1;
-    }
-
-    sanDiego->temperature += cos(sanDiego->temperature + 0.1);
-    sanDiego->humidity += sin(sanDiego->humidity + 0.1);
-    sanDiego->timestamp = now;
-
-    if (corto_updateEnd(sanDiego) != 0)
-    {
-        corto_error("corto_updateBegin for houston.");
-        return -1;
-    }
+    test_WeatherCreateChild(houston, "weather", 82, 45.5, 8, &now);
+    test_WeatherCreateChild(lexington, "weather", 95, 78.8, 6, &now);
+    test_WeatherCreateChild(nicholasville, "weather", 45, 47, 4, &now);
+    test_WeatherCreateChild(sanDiego, "weather", 50, 48, 6, &now);
 
     sleep(2);
 
+    corto_release(kentucky);
+    corto_release(texas);
+    corto_release(california);
     corto_release(houston);
+    corto_release(lexington);
+    corto_release(nicholasville);
     corto_release(sanDiego);
 
     return 0;

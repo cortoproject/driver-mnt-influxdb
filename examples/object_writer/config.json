@@ -10,7 +10,7 @@
         },
         "policy": {
             "sampleRate": 1.0,
-            "mask": "MOUNT_HISTORY_BATCH_NOTIFY"
+            "mask": "MOUNT_NOTIFY"
         }
     }
 }

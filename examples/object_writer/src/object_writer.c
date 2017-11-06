@@ -1,7 +1,7 @@
 #include "include/object_writer.h"
 
 int object_writerMain(int argc, char *argv[]) {
-    corto_verbosity(CORTO_TRACE);
+    // corto_verbosity(CORTO_TRACE);
 
     if (corto_load("config.json", 0, NULL)) {
         goto error;
@@ -15,6 +15,12 @@ int object_writerMain(int argc, char *argv[]) {
     );
     object_writer_Weather houston = object_writer_WeatherCreateChild(
         weather, "Houston", 95, 78.8, 6, &now
+    );
+
+    corto_voidCreateChild_auto(weather, voidTest);
+    corto_voidCreateChild_auto(weather, voidTest2);
+    object_writer_WeatherCreateChild(
+        voidTest2, "test3chidl", 95, 78.8, 6, &now
     );
     corto_float32 t = 0;
     while (1) {
