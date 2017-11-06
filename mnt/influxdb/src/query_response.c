@@ -7,6 +7,10 @@ const corto_string INFLUX_TIMESTAMP_MEMBER = "timestamp";
 int16_t influxdb_Mount_response_result_type(
     struct influxdb_Query_SeriesResult *result);
 
+int16_t influxdb_Mount_response_result_id(
+    struct influxdb_Query_SeriesResult *result,
+    corto_result *r);
+
 int16_t influxdb_Mount_response_build_result(
     corto_result *result,
     JSON_Value *value,
@@ -83,8 +87,7 @@ int16_t influxdb_Mount_response_historical(
         }
     }
 
-    corto_ptr_setstr(&r->id, (corto_string)result->name);
-    corto_ptr_setstr(&r->parent, ".");
+    influxdb_Mount_response_result_id(result, r);
 
     corto_string jsonStr = json_serialize_to_string(jsonValue);
     r->value = (corto_word)corto_strdup(jsonStr);
@@ -139,8 +142,7 @@ int16_t influxdb_Mount_response_query(
         }
     }
 
-    corto_ptr_setstr(&r->id, (corto_string)result->name);
-    corto_ptr_setstr(&r->parent, ".");
+    influxdb_Mount_response_result_id(result, r);
 
     corto_string str = json_serialize_to_string(jsonValue);
     r->value = (corto_word)corto_strdup(str);
@@ -270,5 +272,60 @@ int16_t influxdb_Mount_response_result_type(
 error:
     corto_seterr("Failed to resolve series type. Error: %s",
         corto_lasterr());
+    return -1;
+}
+
+int16_t influxdb_Mount_response_parse_id(
+    const char* resultId,
+    corto_string *parent,
+    corto_string *id)
+{
+    size_t length = strlen(resultId);
+    int pos;
+    for (pos = length-1; pos > 0; pos--) {
+        if (resultId[pos] == '/') {
+            break;
+        }
+    }
+
+    if (pos == 0) {
+        *parent = corto_strdup(".");
+        *id = corto_strdup((corto_string)resultId);
+        return 0;
+    }
+
+    int idLength = length-pos;
+    char newParent[pos];
+    char newId[idLength+1];
+    int i;
+
+    for (i = 0; i < pos; i++) {
+        newParent[i] = resultId[i];
+    }
+    newParent[pos] = '\0';
+
+    for (i = 0; i < idLength; i++) {
+        newId[i] = resultId[i + pos + 1];
+    }
+    newId[length-pos] = '\0';
+
+    *parent = corto_strdup(newParent);
+    *id = corto_strdup(newId);
+
+    return 0;
+}
+
+int16_t influxdb_Mount_response_result_id(
+    struct influxdb_Query_SeriesResult *result,
+    corto_result *r)
+{
+    if (influxdb_Mount_response_parse_id(result->name, &r->parent, &r->id)) {
+        goto error;
+    }
+
+    corto_info("Set Parent = [%s] ID = [%s]", r->parent, r->id);
+
+    return 0;
+error:
     return -1;
 }

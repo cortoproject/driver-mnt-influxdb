@@ -40,8 +40,8 @@ void test_Tool_measurements(
     }
 
     test_assert(influxdb_Mount_TestMeasurementQuery("kentucky", 2) == true);
-    test_assert(influxdb_Mount_TestMeasurementQuery("kentucky/lexington", 2) == true);
-    test_assert(influxdb_Mount_TestMeasurementQuery(".", 2) == true);
+    test_assert(influxdb_Mount_TestMeasurementQuery("kentucky/lexington", 1) == true);
+    test_assert(influxdb_Mount_TestMeasurementQuery(".", 3) == true);
     test_assert(influxdb_Mount_TestMeasurementQuery("Ohio", 0) == true);
     test_assert(influxdb_Mount_TestMeasurementQuery("San Diego", 0) == true);
 

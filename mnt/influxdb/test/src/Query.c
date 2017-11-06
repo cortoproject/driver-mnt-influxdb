@@ -19,8 +19,9 @@ void test_Query_resolve(
         goto error;
     }
 
-    corto_trace("Test corto_resolve(/weather/houston)");
-    test_Weather houston = (test_Weather)corto_resolve(weather, "houston");
+    corto_trace("Test corto_resolve(/weather/texas/houston/houston)");
+    test_Weather houston = (test_Weather)corto_resolve(
+        weather, "texas/houston/weather");
     test_assert(houston != NULL);
     if (houston != NULL) {
         corto_info("Resolved houston: Temperature [%d] Humidity [%f]!",
@@ -44,10 +45,13 @@ void test_Query_select(
 
     test_assert(CreateManualMount(weather) == 0);
 
+    test_assert(CreateWeatherObjects(weather) == 0);
+
     corto_iter it;
     test_assert(corto_select("*").from("/weather").iter(&it) == 0);
 
-    int cnt = 0;
+    int weatherCnt = 0;
+    int stateCnt = 0;
     while(corto_iter_hasNext(&it) == 1)
     {
         corto_result *r = (corto_result*)corto_iter_next(&it);
@@ -55,14 +59,19 @@ void test_Query_select(
         corto_object node = corto_lookup(root_o, nodePath);
         test_assert(node != NULL);
         if (corto_instanceof((corto_type)test_Weather_o, node) == true){
-            cnt++;
+            weatherCnt++;
+        }
+        if (corto_instanceof((corto_type)test_State_o, node) == true){
+            stateCnt++;
         }
         corto_dealloc(nodePath);
         corto_release(node);
     }
 
-    corto_info("Received [%d] nodes", cnt);
-    test_assert(cnt == 2);
+    corto_info("Received [%d] weather nodes", weatherCnt);
+    corto_info("Received [%d] state nodes", stateCnt);
+    test_assert(stateCnt == 3);
+    test_assert(weatherCnt == 0);
     corto_release(weather);
     corto_release(influxdbMount);
     return;
@@ -84,7 +93,8 @@ void test_Query_selectAll(
     while(corto_iter_hasNext(&it) == 1)
     {
         corto_result *r = (corto_result*)corto_iter_next(&it);
-        corto_string nodePath = corto_asprintf("/weather/%s", r->id);
+        corto_info("\n\nReceived: Parent[%s] ID[%s]\n\n", r->parent, r->id);
+        corto_string nodePath = corto_asprintf("/weather/%s/%s", r->parent, r->id);
         corto_object node = corto_lookup(root_o, nodePath);
         test_assert(node != NULL);
         if (corto_instanceof((corto_type)test_Weather_o, node) == true){
@@ -112,16 +122,16 @@ void test_Query_selectChild(
     test_assert(CreateWeatherObjects(weather) == 0);
 
     corto_iter it;
-    test_assert(corto_select("*").from("/weather/kentucky").iter(&it) == 0);
+test_assert(corto_select("*").from("/weather/kentucky").iter(&it) == 0);
 
-    int cnt = 0;
-    while(corto_iter_hasNext(&it) == 1)
-    {
-        corto_result *r = (corto_result*)corto_iter_next(&it);
-        corto_string nodePath = corto_asprintf("/weather/%s", r->id);
-        corto_object node = corto_lookup(root_o, nodePath);
+int cnt = 0;
+while(corto_iter_hasNext(&it) == 1)
+{
+    corto_result *r = (corto_result*)corto_iter_next(&it);
+    corto_string nodePath = corto_asprintf("/weather/kentucky/%s", r->id);
+    corto_object node = corto_lookup(root_o, nodePath);
         test_assert(node != NULL);
-        if (corto_instanceof((corto_type)test_Weather_o, node) == true){
+        if (corto_instanceof((corto_type)test_City_o, node) == true){
             cnt++;
         }
         corto_dealloc(nodePath);
