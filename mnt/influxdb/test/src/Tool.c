@@ -34,7 +34,7 @@ void test_Tool_measurements(
         goto error;
     }
 
-    if (test_write_weather(weather))
+    if (CreateWeatherObjects(weather))
     {
         goto error;
     }

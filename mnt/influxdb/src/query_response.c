@@ -2,27 +2,36 @@
 #include <driver/mnt/influxdb/query_response_parser.h>
 #include <driver/mnt/influxdb/query_response_time.h>
 
+const corto_string INFLUX_TIMESTAMP_MEMBER = "timestamp";
+
+int16_t influxdb_Mount_response_result_type(
+    struct influxdb_Query_SeriesResult *result);
+
 int16_t influxdb_Mount_response_build_result(
     corto_result *result,
     JSON_Value *value,
     JSON_Object *resultJson,
-    corto_string name)
+    corto_string name,
+    bool convertTime)
 {
     if (strcmp(name, "type") == 0) {
-        const char* type = json_value_get_string(value);
-        JSON_PTR_VERIFY(type, "Failed to identify result type. Expected [str].")
-        corto_ptr_setstr(&result->type, (corto_string)type);
         return 0;
     }
 
     /* InfluxDB returns timestamps as "Time" --- Short circuit after update. */
     if (strcmp(name, "time") == 0) {
-        if (influxdb_Mount_response_time(resultJson, value) == 0) {
-            return 0;
+        if (convertTime == true) {
+            if (influxdb_Mount_response_time(resultJson, value) == 0) {
+                return 0;
+            }
+            else {
+                corto_error("Failed to build timestamp JSON object.");
+                goto error;
+            }
         }
         else {
-            corto_error("Failed to build timestamp JSON object.");
-            goto error;
+            /* Ignore time value if type does not have timestamp member */
+            return 0;
         }
     }
 
@@ -49,6 +58,7 @@ int16_t influxdb_Mount_response_historical(
     struct influxdb_Query_SeriesResult *result)
 {
     corto_result *r = corto_ptr_new(corto_result_o);
+    corto_ptr_setstr(&r->type, (corto_string)result->type);
     JSON_Array *cols = result->columns;
 
     JSON_Value *jsonValue = json_value_init_object();
@@ -67,7 +77,8 @@ int16_t influxdb_Mount_response_historical(
         JSON_Value *target = json_array_get_value(values, i);
         JSON_PTR_VERIFY(target, "Failed to get response JSON value.")
 
-        if (influxdb_Mount_response_build_result(r, target, json, col) != 0) {
+        if (influxdb_Mount_response_build_result(
+                r, target, json, col, result->convertTime)) {
             goto error;
         }
     }
@@ -103,6 +114,7 @@ int16_t influxdb_Mount_response_query(
     struct influxdb_Query_SeriesResult *result)
 {
     corto_result *r = corto_ptr_new(corto_result_o);
+    corto_ptr_setstr(&r->type, (corto_string)result->type);
     JSON_Array *cols = result->columns;
 
     JSON_Value *jsonValue = json_value_init_object();
@@ -121,7 +133,8 @@ int16_t influxdb_Mount_response_query(
         JSON_Value *target = json_array_get_value(values, i);
         JSON_PTR_VERIFY(target, "Failed to get response JSON value.")
 
-        if (influxdb_Mount_response_build_result(r, target, json, col) != 0) {
+        if (influxdb_Mount_response_build_result(
+                r, target, json, col, result->convertTime)) {
             goto error;
         }
     }
@@ -152,7 +165,10 @@ int16_t influxdb_Mount_response_process_values(
     struct influxdb_Query_SeriesResult *result,
     void* data)
 {
-    corto_info("\n\n\nMASK [%d]", this->super.policy.mask);
+    if (influxdb_Mount_response_result_type(result)) {
+        goto error;
+    }
+
     if (this->super.policy.mask == CORTO_MOUNT_HISTORY_QUERY) {
         size_t i;
         for (i = 0; i < result->valueCount; i++) {
@@ -210,5 +226,49 @@ int16_t influxdb_Mount_query_response_handler(
 error:
     JSON_SAFE_FREE(response)
     corto_error("Failed to process response. Error: [%s]", corto_lasterr());
+    return -1;
+}
+
+int16_t influxdb_Mount_response_result_type(
+    struct influxdb_Query_SeriesResult *result)
+{
+    JSON_Array *values = json_array_get_array(result->values, 0);
+    JSON_PTR_VERIFY(values, "Parsing index [0] values for type.")
+
+    int typePos = influxdb_Mount_response_column_index(
+        result->columns, result->valueCount, "type");
+    if (typePos == -1) {
+        corto_seterr("Parsing [type] index.");
+        goto error;
+    }
+
+    const char* type = json_array_get_string(values, (size_t)typePos);
+    if (!type) {
+        corto_info("[%s]", type);
+        corto_seterr("Failed to identify result type. Expected [str] at [%zu].",
+            (size_t)typePos);
+        goto error;
+    }
+
+    corto_type t = corto_resolve(root_o, (corto_string)type);
+    if (!t) {
+        corto_error("Failed to resolve type [%s]", type);
+        goto error;
+    }
+
+    result->type = type;
+
+    corto_member m = corto_interface_resolveMember(t, INFLUX_TIMESTAMP_MEMBER);
+    if (m) {
+        result->convertTime = true;
+    }
+    else {
+        result->convertTime = false;
+    }
+
+    return 0;
+error:
+    corto_seterr("Failed to resolve series type. Error: %s",
+        corto_lasterr());
     return -1;
 }

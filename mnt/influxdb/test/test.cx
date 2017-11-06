@@ -1,5 +1,13 @@
 in package test
 
+class State:/
+    region: string
+    commonwealth: bool
+
+class City:/
+    founded: int32
+    population: int32
+
 class Weather:/
     temperature: int16
     humidity:    float32

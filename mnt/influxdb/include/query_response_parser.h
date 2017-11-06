@@ -6,18 +6,25 @@
 #define JSON_PTR_VERIFY(ptr, msg) if (!ptr) { corto_seterr(msg); goto error; }
 #define JSON_SAFE_FREE(v)if (v) { json_value_free(v); v = NULL; }
 
+/* Struct wrapping the current series result to be processed by
+ * the influxdb_ResultCallback callback. */
+DRIVER_MNT_INFLUXDB_EXPORT
 struct influxdb_Query_SeriesResult {
     const char* name;
     JSON_Array  *values;
     JSON_Array  *columns;
     size_t      valueCount;
+    bool        convertTime;
+    const char* type;
 };
 
+/* Callback used to process response series arrays. */
 typedef int16_t (*influxdb_ResultCallback)(
     influxdb_Mount ctx,
     struct influxdb_Query_SeriesResult *result,
     void *data);
 
+DRIVER_MNT_INFLUXDB_EXPORT
 struct influxdb_Query_Result {
     influxdb_ResultCallback callback;
     influxdb_Mount          ctx;
@@ -26,8 +33,14 @@ struct influxdb_Query_Result {
 
 DRIVER_MNT_INFLUXDB_EXPORT
 corto_string influxdb_Mount_response_column_name(
-    JSON_Array *cols,
+    JSON_Array *columns,
     int pos);
+
+DRIVER_MNT_INFLUXDB_EXPORT
+int influxdb_Mount_response_column_index(
+    JSON_Array *cols,
+    size_t count,
+    corto_string name);
 
 DRIVER_MNT_INFLUXDB_EXPORT
 int16_t influxdb_Mount_response_parse(

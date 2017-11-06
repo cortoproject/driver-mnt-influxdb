@@ -1,14 +1,5 @@
 #include <driver/mnt/influxdb/query_response_parser.h>
 
-corto_string influxdb_Mount_response_column_name(JSON_Array *cols, int pos) {
-    const char* column = json_array_get_string(cols, pos);
-    JSON_PTR_VERIFY(column, "Failed to get column name from JSON columns.")
-
-    return (corto_string)column;
-error:
-    return NULL;
-}
-
 int16_t influxdb_Mount_response_parse_verify_result(
     struct influxdb_Query_SeriesResult *series)
 {
@@ -38,7 +29,7 @@ int16_t influxdb_Mount_response_parse_series(
     JSON_Object *series,
     struct influxdb_Query_Result *result)
 {
-    struct influxdb_Query_SeriesResult r = {NULL, NULL, NULL, 0};
+    struct influxdb_Query_SeriesResult r = {NULL, NULL, NULL, 0, false, NULL};
     r.name = json_object_get_string(series, "name");
     JSON_PTR_VERIFY(r.name, "Failed to find [name] in series object.")
     r.columns = json_object_get_array(series, "columns");
@@ -127,5 +118,35 @@ empty:
     return 0;
 error:
     corto_seterr("Failed to parse response. Error: [%s]", corto_lasterr());
+    return -1;
+}
+
+corto_string influxdb_Mount_response_column_name(
+    JSON_Array *cols,
+    int pos) {
+    const char* column = json_array_get_string(cols, pos);
+    JSON_PTR_VERIFY(column, "Failed to get column name from JSON columns.")
+
+    return (corto_string)column;
+error:
+    return NULL;
+}
+
+int influxdb_Mount_response_column_index(
+    JSON_Array *columns,
+    size_t count,
+    corto_string name)
+{
+    size_t i;
+    for (i = 0; i < count; i++) {
+        const char* column = json_array_get_string(columns, i);
+        JSON_PTR_VERIFY(column, "Failed to resolve column index.");
+        if (strcmp(column, name) == 0) {
+            return i;
+        }
+    }
+
+    return -1;
+error:
     return -1;
 }

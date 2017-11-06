@@ -14,7 +14,7 @@ void test_HistoricalQuery_select(
         goto error;
     }
 
-    if (test_write_weather(weather) != 0) {
+    if (CreateWeatherObjects(weather) != 0) {
         goto error;
     }
 
