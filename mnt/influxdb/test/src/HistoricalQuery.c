@@ -32,7 +32,7 @@ void test_HistoricalQuery_select(
     {
         cnt++;
         corto_result *result = (corto_result*) corto_iter_next(&it);
-
+        ///TODO Check values
         corto_info("SELECT: ID [%s] Name [%s]", result->id, result->name);
     }
 

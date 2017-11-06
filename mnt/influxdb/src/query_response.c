@@ -146,7 +146,6 @@ int16_t influxdb_Mount_response_query(
 
     corto_string str = json_serialize_to_string(jsonValue);
     r->value = (corto_word)corto_strdup(str);
-    corto_info("Query Result Type [%s] Value: %s", r->type, str);
     json_free_serialized_string(str);
 
     corto_mount_return(this, r);
@@ -201,7 +200,7 @@ int16_t influxdb_Mount_query_response_handler(
     influxdb_Mount this,
     httpclient_Result *r)
 {
-    corto_info("GET Result STATUS [%d] RESPONSE [%s]", r->status, r->response);
+    corto_trace("GET Result STATUS [%d] RESPONSE [%s]", r->status, r->response);
 
     if (r->status != 200) {
         corto_seterr("Query failed. Status [%d] Response [%s]",
@@ -246,7 +245,6 @@ int16_t influxdb_Mount_response_result_type(
 
     const char* type = json_array_get_string(values, (size_t)typePos);
     if (!type) {
-        corto_info("[%s]", type);
         corto_seterr("Failed to identify result type. Expected [str] at [%zu].",
             (size_t)typePos);
         goto error;
@@ -322,8 +320,6 @@ int16_t influxdb_Mount_response_result_id(
     if (influxdb_Mount_response_parse_id(result->name, &r->parent, &r->id)) {
         goto error;
     }
-
-    corto_info("Set Parent = [%s] ID = [%s]", r->parent, r->id);
 
     return 0;
 error:

@@ -49,7 +49,7 @@ void influxdb_Mount_onNotify(
     }
 
     corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
-    corto_info("influxdb: %s: POST %s", url, sample);
+    corto_trace("influxdb: %s: POST %s", url, sample);
     httpclient_post(url, sample);
     corto_dealloc(url);
     corto_dealloc(sample);
@@ -59,12 +59,14 @@ corto_resultIter influxdb_Mount_onQuery(
     influxdb_Mount this,
     corto_query *query)
 {
+    /* Uncomment to debug queries
     corto_info("MOUNT_FROM [%s]", this->super.super.query.from);
     corto_info("SELECT [%s]", query->select);
     corto_info("FROM [%s]", query->from);
     corto_info("TYPE [%s]", query->type);
     corto_info("MEMBER [%s]", query->member);
     corto_info("WHERE [%s]", query->where);
+    */
 
     corto_buffer buffer = CORTO_BUFFER_INIT;
     corto_buffer_appendstr(&buffer, " ");
@@ -97,12 +99,14 @@ corto_resultIter influxdb_Mount_onQuery(
 
     /* Publish Query */
     corto_string bufferStr = corto_buffer_str(&buffer);
-    corto_info("Decoded Fields [%s]", bufferStr);
     char *encodedBuffer = httpclient_encode_fields(bufferStr);
     corto_string queryStr = corto_asprintf("q=SELECT%s", encodedBuffer);
     corto_dealloc(encodedBuffer);
     corto_string url = corto_asprintf("%s/query?db=%s", this->host, this->db);
-    corto_info("influxdb: %s: GET %s", url, queryStr);
+
+    corto_trace("Fields to be decoded [%s]", bufferStr);
+    corto_trace("influxdb: %s: GET %s", url, queryStr);
+
     httpclient_Result result = httpclient_get(url, queryStr);
     corto_dealloc(url);
     corto_dealloc(bufferStr);
@@ -183,7 +187,7 @@ void influxdb_Mount_onHistoryBatchNotify(
 
     corto_string bufferStr = corto_buffer_str(&buffer);
     corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
-    corto_info("influxdb: %s: POST %s", url, bufferStr);
+    corto_trace("influxdb: %s: POST %s", url, bufferStr);
     httpclient_Result result = httpclient_post(url, bufferStr);
     if (result.status != 204) {
         corto_seterr("InfluxDB Update Failed. Status [%d] Response:\n%s",

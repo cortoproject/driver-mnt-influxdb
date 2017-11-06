@@ -40,7 +40,7 @@ int16_t influxdb_Mount_response_parse_series(
 
     r.valueCount = json_array_get_count(r.values);
     if (r.valueCount <= 0) {
-        corto_info("No matching samples in [%s] database", result->ctx->db);
+        corto_trace("No matching samples in [%s] database", result->ctx->db);
         goto error;
     }
 
