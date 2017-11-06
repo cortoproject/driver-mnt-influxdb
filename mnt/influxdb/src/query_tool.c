@@ -2,7 +2,7 @@
 #include <driver/mnt/influxdb/query_builder.h>
 #include <driver/mnt/influxdb/query_tool.h>
 
-int16_t influxdb_Mount_parse_measurements(
+int16_t influxdb_Mount_parse_show_process_values(
     influxdb_Mount this,
     struct influxdb_Query_SeriesResult *result,
     void* data)
@@ -18,8 +18,8 @@ int16_t influxdb_Mount_parse_measurements(
         for (j = 0; j < cnt; j++) {
             JSON_Value *v = json_array_get_value(values, j);
             JSON_PTR_VERIFY(v, "Failed to get response JSON value.")
-            const char* measurement = json_value_get_string(v);
-            corto_ll_append(resultList, (void*)corto_strdup(measurement));
+            const char* r = json_value_get_string(v);
+            corto_ll_append(resultList, (void*)corto_strdup(r));
         }
     }
 
@@ -29,7 +29,6 @@ error:
     return -1;
 }
 
-//regex https://regex101.com/r/5N6jwz/1
 int16_t influxdb_Mount_show_measurements(
     influxdb_Mount this,
     corto_string pattern,
@@ -58,7 +57,7 @@ int16_t influxdb_Mount_show_measurements(
     }
 
     struct influxdb_Query_Result result = {
-        &influxdb_Mount_parse_measurements,
+        &influxdb_Mount_parse_show_process_values,
         this,
         results
     };
