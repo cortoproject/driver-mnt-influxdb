@@ -1,5 +1,0 @@
-COMPONENTS = %w(
-    influxdb
-)
-
-require "#{ENV['CORTO_BUILD']}/forward"
