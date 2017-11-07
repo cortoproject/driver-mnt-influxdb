@@ -25,3 +25,6 @@ test/Suite HistoricalQuery:/
 
 test/Suite Tool:/
     void measurements()
+
+test/Suite RetentionPolicy:/
+    void create()

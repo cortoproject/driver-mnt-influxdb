@@ -2,7 +2,8 @@ in package driver/mnt/influxdb
 
 class RetentionPolicy:/
     name:           string
-    databse:        string
+    host:           string
+    db:             string
     duration:       string
     replication:    uint16
     shardDuration:  string
@@ -17,6 +18,7 @@ class Mount: vstore/mount:/
     password:   string
 
     int16 construct()
+    string retentionPolicy()
     void onNotify(vstore/subscriberEvent event) override
     void onHistoryBatchNotify(vstore/subscriberEventIter events) override
     void onBatchNotify(vstore/subscriberEventIter events) override
