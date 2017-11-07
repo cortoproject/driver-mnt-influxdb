@@ -13,7 +13,7 @@ class RetentionPolicy:/
 class Mount: vstore/mount:/
     host:       string
     db:         string
-    rp:         influxdb/RetentionPolicy, optional
+    rp:         influxdb/RetentionPolicy
     username:   string
     password:   string
 
