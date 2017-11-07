@@ -31,8 +31,11 @@ int CreateManualMount(corto_object mountPoint)
         query,
         "text/json",
         policy,
-        INFLUX_DB_HOST,     /* hostname */
-        INFLUX_DB_NAME))    /* database name */
+        INFLUX_DB_HOST,    /* hostname */
+        INFLUX_DB_NAME,    /* database name */
+        NULL,              /* retention policy */
+        NULL,              /* username */
+        NULL))             /* password */
     {
         corto_error("Failed to define manual mount");
         return -1;
