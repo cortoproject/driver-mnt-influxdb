@@ -7,7 +7,6 @@
 bool influxdb_Mount_filterEvent(corto_string type);
 corto_string influxdb_Mount_notifySample(corto_subscriberEvent *event);
 corto_string influxdb_safeString(corto_string source);
-
 int16_t influxdb_Mount_construct(
     influxdb_Mount this)
 {
@@ -84,11 +83,11 @@ corto_resultIter influxdb_Mount_onQuery(
         corto_buffer_appendstr(&buffer, from);
         corto_dealloc(from);
     }
+
     else {
         corto_error("Failed to create InfluxDB FROM statement. Error %s",
             corto_lasterr());
     }
-
 
     /* WHERE */
     corto_string where = influxdb_Mount_query_builder_where(this, query);
@@ -103,10 +102,8 @@ corto_resultIter influxdb_Mount_onQuery(
     corto_string queryStr = corto_asprintf("q=SELECT%s", encodedBuffer);
     corto_dealloc(encodedBuffer);
     corto_string url = corto_asprintf("%s/query?db=%s", this->host, this->db);
-
     corto_trace("Fields to be decoded [%s]", bufferStr);
     corto_trace("influxdb: %s: GET %s", url, queryStr);
-
     httpclient_Result result = httpclient_get(url, queryStr);
     corto_dealloc(url);
     corto_dealloc(bufferStr);
@@ -137,10 +134,10 @@ void influxdb_Mount_onBatchNotify(
 
         corto_buffer_appendstr(&buffer, sample);
         corto_dealloc(sample);
-
         if (corto_iter_hasNext(&events) != 0) {
             corto_buffer_appendstr(&buffer, "\n");
         }
+
     }
 
     corto_string bufferStr = corto_buffer_str(&buffer);
@@ -178,7 +175,6 @@ void influxdb_Mount_onHistoryBatchNotify(
 
         corto_buffer_appendstr(&buffer, sample);
         corto_dealloc(sample);
-
         if (corto_iter_hasNext(&events) != 0) {
             corto_buffer_appendstr(&buffer, "\n");
         }
@@ -222,6 +218,7 @@ corto_string influxdb_Mount_notifySample(corto_subscriberEvent *event)
     if (strcmp(".", event->data.parent) == 0) {
         sample = corto_asprintf("%s,type=%s %s", id, t, r);
     }
+
     else {
         parent = influxdb_safeString(event->data.parent);
         sample = corto_asprintf("%s/%s,type=%s %s", parent, id, t, r);
@@ -229,7 +226,6 @@ corto_string influxdb_Mount_notifySample(corto_subscriberEvent *event)
     }
 
     SAFE_DEALLOC(id)
-
     return sample;
 }
 
@@ -238,3 +234,10 @@ corto_string influxdb_safeString(corto_string source)
     /* Measurements and Tags names cannot contain non-espaced spaces */
     return corto_replace(source, " ", "\\ ");
 }
+
+corto_string influxdb_Mount_retentionPolicy(
+    influxdb_Mount this)
+{
+    /* Insert implementation */
+}
+
