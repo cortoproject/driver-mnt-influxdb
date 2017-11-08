@@ -27,7 +27,8 @@ int16_t influxdb_Mount_show_measurements_free(
 
 DRIVER_MNT_INFLUXDB_EXPORT
 int16_t influxdb_Mount_show_retentionPolicies(
-    influxdb_Mount this,
+    corto_string host,
+    corto_string db,
     corto_ll results);
 
 /* Releases the measurement result list content

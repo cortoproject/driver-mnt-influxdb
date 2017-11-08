@@ -47,7 +47,7 @@ void influxdb_Mount_onNotify(
         return;
     }
 
-    corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
+    corto_string url = influxdb_Mount_query_builder_url(this);
     corto_trace("influxdb: %s: POST %s", url, sample);
     httpclient_post(url, sample);
     corto_dealloc(url);
@@ -141,7 +141,7 @@ void influxdb_Mount_onBatchNotify(
     }
 
     corto_string bufferStr = corto_buffer_str(&buffer);
-    corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
+    corto_string url = influxdb_Mount_query_builder_url(this);
     corto_trace("influxdb: %s: POST %s", url, bufferStr);
     httpclient_Result result = httpclient_post(url, bufferStr);
     if (result.status != 204) {
@@ -182,7 +182,7 @@ void influxdb_Mount_onHistoryBatchNotify(
     }
 
     corto_string bufferStr = corto_buffer_str(&buffer);
-    corto_string url = corto_asprintf("%s/write?db=%s", this->host, this->db);
+    corto_string url = influxdb_Mount_query_builder_url(this);
     corto_trace("influxdb: %s: POST %s", url, bufferStr);
     httpclient_Result result = httpclient_post(url, bufferStr);
     if (result.status != 204) {

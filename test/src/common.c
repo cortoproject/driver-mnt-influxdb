@@ -19,13 +19,23 @@ int CreateManualMount(corto_object mountPoint)
          0,
          false);
 
+     influxdb_RetentionPolicy rp = influxdb_RetentionPolicyCreate(
+         "unit_test",
+         INFLUX_DB_HOST,
+         INFLUX_DB_NAME,
+         "1h0m0s",
+         1,
+         NULL);
+
+    test_assert(rp != NULL);
+
     if (influxdb_MountDefine(influxdbMount,
         query,
         "text/json",
         policy,
         INFLUX_DB_HOST,     /* hostname */
         INFLUX_DB_NAME,    /* database name */
-        NULL,              /* retention policy */
+        rp,                /* retention policy */
         NULL,              /* username */
         NULL))             /* password */
     {
