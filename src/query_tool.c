@@ -4,13 +4,13 @@
 
 int16_t influxdb_Mount_parse_show_measurements_process(
     influxdb_Mount this,
-    struct influxdb_Query_SeriesResult *result,
+    influxdb_Query_SeriesResult *series,
     void* data)
 {
     corto_ll resultList = (corto_ll)data;
     size_t i;
-    for (i = 0; i < result->valueCount; i++) {
-        JSON_Array *values = json_array_get_array(result->values, i);
+    for (i = 0; i < series->valueCount; i++) {
+        JSON_Array *values = json_array_get_array(series->values, i);
         JSON_PTR_VERIFY(values, "Failed to parse response values JSON array.")
 
         size_t j;
@@ -35,8 +35,8 @@ int16_t influxdb_Mount_show_measurements(
     corto_ll results)
 {
     corto_string regex = influxdb_Mount_query_builder_regex(pattern);
-    corto_string request = corto_asprintf("SHOW MEASUREMENTS WITH MEASUREMENT =~/%s/",
-        regex);
+    corto_string request = corto_asprintf("SHOW MEASUREMENTS " \
+        "ON %s WITH MEASUREMENT =~/%s/", this->db, regex);
     char *encodedBuffer = httpclient_encode_fields(request);
     corto_string url = corto_asprintf("%s/query?db=%s", this->host, this->db);
     corto_string queryStr = corto_asprintf("q=%s", encodedBuffer);
@@ -88,15 +88,119 @@ int16_t influxdb_Mount_show_measurements_free(
     return 0;
 }
 
-int16_t influxdb_Mount_show_retentionPolicies_process(
+int16_t influxdb_Mount_parse_show_databases_process(
     influxdb_Mount this,
-    struct influxdb_Query_SeriesResult *result,
+    influxdb_Query_SeriesResult *series,
     void* data)
 {
     corto_ll resultList = (corto_ll)data;
     size_t i;
-    for (i = 0; i < result->valueCount; i++) {
-        JSON_Array *values = json_array_get_array(result->values, i);
+    for (i = 0; i < series->valueCount; i++) {
+        JSON_Array *values = json_array_get_array(series->values, i);
+        JSON_PTR_VERIFY(values, "Failed to parse response values JSON array.")
+
+        size_t j;
+        size_t cnt = json_array_get_count(values);
+        for (j = 0; j < cnt; j++) {
+            JSON_Value *v = json_array_get_value(values, j);
+            JSON_PTR_VERIFY(v, "Failed to get response JSON value.")
+            const char* r = json_value_get_string(v);
+            corto_ll_append(resultList, (void*)corto_strdup(r));
+        }
+    }
+
+    return 0;
+
+error:
+    return -1;
+}
+
+int16_t influxdb_Mount_create_database(
+    corto_string host,
+    corto_string db)
+{
+    corto_string url = corto_asprintf("%s/query", host);
+    corto_string query = corto_asprintf("q=CREATE DATABASE %s", db);
+    httpclient_Result r = httpclient_post(url, query);
+    corto_dealloc(url);
+    corto_dealloc(query);
+
+    if (r.status != 200) {
+        corto_error("Create database Query failed. Status [%d] Response [%s]",
+            r.status, r.response);
+        goto error;
+    }
+
+    return 0;
+error:
+    return -1;
+}
+
+int16_t influxdb_Mount_show_databases(
+    corto_string host,
+    corto_string db,
+    corto_ll results)
+{
+    corto_string request = corto_asprintf("SHOW DATABASES");
+    char *encodedBuffer = httpclient_encode_fields(request);
+    corto_string url = corto_asprintf("%s/query?db=%s", host, db);
+    corto_string queryStr = corto_asprintf("q=%s", encodedBuffer);
+    httpclient_Result r = httpclient_get(url, queryStr);
+    corto_dealloc(queryStr);
+    corto_dealloc(url);
+    corto_dealloc(encodedBuffer);
+    corto_dealloc(request);
+
+    JSON_Value *response = NULL;
+
+    if (r.status != 200) {
+        corto_error("Show Databases Query failed. Status [%d] Response [%s]",
+            r.status, r.response);
+        corto_seterr("Response Status = 400");
+        goto error;
+    }
+
+    struct influxdb_Query_Result result = {
+        &influxdb_Mount_parse_show_databases_process,
+        NULL,
+        results
+    };
+
+    response = json_parse_string(r.response);
+    JSON_PTR_VERIFY(response, "Parson failed to parse Influxdb JSON response")
+    if (influxdb_Mount_response_parse(response, &result)) {
+        goto error;
+    }
+
+    JSON_SAFE_FREE(response)
+
+    return 0;
+error:
+    JSON_SAFE_FREE(response)
+    corto_error("Failed to process response. Error: [%s]", corto_lasterr());
+    return -1;
+}
+
+int16_t influxdb_Mount_show_databases_free(
+    corto_ll results)
+{
+    while (corto_ll_size(results) > 0) {
+        corto_string str = (corto_string)corto_ll_takeFirst(results);
+        corto_dealloc(str);
+    }
+
+    return 0;
+}
+
+int16_t influxdb_Mount_show_retentionPolicies_process(
+    influxdb_Mount this,
+    influxdb_Query_SeriesResult *series,
+    void* data)
+{
+    corto_ll resultList = (corto_ll)data;
+    size_t i;
+    for (i = 0; i < series->valueCount; i++) {
+        JSON_Array *values = json_array_get_array(series->values, i);
         JSON_PTR_VERIFY(values, "Failed to parse response values JSON array.")
 
         size_t j;
@@ -106,7 +210,7 @@ int16_t influxdb_Mount_show_retentionPolicies_process(
             malloc(sizeof(influxdb_Query_RetentionPolicyResult));
         for (j = 0; j < cnt; j++) {
             const char* name = influxdb_Mount_response_column_name(
-                result->columns, j);
+                series->columns, j);
             if (!name) {
                 corto_seterr("Invalid rp column index [%d]", j);
                 free(rp);
@@ -151,7 +255,7 @@ int16_t influxdb_Mount_show_retentionPolicies(
     corto_string db,
     corto_ll results)
 {
-    corto_string request = corto_asprintf("SHOW RETENTION POLICIES");
+    corto_string request = corto_asprintf("SHOW RETENTION POLICIES ON %s", db);
     char *encodedBuffer = httpclient_encode_fields(request);
     corto_string url = corto_asprintf("%s/query?db=%s", host, db);
     corto_string queryStr = corto_asprintf("q=%s", encodedBuffer);

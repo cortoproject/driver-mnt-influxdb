@@ -26,6 +26,24 @@ int16_t influxdb_Mount_show_measurements_free(
     corto_ll results);
 
 DRIVER_MNT_INFLUXDB_EXPORT
+int16_t influxdb_Mount_create_database(
+    corto_string host,
+    corto_string db);
+
+DRIVER_MNT_INFLUXDB_EXPORT
+int16_t influxdb_Mount_show_databases(
+    corto_string host,
+    corto_string db,
+    corto_ll results);
+
+/* Releases the database result list content
+ * NOTE: Does not free the results list - user is responsible for results list.
+ */
+DRIVER_MNT_INFLUXDB_EXPORT
+int16_t influxdb_Mount_show_databases_free(
+    corto_ll results);
+
+DRIVER_MNT_INFLUXDB_EXPORT
 int16_t influxdb_Mount_show_retentionPolicies(
     corto_string host,
     corto_string db,

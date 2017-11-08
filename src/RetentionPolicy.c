@@ -101,6 +101,11 @@ int16_t influxdb_RetentionPolicy_construct(
         shard = corto_asprintf(" ");
     }
 
+    if (influxdb_Mount_create_database(this->host, this->db)) {
+        corto_seterr("Failed to create database.");
+        goto error;
+    }
+
     int exists = influxdb_RetentionPolicy_verify_create(this);
     if (exists > 0) {
         return 0;
@@ -108,14 +113,13 @@ int16_t influxdb_RetentionPolicy_construct(
     else if (exists < 0) {
         goto error;
     }
-
     request = corto_asprintf("CREATE RETENTION POLICY %s ON %s " \
         "DURATION %s REPLICATION %d%s",
         this->name, this->db, this->duration, this->replication, shard);
     char *encodedBuffer = httpclient_encode_fields(request);
     corto_string url = corto_asprintf("%s/query?db=%s", this->host, this->db);
     corto_string queryStr = corto_asprintf("q=%s", encodedBuffer);
-    httpclient_Result r = httpclient_get(url, queryStr);
+    httpclient_Result r = httpclient_post(url, queryStr);
     corto_dealloc(queryStr);
     corto_dealloc(url);
     corto_dealloc(encodedBuffer);
@@ -123,8 +127,7 @@ int16_t influxdb_RetentionPolicy_construct(
     corto_dealloc(shard);
 
     if (r.status != 200) {
-        corto_error("Create Retention Policy failed. Status [%d] Response [%s]",
-            r.status, r.response);
+        corto_seterr("Status [%d] Response [%s]", r.status, r.response);
         goto error;
     }
 
