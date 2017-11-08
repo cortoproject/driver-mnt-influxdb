@@ -1,7 +1,7 @@
 #include <driver/mnt/influxdb/query_response_parser.h>
 
 int16_t influxdb_Mount_response_parse_verify_result(
-    struct influxdb_Query_SeriesResult *series)
+    influxdb_Query_SeriesResult *series)
 {
     if (!series->name) {
         corto_seterr("Failed to parse [name] in response.");
@@ -29,8 +29,8 @@ int16_t influxdb_Mount_response_parse_series(
     JSON_Object *series,
     struct influxdb_Query_Result *result)
 {
-    struct influxdb_Query_SeriesResult r = {NULL, NULL, NULL, 0, false, NULL};
-    const char* name = json_object_get_string(series, "name");
+    influxdb_Query_SeriesResult r = {NULL, NULL, NULL, 0, false, NULL};
+    corto_string name = (corto_string)json_object_get_string(series, "name");
     if (name) {
         r.name = name;
     }
@@ -141,11 +141,10 @@ error:
 
 int influxdb_Mount_response_column_index(
     JSON_Array *columns,
-    size_t count,
     corto_string name)
 {
     size_t i;
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < json_array_get_count(columns); i++) {
         const char* column = json_array_get_string(columns, i);
         JSON_PTR_VERIFY(column, "Failed to resolve column index.");
         if (strcmp(column, name) == 0) {

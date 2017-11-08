@@ -1,17 +1,18 @@
 #include <driver/mnt/influxdb/query_response.h>
 #include <driver/mnt/influxdb/query_response_parser.h>
 #include <driver/mnt/influxdb/query_response_time.h>
+#include <driver/mnt/influxdb/query_response_iter.h>
 
 const corto_string INFLUX_TIMESTAMP_MEMBER = "timestamp";
 
 int16_t influxdb_Mount_response_result_type(
-    struct influxdb_Query_SeriesResult *result);
+    influxdb_Query_SeriesResult *series);
 
 int16_t influxdb_Mount_response_result_id(
-    struct influxdb_Query_SeriesResult *result,
+    influxdb_Query_SeriesResult *series,
     corto_result *r);
 
-int16_t influxdb_Mount_response_build_result(
+int16_t influxdb_Mount_response_result_value(
     corto_result *result,
     JSON_Value *value,
     JSON_Object *resultJson,
@@ -51,25 +52,19 @@ error:
     return -1;
 }
 
-/*
-*  Hitorical Query Response
- * Process Value Array Index
- * ["valueA", "valueB", "ValueC", ...]
- */
-int16_t influxdb_Mount_response_historical(
-    influxdb_Mount this,
+int16_t influxdb_Mount_response_result_update(
+    influxdb_Query_SeriesResult *series,
     JSON_Array *values,
-    struct influxdb_Query_SeriesResult *result)
+    corto_result *r)
 {
-    corto_result *r = corto_ptr_new(corto_result_o);
-    corto_ptr_setstr(&r->type, (corto_string)result->type);
-    JSON_Array *cols = result->columns;
+    corto_ptr_setstr(&r->type, (corto_string)series->type);
 
     JSON_Value *jsonValue = json_value_init_object();
     JSON_PTR_VERIFY(jsonValue, "Failed to create result JSON Value.")
     JSON_Object *json = json_value_get_object(jsonValue);
     JSON_PTR_VERIFY(json, "Failed to retrieve JSON result object.")
 
+    JSON_Array *cols = series->columns;
     size_t i;
     size_t cnt = json_array_get_count(values);
     for (i = 0; i < cnt; i++) {
@@ -81,26 +76,22 @@ int16_t influxdb_Mount_response_historical(
         JSON_Value *target = json_array_get_value(values, i);
         JSON_PTR_VERIFY(target, "Failed to get response JSON value.")
 
-        if (influxdb_Mount_response_build_result(
-                r, target, json, col, result->convertTime)) {
+        if (influxdb_Mount_response_result_value(
+                r, target, json, col, series->convertTime)) {
             goto error;
         }
     }
 
-    influxdb_Mount_response_result_id(result, r);
+    influxdb_Mount_response_result_id(series, r);
 
-    corto_string jsonStr = json_serialize_to_string(jsonValue);
-    r->value = (corto_word)corto_strdup(jsonStr);
-    json_free_serialized_string(jsonStr);
-
-    corto_mount_return(this, r);
-
-    corto_ptr_free(r, corto_result_o);
+    corto_string str = json_serialize_to_string(jsonValue);
+    r->value = (corto_word)corto_strdup(str);
+    json_free_serialized_string(str);
+    JSON_SAFE_FREE(jsonValue)
 
     return 0;
 error:
     JSON_SAFE_FREE(jsonValue)
-    corto_ptr_free(r, corto_result_o);
     return -1;
 }
 
@@ -111,49 +102,56 @@ error:
  * ["valueA", "valueB", "ValueC", ...]
  *
  */
-int16_t influxdb_Mount_response_query(
+int16_t influxdb_Mount_response_latest(
     influxdb_Mount this,
-    JSON_Array *values,
-    struct influxdb_Query_SeriesResult *result)
+    influxdb_Query_SeriesResult *series,
+    JSON_Array *values)
 {
     corto_result *r = corto_ptr_new(corto_result_o);
-    corto_ptr_setstr(&r->type, (corto_string)result->type);
-    JSON_Array *cols = result->columns;
 
-    JSON_Value *jsonValue = json_value_init_object();
-    JSON_PTR_VERIFY(jsonValue, "Failed to create result JSON Value.")
-    JSON_Object *json = json_value_get_object(jsonValue);
-    JSON_PTR_VERIFY(json, "Failed to retrieve JSON result object.")
-
-    size_t i;
-    size_t cnt = json_array_get_count(values);
-    for (i = 0; i < cnt; i++) {
-        corto_string col = influxdb_Mount_response_column_name(cols, i);
-        if (!col) {
-            goto error;
-        }
-
-        JSON_Value *target = json_array_get_value(values, i);
-        JSON_PTR_VERIFY(target, "Failed to get response JSON value.")
-
-        if (influxdb_Mount_response_build_result(
-                r, target, json, col, result->convertTime)) {
-            goto error;
-        }
+    if (influxdb_Mount_response_result_update(series, values, r)) {
+        goto error;
     }
-
-    influxdb_Mount_response_result_id(result, r);
-
-    corto_string str = json_serialize_to_string(jsonValue);
-    r->value = (corto_word)corto_strdup(str);
-    json_free_serialized_string(str);
 
     corto_mount_return(this, r);
     corto_ptr_free(r, corto_result_o);
     return 0;
 error:
-    JSON_SAFE_FREE(jsonValue)
     corto_ptr_free(r, corto_result_o);
+    return -1;
+}
+
+/*
+ * Processes and Returns onQuery Response for historical data
+ *
+ * Process Value Array Index
+ * ["valueA", "valueB", "ValueC", ...]
+ *
+ */
+int16_t influxdb_Mount_response_historical(
+    influxdb_Mount this,
+    influxdb_Query_SeriesResult *series)
+{
+    corto_result *result = NULL;
+    influxdb_Mount_iterData *data = influxdb_Mount_iterDataNew(series);
+    if (!data) {
+        corto_seterr("Failed to create historical response iterator data.");
+        goto error;
+    }
+
+    result = corto_ptr_new(corto_result_o);
+
+    result->history.ctx = data;
+    result->history.hasNext = influxdb_Mount_iterDataHasNext;
+    result->history.next = influxdb_Mount_iterDataNext;
+    result->history.release = influxdb_Mount_iterDataRelease;
+
+    corto_mount_return(this, result);
+    corto_ptr_free(result, corto_result_o);
+
+    return 0;
+error:
+    corto_ptr_free(result, corto_result_o);
     return -1;
 }
 
@@ -163,30 +161,26 @@ error:
  */
 int16_t influxdb_Mount_response_process_values(
     influxdb_Mount this,
-    struct influxdb_Query_SeriesResult *result,
+    influxdb_Query_SeriesResult *series,
     void* data)
 {
-    if (influxdb_Mount_response_result_type(result)) {
+    if (influxdb_Mount_response_result_type(series)) {
         goto error;
     }
 
     if (this->super.policy.mask == CORTO_MOUNT_HISTORY_QUERY) {
-        size_t i;
-        for (i = 0; i < result->valueCount; i++) {
-            JSON_Array *v = json_array_get_array(result->values, i);
-            if (!v) {
-                corto_seterr("Resolved invalid JSON value at index [%s]", i);
-                goto error;
-            }
-            if (influxdb_Mount_response_historical(this, v, result) != 0) {
-                goto error;
-            }
+        if (influxdb_Mount_response_historical(this, series) != 0) {
+            corto_seterr("Failed to process historical query response. %s",
+                corto_lasterr());
+            goto error;
         }
     }
     else {
-        JSON_Array *v = json_array_get_array(result->values, 0);
+        JSON_Array *v = json_array_get_array(series->values, 0);
         JSON_PTR_VERIFY(v, "Resolved invalid JSON value.")
-        if (influxdb_Mount_response_query(this, v, result) != 0) {
+        if (influxdb_Mount_response_latest(this, series, v) != 0) {
+            corto_seterr("Failed to process last query response. %s",
+                corto_lasterr());
             goto error;
         }
     }
@@ -231,39 +225,38 @@ error:
 }
 
 int16_t influxdb_Mount_response_result_type(
-    struct influxdb_Query_SeriesResult *result)
+    influxdb_Query_SeriesResult *series)
 {
-    JSON_Array *values = json_array_get_array(result->values, 0);
+    JSON_Array *values = json_array_get_array(series->values, 0);
     JSON_PTR_VERIFY(values, "Parsing index [0] values for type.")
 
-    int typePos = influxdb_Mount_response_column_index(
-        result->columns, result->valueCount, "type");
+    int typePos = influxdb_Mount_response_column_index(series->columns, "type");
     if (typePos == -1) {
         corto_seterr("Parsing [type] index.");
         goto error;
     }
 
-    const char* type = json_array_get_string(values, (size_t)typePos);
+    corto_string type = (corto_string)json_array_get_string(values, (size_t)typePos);
     if (!type) {
         corto_seterr("Failed to identify result type. Expected [str] at [%zu].",
             (size_t)typePos);
         goto error;
     }
 
-    corto_type t = corto_resolve(root_o, (corto_string)type);
+    corto_type t = corto_resolve(root_o, type);
     if (!t) {
         corto_error("Failed to resolve type [%s]", type);
         goto error;
     }
 
-    result->type = type;
+    series->type = type;
 
     corto_member m = corto_interface_resolveMember(t, INFLUX_TIMESTAMP_MEMBER);
     if (m) {
-        result->convertTime = true;
+        series->convertTime = true;
     }
     else {
-        result->convertTime = false;
+        series->convertTime = false;
     }
 
     return 0;
@@ -314,10 +307,10 @@ int16_t influxdb_Mount_response_parse_id(
 }
 
 int16_t influxdb_Mount_response_result_id(
-    struct influxdb_Query_SeriesResult *result,
+    influxdb_Query_SeriesResult *series,
     corto_result *r)
 {
-    if (influxdb_Mount_response_parse_id(result->name, &r->parent, &r->id)) {
+    if (influxdb_Mount_response_parse_id(series->name, &r->parent, &r->id)) {
         goto error;
     }
 
