@@ -30,8 +30,14 @@ int16_t influxdb_Mount_response_parse_series(
     struct influxdb_Query_Result *result)
 {
     struct influxdb_Query_SeriesResult r = {NULL, NULL, NULL, 0, false, NULL};
-    r.name = json_object_get_string(series, "name");
-    JSON_PTR_VERIFY(r.name, "Failed to find [name] in series object.")
+    const char* name = json_object_get_string(series, "name");
+    if (name) {
+        r.name = name;
+    }
+    else {
+        r.name = " ";
+    }
+
     r.columns = json_object_get_array(series, "columns");
     JSON_PTR_VERIFY(r.columns, "Failed to find [columns] array.")
 
@@ -123,7 +129,8 @@ error:
 
 corto_string influxdb_Mount_response_column_name(
     JSON_Array *cols,
-    int pos) {
+    int pos)
+{
     const char* column = json_array_get_string(cols, pos);
     JSON_PTR_VERIFY(column, "Failed to get column name from JSON columns.")
 

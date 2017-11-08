@@ -27,4 +27,5 @@ test/Suite Tool:/
     void measurements()
 
 test/Suite RetentionPolicy:/
-    void create()
+    void tc_1_create()
+    void tc_2_create()

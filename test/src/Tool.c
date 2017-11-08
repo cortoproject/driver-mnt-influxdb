@@ -18,6 +18,8 @@ bool influxdb_Mount_TestMeasurementQuery(corto_string pattern, int results)
         return false;
     }
 
+    test_assert(influxdb_Mount_show_measurements_free(list) == 0);
+    
     corto_ll_free(list);
 
     return true;
