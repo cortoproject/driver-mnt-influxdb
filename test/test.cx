@@ -28,4 +28,5 @@ test/Suite Tool:/
 
 test/Suite RetentionPolicy:/
     void tc_1_create()
-    void tc_2_create()
+    void tc_2_duplicate()
+    void tc_2_duplicateConflict()

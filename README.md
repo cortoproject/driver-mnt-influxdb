@@ -23,19 +23,33 @@
 }
 ```
 
-**Note:** InfluxDB mounts can be created without specifying a Retention Policy. When Retention 
-policy is not defined, `autogen` will be used as the default policy. 
+**Note:** InfluxDB mounts can be created without specifying a Retention Policy. When Retention
+policy is not defined, `autogen` will be used as the default policy.
 
 ### Retention Policy
-[Retention Policies](https://docs.influxdata.com/influxdb/v1.3/query_language/database_management/#retention-policy-management) Specify how long InfluxDB samples will be persisted to disk. 
+[Retention Policies](https://docs.influxdata.com/influxdb/v1.3/query_language/database_management/#retention-policy-management) Specify how long InfluxDB samples will be persisted to disk.
 
 |**Property** | **Required** | **Type** | **Description** | **Example**|
 |-------------|--------------|----------|-----------------|------------|
 | name     |  true  | string | Name of retention policy | 10m.events (10 minute events) |
-| database |  true  | string | Database Name for retetnion policy | weather |
+| database |  true  | string | Database Name for retention policy | weather |
 | duration |  true | string | Length of time to store series data.  | 180m (3 hours) |
 | replication | true  | integer |  Number of independent copies of each point are stored in the cluster  | 1 |
 | shardDuration  | false  | string | Time range covered by a shard group. | 1h |
+
+#### Durations
+It is recommended that durations are specified in _duration-literal_ format (`2h0m0s`)
+opposed to calculated (`120m`). The mount will query InfluxDB to evaluate if
+there is already an existing retention policy before creating a new policy.
+
+**Retention Policy Errors**
+Creating a retention policy may fail for improper duration format with the following
+error:
+```
+Requested Duration [120m] conflicts with [2h0m0s]
+```
+
+Review [Duration Format](https://docs.influxdata.com/influxdb/v1.3/query_language/spec/#durations).
 
 ## Known Limitations
 ### Timestamps
@@ -54,9 +68,9 @@ Be conscious of the following when connecting the InfluxDB mount.
 
 ### Void Objects NOT SUPPORTED
 
-InfluxDB will fail to serialize objects of void type. Void objects do not have datafields, 
-thus are not supported by InfluxDB. 
+InfluxDB will fail to serialize objects of void type. Void objects do not have datafields,
+thus are not supported by InfluxDB.
 
 **Consequences**
 * Be aware that mounting InfluxDB to a scope with void objects will create holes in your tree path.
-  It may be impossible to query for children of void objects. 
+  It may be impossible to query for children of void objects.

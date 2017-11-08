@@ -2,6 +2,42 @@
 
 #define SAFE_DEALLOC(s) if (s) { corto_dealloc(s); s = NULL; }
 
+corto_string influxdb_Mount_query_builder_url(
+    influxdb_Mount this)
+{
+    corto_string user = "";
+    corto_string pass = "";
+    bool userFree = false;
+    bool passFree = false;
+
+    corto_string rp = corto_asprintf("&rp=%s",
+        influxdb_Mount_retentionPolicy(this));
+
+    if (this->username) {
+        user = corto_asprintf("&u=%s", this->username);
+        userFree = true;
+    }
+    if (this->password) {
+        pass = corto_asprintf("&p=%s", this->password);
+        passFree = true;
+    }
+
+    corto_string url = corto_asprintf("%s/write?db=%s%s%s%s",
+        this->host, this->db, rp, user, pass);
+
+    corto_dealloc(rp);
+
+    if (userFree) {
+        corto_dealloc(user);
+    }
+
+    if (passFree) {
+        corto_dealloc(pass);
+    }
+
+    return url;
+}
+
 corto_string influxdb_Mount_query_builder_select(
     influxdb_Mount this,
     corto_query *query)
@@ -33,7 +69,8 @@ corto_string influxdb_Mount_query_builder_from(
     corto_buffer buffer = CORTO_BUFFER_INIT;
     corto_string from = NULL;
     corto_string db = corto_asprintf("\"%s\"", this->db);
-    corto_string rp = "\"autogen\"";
+    corto_string rp = corto_asprintf("\"%s\"",
+        influxdb_Mount_retentionPolicy(this));
 
     if (strcmp(query->select, "*") == 0) {
         corto_string pattern = influxdb_Mount_query_builder_regex(query->from);
@@ -63,11 +100,13 @@ corto_string influxdb_Mount_query_builder_from(
 
     SAFE_DEALLOC(from)
     SAFE_DEALLOC(db)
+    SAFE_DEALLOC(rp)
 
     return corto_buffer_str(&buffer);
 error:
     SAFE_DEALLOC(from)
     SAFE_DEALLOC(db)
+    SAFE_DEALLOC(rp)
     corto_buffer_reset(&buffer);
     return NULL;
 }

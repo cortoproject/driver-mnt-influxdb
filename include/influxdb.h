@@ -24,7 +24,7 @@
 #include <driver/mnt/influxdb/c/_api.h>
 
 /* $body() */
-/* Definitions here that need your package headers go here. */
+#include <driver/mnt/influxdb/query_tool.h>
 /* $end */
 
 #endif
