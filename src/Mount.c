@@ -238,6 +238,8 @@ corto_string influxdb_safeString(corto_string source)
 corto_string influxdb_Mount_retentionPolicy(
     influxdb_Mount this)
 {
-    /* Insert implementation */
+    if (!this->rp) {
+        return "autogen";
+    }
+    return this->rp->name;
 }
-
