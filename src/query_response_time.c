@@ -1,10 +1,6 @@
 #include <driver/mnt/influxdb/query_response_time.h>
 #include <driver/mnt/influxdb/query_response_parser.h>
 
-#define MILLI 1000L
-#define MICRO MILLI * 1000L
-#define NANO MICRO * 1000L
-
 int16_t influxdb_Mount_time_rfc3339(const char* timeStr, struct timespec *ts);
 int16_t influxdb_Mount_time_epochNano(double nanoseconds, struct timespec *ts);
 
@@ -13,9 +9,6 @@ int16_t influxdb_Mount_time_epochNano(double nanoseconds, struct timespec *ts);
  */
 int16_t influxdb_Mount_response_time(JSON_Object *output, JSON_Value *value)
 {
-    const char* inStr = json_serialize_to_string(value);
-    corto_info("Convert [%s]", inStr);
-
     struct timespec ts;
     JSON_Value *v = NULL;
 
@@ -71,9 +64,6 @@ int16_t influxdb_Mount_response_time(JSON_Object *output, JSON_Value *value)
         goto error;
     }
 
-    const char* timeStr = json_serialize_to_string(v);
-    corto_info("Updated [%s]", timeStr);
-
     json_value_free(v);
 
     return 0;
@@ -120,9 +110,11 @@ error:
 int16_t influxdb_Mount_time_epochNano(double nanoseconds, struct timespec *ts)
 {
     uint64_t ns = (uint64_t)nanoseconds;
-    corto_info("Converted nano [%llu]", ns);
-    ts->tv_sec = (uint64_t)(ns / 1000*1000);
-    ts->tv_nsec = ns % NANO;
+    ts->tv_nsec = ns % (1000 * 1000 * 1000);
+
+    uint64_t us = ns / 1000;
+    uint64_t ms = us / 1000;
+    ts->tv_sec = ms / 1000;
 
     return 0;
 }
