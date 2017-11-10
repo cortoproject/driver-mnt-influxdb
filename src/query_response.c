@@ -5,12 +5,10 @@
 
 const corto_string INFLUX_TIMESTAMP_MEMBER = "timestamp";
 
-int16_t influxdb_Mount_response_result_type(
-    influxdb_Query_SeriesResult *series);
-
-int16_t influxdb_Mount_response_result_id(
-    influxdb_Query_SeriesResult *series,
-    corto_result *r);
+int16_t influxdb_Mount_response_parse_id(
+    const char* resultId,
+    corto_string *parent,
+    corto_string *id);
 
 int16_t influxdb_Mount_response_result_value(
     corto_result *result,
@@ -57,7 +55,7 @@ int16_t influxdb_Mount_response_result_update(
     JSON_Array *values,
     corto_result *r)
 {
-    corto_ptr_setstr(&r->type, (corto_string)series->type);
+    corto_ptr_setstr(&r->type, series->type);
 
     JSON_Value *jsonValue = json_value_init_object();
     JSON_PTR_VERIFY(jsonValue, "Failed to create result JSON Value.")
@@ -82,10 +80,13 @@ int16_t influxdb_Mount_response_result_update(
         }
     }
 
-    influxdb_Mount_response_result_id(series, r);
+    if (influxdb_Mount_response_parse_id(series->name, &r->parent, &r->id)) {
+        goto error;
+    }
 
     corto_string str = json_serialize_to_string(jsonValue);
     r->value = (corto_word)corto_strdup(str);
+
     json_free_serialized_string(str);
     JSON_SAFE_FREE(jsonValue)
 
@@ -273,17 +274,4 @@ int16_t influxdb_Mount_response_parse_id(
     *id = corto_strdup(newId);
 
     return 0;
-}
-
-int16_t influxdb_Mount_response_result_id(
-    influxdb_Query_SeriesResult *series,
-    corto_result *r)
-{
-    if (influxdb_Mount_response_parse_id(series->name, &r->parent, &r->id)) {
-        goto error;
-    }
-
-    return 0;
-error:
-    return -1;
 }
