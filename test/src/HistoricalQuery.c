@@ -29,7 +29,6 @@ void test_HistoricalQuery_select(
     int cnt = 0;
     while(corto_iter_hasNext(&it) != 0)
     {
-        cnt++;
         corto_result *result = (corto_result*) corto_iter_next(&it);
         if (strcmp(result->type, corto_fullpath(NULL, (corto_type)test_Weather_o)) == 0) {
             corto_info("Historical Query: Parent [%s] ID [%s]",
@@ -39,6 +38,7 @@ void test_HistoricalQuery_select(
             //     corto_info("[%s]", value);
             // }
             while (corto_iter_hasNext(&result->history)) {
+                cnt++;
                 corto_result *r = corto_iter_next(&result->history);
                 corto_info(
                     "got '%s' with type '%s' and value %s",

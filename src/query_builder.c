@@ -177,6 +177,17 @@ corto_string influxdb_Mount_query_builder_where(
     return corto_buffer_str(&buffer);
 }
 
+corto_string influxdb_Mount_query_builder_order(
+    influxdb_Mount this,
+    corto_query *query)
+{
+    corto_string order = NULL;
+
+    order = corto_asprintf(" ORDER BY time DESC");
+
+    return order;
+}
+
 corto_string influxdb_Mount_query_builder_limit(
     influxdb_Mount this,
     corto_query *query)
