@@ -30,6 +30,16 @@ struct influxdb_Query_Result {
     void                    *data;
 };
 
+/* Function allocates memory, dest should be NULL (uninitialized) pointer */
+DRIVER_MNT_INFLUXDB_EXPORT
+int16_t influxdb_Mount_series_deepCopy(
+    influxdb_Query_SeriesResult *src,
+    influxdb_Query_SeriesResult *dest);
+
+DRIVER_MNT_INFLUXDB_EXPORT
+void influxdb_Mount_series_free(
+    influxdb_Query_SeriesResult *series);
+
 DRIVER_MNT_INFLUXDB_EXPORT
 corto_string influxdb_Mount_response_column_name(
     JSON_Array *columns,

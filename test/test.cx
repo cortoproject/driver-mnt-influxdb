@@ -19,6 +19,8 @@ test/Suite Query:/
     void select()
     void selectAll()
     void selectChild()
+    void limit()
+    void offset()
 
 test/Suite HistoricalQuery:/
     void select()

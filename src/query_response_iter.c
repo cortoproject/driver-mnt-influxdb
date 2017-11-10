@@ -29,13 +29,13 @@ error:
 int influxdb_Mount_iterDataHasNext(corto_iter *iter)
 {
     influxdb_Mount_iterData *data = (influxdb_Mount_iterData*)iter->ctx;
+    corto_info("pos [%d] of [%d]", data->pos+1, data->series->valueCount);
 
     if (data == NULL)
     {
         corto_error("InfluxDB iterator is uninitialized.");
         return -1;
     }
-
     if ((data->pos+1) >= data->series->valueCount) {
         goto nodata;
     }
@@ -55,16 +55,11 @@ void influxdb_Mount_iterDataRelease(corto_iter *iter)
             return;
         }
 
-        JSON_Value *vals = json_array_get_wrapping_value(data->series->values);
-        JSON_Value *cols = json_array_get_wrapping_value(data->series->columns);
-
-        corto_dealloc(data->series->name);
-        corto_dealloc(data->series->type);
-        json_value_free(vals);
-        json_value_free(cols);
         corto_ptr_free(data->result, corto_result_o);
-        free(data->series);
+        influxdb_Mount_series_free(data->series);
         free(data);
+
+        corto_info("Released.");
 
         iter->ctx = NULL;
     }
@@ -73,47 +68,20 @@ void influxdb_Mount_iterDataRelease(corto_iter *iter)
 influxdb_Mount_iterData *influxdb_Mount_iterDataNew(
     influxdb_Query_SeriesResult *series)
 {
-    JSON_Array *vals = NULL;
-    JSON_Array *cols = NULL;
-    JSON_Value *v = NULL;
-    JSON_Value *c = NULL;
-
-    JSON_Value *values = json_array_get_wrapping_value(series->values);
-    JSON_Value *columns = json_array_get_wrapping_value(series->columns);
-
-    v = json_value_deep_copy(values);
-    JSON_PTR_VERIFY(v, "Iterator value data copy.");
-    vals = json_value_get_array(v);
-    if (!vals) {
-        corto_seterr("Failed to create iterator values.");
-        goto error;
-    }
-
-    c = json_value_deep_copy(values);
-    JSON_PTR_VERIFY(v, "Iterator columns data copy.");
-    cols = json_value_get_array(c);
-    if (!columns) {
-        corto_seterr("Failed to create iterator columns.");
-        goto error;
-    }
-
     influxdb_Mount_iterData *data =
         (influxdb_Mount_iterData*)calloc(1, sizeof(influxdb_Mount_iterData));
 
-    influxdb_Query_SeriesResult *seriesCopy =
-        (influxdb_Query_SeriesResult*)malloc(sizeof(influxdb_Query_SeriesResult));
+    influxdb_Query_SeriesResult *seriesCopy = NULL;
+    if (influxdb_Mount_series_deepCopy(series, seriesCopy)) {
+        goto error;
+    }
+
     corto_result *result = corto_ptr_new(corto_result_o);
-
-    seriesCopy->values = vals;
-    seriesCopy->columns = cols;
-
     data->pos = 0;
     data->result = result;
-    data->series = series;
+    data->series = seriesCopy;
 
     return data;
 error:
-    JSON_SAFE_FREE(c);
-    JSON_SAFE_FREE(v);
     return NULL;
 }
