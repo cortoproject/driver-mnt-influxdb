@@ -12,9 +12,12 @@ int CreateManualMount(corto_object mountPoint)
     corto_string fromPath = corto_fullpath(NULL, mountPoint);
     corto_query* query = corto_queryCreate("//", fromPath, NULL, NULL, NULL, 0, 0, NULL, NULL);
     corto_queuePolicy *queue = corto_queuePolicyCreate(25);
+
+    int policyMask = 0;
+    policyMask |= CORTO_MOUNT_NOTIFY | CORTO_MOUNT_QUERY;
     corto_mountPolicy *policy = corto_mountPolicyCreate(CORTO_LOCAL_OWNER,
-         CORTO_MOUNT_NOTIFY|CORTO_MOUNT_QUERY,
-         1,
+         policyMask,
+         0,
          queue,
          0,
          false);
@@ -58,8 +61,10 @@ int CreateHistoricalManualMount(corto_object mountPoint)
     corto_string fromPath = corto_fullpath(NULL, mountPoint);
     corto_query* query = corto_queryCreate("//", fromPath, NULL, NULL, NULL, 0, 0, NULL, NULL);
     corto_queuePolicy *queue = corto_queuePolicyCreate(25);
+    int policyMask = 0;
+    policyMask |= CORTO_MOUNT_HISTORY_QUERY;
     corto_mountPolicy *policy = corto_mountPolicyCreate(CORTO_LOCAL_OWNER,
-         CORTO_MOUNT_HISTORY_QUERY,
+         policyMask,
          1,
          queue,
          0,
@@ -98,6 +103,24 @@ error:
     return -1;
 }
 
+int DumbRandom(int min, int max){
+   return min + rand() / (RAND_MAX / (max - min + 1) + 1);
+}
+
+void QuickWeatherUpdate(test_Weather weather, int temp, int humidity, int uv) {
+    corto_time now;
+    corto_timeGet(&now);
+    if (test_WeatherUpdate(
+        weather,
+        DumbRandom(temp-20, temp+20),
+        DumbRandom(humidity-10, humidity+10),
+        DumbRandom(uv-3, 12),
+        &now)) {
+        corto_error("Weather update failed. Error: %s", corto_lasterr());
+    }
+
+}
+
 int16_t CreateWeatherObjects(corto_object weather)
 {
     corto_time now;
@@ -111,12 +134,22 @@ int16_t CreateWeatherObjects(corto_object weather)
     test_City nicholasville = test_CityCreateChild(kentucky, "nicholasville", 1798, 30006);
     test_City sanDiego = test_CityCreateChild(california, "San Diego", 1769, 1407000);
 
-    test_WeatherCreateChild(houston, "weather", 82, 45.5, 8, &now);
-    test_WeatherCreateChild(lexington, "weather", 95, 78.8, 6, &now);
-    test_WeatherCreateChild(nicholasville, "weather", 45, 47, 4, &now);
-    test_WeatherCreateChild(sanDiego, "weather", 50, 48, 6, &now);
+    test_Weather weatherH = test_WeatherCreateChild(houston, "weather", 82, 45.5, 8, &now);
+    test_Weather weatherL = test_WeatherCreateChild(lexington, "weather", 95, 78.8, 6, &now);
+    test_Weather weatherN = test_WeatherCreateChild(nicholasville, "weather", 45, 47, 4, &now);
+    test_Weather weatherS = test_WeatherCreateChild(sanDiego, "weather", 50, 48, 6, &now);
 
     sleep(2);
+
+    int cnt = 0;
+    while (cnt < 2) {
+        cnt++;
+        QuickWeatherUpdate(weatherL, 82, 45, 8);
+        QuickWeatherUpdate(weatherH, 95, 78, 6);
+        QuickWeatherUpdate(weatherN, 45, 47, 4);
+        QuickWeatherUpdate(weatherS, 50, 48, 6);
+        usleep(1000);
+    }
 
     corto_release(kentucky);
     corto_release(texas);

@@ -1,22 +1,32 @@
 #include <driver/mnt/influxdb/query_response_time.h>
 #include <driver/mnt/influxdb/query_response_parser.h>
 
+#define MILLI 1000L
+#define MICRO MILLI * 1000L
+#define NANO MICRO * 1000L
+
 int16_t influxdb_Mount_time_rfc3339(const char* timeStr, struct timespec *ts);
+int16_t influxdb_Mount_time_epochNano(double nanoseconds, struct timespec *ts);
 
 /* InfluxDB returns timestamps as "Time"
  * Format 2017-10-17T02:25:41.60012734Z
  */
 int16_t influxdb_Mount_response_time(JSON_Object *output, JSON_Value *value)
 {
+    const char* inStr = json_serialize_to_string(value);
+    corto_info("Convert [%s]", inStr);
+
     struct timespec ts;
     JSON_Value *v = NULL;
-    if (json_value_get_type(value) == JSONString) {
+
+    JSON_Value_Type timeFormat = json_value_get_type(value);
+    if (timeFormat == JSONString) {
         const char *timeStr = json_value_get_string(value);
         if (!timeStr) {
             corto_seterr("Failed to parse timestamp string.");
             goto error;
         }
-        if (influxdb_Mount_time_rfc3339(timeStr, &ts) != 0) {
+        if (influxdb_Mount_time_rfc3339(timeStr, &ts)) {
             corto_error("Failed to parse timestamp.");
             goto error;
         }
@@ -24,6 +34,16 @@ int16_t influxdb_Mount_response_time(JSON_Object *output, JSON_Value *value)
         // corto_info("Format [%s] Output Sec [%d] Nano [%d]",
             // timeStr, ts.tv_sec, ts.tv_nsec);
         // corto_info("EPOCH [%lld.%.9ld]", (long long)ts.tv_sec, ts.tv_nsec);
+    } else if (timeFormat == JSONNumber) {
+        ///TODO Need to check precision - hardcoded to nanoseconds
+        double epochNano = json_value_get_number(value);
+        if (influxdb_Mount_time_epochNano(epochNano, &ts)) {
+            corto_error("Failed to parse timestamp.");
+            goto error;
+        }
+    } else {
+        corto_seterr("Unsupported time format. JSON Type = [%d]", timeFormat);
+        goto error;
     }
 
     v = json_value_init_object();
@@ -50,6 +70,9 @@ int16_t influxdb_Mount_response_time(JSON_Object *output, JSON_Value *value)
         corto_seterr("Failed to set JSON result value.");
         goto error;
     }
+
+    const char* timeStr = json_serialize_to_string(v);
+    corto_info("Updated [%s]", timeStr);
 
     json_value_free(v);
 
@@ -92,4 +115,14 @@ error:
 //     ts->tv_sec = 0;
 //     ts->tv_nsec = 0;
 //     return 0;
+}
+
+int16_t influxdb_Mount_time_epochNano(double nanoseconds, struct timespec *ts)
+{
+    uint64_t ns = (uint64_t)nanoseconds;
+    corto_info("Converted nano [%llu]", ns);
+    ts->tv_sec = (uint64_t)(ns / 1000*1000);
+    ts->tv_nsec = ns % NANO;
+
+    return 0;
 }

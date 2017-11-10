@@ -91,7 +91,17 @@ void test_Query_selectAll(
         corto_string nodePath = corto_asprintf("/weather/%s/%s", r->parent, r->id);
         corto_object node = corto_lookup(root_o, nodePath);
         test_assert(node != NULL);
+
+        corto_time now;
+        corto_time epoch;
+        corto_timeGet(&now);
+
+        corto_timeGet(&now);
         if (corto_instanceof((corto_type)test_Weather_o, node) == true){
+            test_Weather weather = (test_Weather)node;
+            test_assert(corto_time_compare(weather->timestamp, epoch) == 1);
+            test_assert(corto_time_compare(weather->timestamp, now) == -1);
+
             cnt++;
         }
 
