@@ -10,6 +10,7 @@ extern corto_string INFLUX_DB_NAME;
 extern influxdb_Mount influxdbMount;
 
 int CreateManualMount(corto_object mountPoint);
+int CreateHistoricalManualMount(corto_object mountPoint);
 int16_t CreateWeatherObjects(corto_object weather);
 
 #endif

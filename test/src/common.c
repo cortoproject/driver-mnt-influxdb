@@ -52,6 +52,52 @@ error:
     return -1;
 }
 
+int CreateHistoricalManualMount(corto_object mountPoint)
+{
+    influxdbMount = influxdb_MountDeclareChild(root_o, INFLUX_MOUNT_ID);
+    corto_string fromPath = corto_fullpath(NULL, mountPoint);
+    corto_query* query = corto_queryCreate("//", fromPath, NULL, NULL, NULL, 0, 0, NULL, NULL);
+    corto_queuePolicy *queue = corto_queuePolicyCreate(25);
+    corto_mountPolicy *policy = corto_mountPolicyCreate(CORTO_LOCAL_OWNER,
+         CORTO_MOUNT_HISTORY_QUERY,
+         1,
+         queue,
+         0,
+         false);
+
+     influxdb_RetentionPolicy rp = influxdb_RetentionPolicyCreate(
+         "unit_test",
+         INFLUX_DB_HOST,
+         INFLUX_DB_NAME,
+         "1h0m0s",
+         1,
+         NULL);
+
+    test_assert(rp != NULL);
+
+    if (influxdb_MountDefine(influxdbMount,
+        query,
+        "text/json",
+        policy,
+        INFLUX_DB_HOST,     /* hostname */
+        INFLUX_DB_NAME,    /* database name */
+        rp,                /* retention policy */
+        NULL,              /* username */
+        NULL))             /* password */
+    {
+        corto_error("Failed to define weather mount");
+        goto error;
+    }
+
+    corto_release(query);
+    corto_release(queue);
+    corto_release(policy);
+
+    return 0;
+error:
+    return -1;
+}
+
 int16_t CreateWeatherObjects(corto_object weather)
 {
     corto_time now;

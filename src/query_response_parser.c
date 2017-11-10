@@ -1,5 +1,64 @@
 #include <driver/mnt/influxdb/query_response_parser.h>
 
+int16_t influxdb_Mount_series_deepCopy(
+    influxdb_Query_SeriesResult *src,
+    influxdb_Query_SeriesResult *dest)
+{
+    JSON_Array *values = NULL;
+    JSON_Array *columns = NULL;
+    JSON_Value *valuesCopy = NULL;
+    JSON_Value *columnsCopy = NULL;
+
+    JSON_Value *srcValues = json_array_get_wrapping_value(src->values);
+    JSON_Value *srcColumns = json_array_get_wrapping_value(src->columns);
+
+    valuesCopy = json_value_deep_copy(srcValues);
+    JSON_PTR_VERIFY(valuesCopy, "Iterator value data copy.");
+    values = json_value_get_array(valuesCopy);
+    if (!values) {
+        corto_seterr("Failed to create iterator values.");
+        goto error;
+    }
+
+    columnsCopy = json_value_deep_copy(srcColumns);
+    JSON_PTR_VERIFY(columnsCopy, "Iterator column data copy.");
+    columns = json_value_get_array(columnsCopy);
+    if (!columns) {
+        corto_seterr("Failed to create iterator columns.");
+        goto error;
+    }
+
+    size_t size = sizeof(influxdb_Query_SeriesResult);
+    dest = (influxdb_Query_SeriesResult*)malloc(size);
+
+    dest->name = corto_strdup(src->name);
+    dest->values = values;
+    dest->columns = columns;
+    dest->valueCount = src->valueCount;
+    dest->convertTime = src->convertTime;
+    dest->type = corto_strdup(src->type);
+
+    return 0;
+error:
+    JSON_SAFE_FREE(columnsCopy);
+    JSON_SAFE_FREE(valuesCopy);
+    return -1;
+}
+
+void influxdb_Mount_series_free(
+    influxdb_Query_SeriesResult *series)
+{
+    JSON_Value *values = json_array_get_wrapping_value(series->values);
+    JSON_Value *columns = json_array_get_wrapping_value(series->columns);
+
+    corto_dealloc(series->name);
+    corto_dealloc(series->type);
+    json_value_free(values);
+    json_value_free(columns);
+
+    free(series);
+}
+
 int16_t influxdb_Mount_response_parse_verify_result(
     influxdb_Query_SeriesResult *series)
 {

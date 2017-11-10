@@ -95,63 +95,26 @@ error:
     return -1;
 }
 
-/*
- * Processes and Returns onQuery Response
- *
- * Process Value Array Index
- * ["valueA", "valueB", "ValueC", ...]
- *
- */
-int16_t influxdb_Mount_response_latest(
-    influxdb_Mount this,
-    influxdb_Query_SeriesResult *series,
-    JSON_Array *values)
-{
-    corto_result *r = corto_ptr_new(corto_result_o);
-
-    if (influxdb_Mount_response_result_update(series, values, r)) {
-        goto error;
-    }
-
-    corto_mount_return(this, r);
-    corto_ptr_free(r, corto_result_o);
-    return 0;
-error:
-    corto_ptr_free(r, corto_result_o);
-    return -1;
-}
-
-/*
- * Processes and Returns onQuery Response for historical data
- *
- * Process Value Array Index
- * ["valueA", "valueB", "ValueC", ...]
- *
- */
 int16_t influxdb_Mount_response_historical(
     influxdb_Mount this,
-    influxdb_Query_SeriesResult *series)
+    influxdb_Query_SeriesResult *series,
+    corto_result *result)
 {
-    corto_result *result = NULL;
     influxdb_Mount_iterData *data = influxdb_Mount_iterDataNew(series);
     if (!data) {
         corto_seterr("Failed to create historical response iterator data.");
         goto error;
     }
 
-    result = corto_ptr_new(corto_result_o);
-
     result->history.ctx = data;
     result->history.hasNext = influxdb_Mount_iterDataHasNext;
     result->history.next = influxdb_Mount_iterDataNext;
     result->history.release = influxdb_Mount_iterDataRelease;
 
-    corto_mount_return(this, result);
-    corto_ptr_free(result, corto_result_o);
+    corto_info("Historical built");
 
     return 0;
 error:
-    corto_ptr_free(result, corto_result_o);
     return -1;
 }
 
@@ -168,22 +131,27 @@ int16_t influxdb_Mount_response_process_values(
         goto error;
     }
 
-    if (this->super.policy.mask == CORTO_MOUNT_HISTORY_QUERY) {
-        if (influxdb_Mount_response_historical(this, series) != 0) {
+    JSON_Array *v = json_array_get_array(series->values, 0);
+    JSON_PTR_VERIFY(v, "Resolved invalid JSON value.")
+
+    corto_result *r = corto_ptr_new(corto_result_o);
+
+    if (influxdb_Mount_response_result_update(series, v, r)) {
+        corto_seterr("Failed to process query response. %s", corto_lasterr());
+        goto error;
+    }
+
+    bool *historical = (bool*)data;
+    if (*historical == true) {
+        if (influxdb_Mount_response_historical(this, series, r) != 0) {
             corto_seterr("Failed to process historical query response. %s",
                 corto_lasterr());
             goto error;
         }
     }
-    else {
-        JSON_Array *v = json_array_get_array(series->values, 0);
-        JSON_PTR_VERIFY(v, "Resolved invalid JSON value.")
-        if (influxdb_Mount_response_latest(this, series, v) != 0) {
-            corto_seterr("Failed to process last query response. %s",
-                corto_lasterr());
-            goto error;
-        }
-    }
+
+    corto_mount_return(this, r);
+    corto_ptr_free(r, corto_result_o);
 
     return 0;
 error:
@@ -192,7 +160,8 @@ error:
 
 int16_t influxdb_Mount_query_response_handler(
     influxdb_Mount this,
-    httpclient_Result *r)
+    httpclient_Result *r,
+    bool historical)
 {
     corto_trace("GET Result STATUS [%d] RESPONSE [%s]", r->status, r->response);
 
@@ -205,7 +174,7 @@ int16_t influxdb_Mount_query_response_handler(
     struct influxdb_Query_Result result = {
         &influxdb_Mount_response_process_values,
         this,
-        NULL
+        &historical
     };
 
     JSON_Value *response = json_parse_string(r->response);

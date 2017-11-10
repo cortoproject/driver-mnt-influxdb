@@ -23,3 +23,4 @@ class Mount: vstore/mount:/
     void onHistoryBatchNotify(vstore/subscriberEventIter events) override
     void onBatchNotify(vstore/subscriberEventIter events) override
     vstore/resultIter onQuery(vstore/query query) override
+    vstore/resultIter onHistoryQuery(vstore/query query) override

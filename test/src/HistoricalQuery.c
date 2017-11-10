@@ -9,7 +9,7 @@ void test_HistoricalQuery_select(
 
     corto_object weather = corto_voidCreateChild(root_o, "weather");
 
-    if (CreateManualMount(weather))
+    if (CreateHistoricalManualMount(weather))
     {
         goto error;
     }
@@ -19,9 +19,8 @@ void test_HistoricalQuery_select(
     }
 
     corto_iter it;
-
-    /* Select children from object (o). */
-    corto_int16 ret = corto_select("*").from("/weather").iter(&it);
+    corto_int16 ret = corto_select("//")
+        .from("/weather").fromNow().forDepth(10).iter(&it);
 
     if (ret != 0) {
         goto error;
@@ -32,8 +31,22 @@ void test_HistoricalQuery_select(
     {
         cnt++;
         corto_result *result = (corto_result*) corto_iter_next(&it);
-        ///TODO Check values
-        corto_info("SELECT: ID [%s] Name [%s]", result->id, result->name);
+        if (strcmp(result->type, corto_fullpath(NULL, (corto_type)test_Weather_o)) == 0) {
+            corto_info("Historical Query: Parent [%s] ID [%s]",
+                result->parent, result->id);
+            // corto_sampleIterForeach(result->history, sample) {
+            //     corto_string value = (corto_string)sample.value;
+            //     corto_info("[%s]", value);
+            // }
+            while (corto_iter_hasNext(&result->history)) {
+                corto_result *r = corto_iter_next(&result->history);
+                corto_info(
+                    "got '%s' with type '%s' and value %s",
+                    r->id,
+                    r->type,
+                    corto_result_getText(r));
+            }
+        }
     }
 
     test_assert(cnt > 0);

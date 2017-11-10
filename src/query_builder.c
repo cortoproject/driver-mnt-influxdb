@@ -86,8 +86,6 @@ corto_string influxdb_Mount_query_builder_from(
             from = corto_asprintf(" FROM %s.%s.\"%s/%s\"",
                 db, rp, query->from, query->select);
         }
-
-
     }
 
     if (from) {
@@ -117,77 +115,97 @@ corto_string influxdb_Mount_query_builder_where(
 {
     corto_buffer buffer = CORTO_BUFFER_INIT;
 
-    corto_string timeLimit = NULL;
-    corto_string sampleLimit = NULL;
-    corto_string depthLimit = NULL;
-    if (query->timeBegin.kind == CORTO_FRAME_NOW) {
-        if (query->timeBegin.kind == CORTO_FRAME_TIME) {
-            corto_time t = corto_frame_getTime(&query->timeBegin);
-            timeLimit = corto_asprintf(" WHERE time > %ds", t.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
-            corto_time t = corto_frame_getTime(&query->timeEnd);
-            timeLimit = corto_asprintf(" WHERE time > (now() - %ds)", t.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_SAMPLE) {
-            if (query->timeEnd.value) {
-                sampleLimit = corto_asprintf(" OFFSET %ld", query->timeEnd.value);
-            }
-
-        } else if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
-            depthLimit = corto_asprintf(" ORDER BY time DESC LIMIT %ld", query->timeEnd.value);
-        }
-    } else if (query->timeBegin.kind == CORTO_FRAME_TIME) {
-        corto_time from = corto_frame_getTime(&query->timeBegin);
-        if (query->timeEnd.kind == CORTO_FRAME_TIME) {
-            corto_time to = corto_frame_getTime(&query->timeEnd);
-            timeLimit = corto_asprintf(" WHERE time < %ds AND time > %ds", from.sec, to.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
-            corto_time to = corto_frame_getTime(&query->timeEnd);
-            timeLimit = corto_asprintf(" WHERE time < %ds AND time > %ds",
-                from.sec,
-                from.sec - to.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_SAMPLE) {
-            timeLimit = corto_asprintf(" WHERE time < %ds", from.sec);
-            if (query->timeEnd.value) {
-                sampleLimit = corto_asprintf(" OFFSET %ld", query->timeEnd.value);
-            }
-        } else if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
-            timeLimit = corto_asprintf(" WHERE time < %ds", from.sec);
-            depthLimit = corto_asprintf(" ORDER BY time DESC LIMIT %ld", query->timeEnd.value);
-        }
-    } else if (query->timeBegin.kind == CORTO_FRAME_SAMPLE) {
-        if (query->timeBegin.value) {
-            sampleLimit = corto_asprintf(" OFFSET %ld", query->timeBegin.value);
-        }
-        if (query->timeEnd.kind == CORTO_FRAME_TIME) {
-            corto_time to = corto_frame_getTime(&query->timeEnd);
-            timeLimit = corto_asprintf(" WHERE time < %ds", to.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
-            /* Unsupported */
-        } else if (query->timeEnd.kind == CORTO_FRAME_SAMPLE) {
-            if (query->timeEnd.value) {
-                depthLimit = corto_asprintf(" LIMIT %ld", query->timeEnd.value - query->timeBegin.value);
-            }
-        } else if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
-            depthLimit = corto_asprintf(" ORDER BY time DESC LIMIT %ld", query->timeEnd.value);
-        }
-    }
-
-    if (timeLimit) {
-        corto_buffer_appendstr(&buffer, timeLimit);
-        corto_dealloc(timeLimit);
-    }
-
-    if (sampleLimit) {
-        corto_buffer_appendstr(&buffer, sampleLimit);
-        corto_dealloc(sampleLimit);
-    }
-
-    if (depthLimit) {
-        corto_buffer_appendstr(&buffer, depthLimit);
-        corto_dealloc(depthLimit);
-    }
+    // corto_string timeLimit = NULL;
+    // corto_string sampleLimit = NULL;
+    // corto_string depthLimit = NULL;
+    // if (query->timeBegin.kind == CORTO_FRAME_NOW) {
+    //     if (query->timeBegin.kind == CORTO_FRAME_TIME) {
+    //         corto_time t = corto_frame_getTime(&query->timeBegin);
+    //         timeLimit = corto_asprintf(" WHERE time > %ds", t.sec);
+    //     } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
+    //         corto_time t = corto_frame_getTime(&query->timeEnd);
+    //         timeLimit = corto_asprintf(" WHERE time > (now() - %ds)", t.sec);
+    //     } else if (qu       ery->timeEnd.kind == CORTO_FRAME_SAMPLE) {
+    //         if (query->timeEnd.value) {
+    //             sampleLimit = corto_asprintf(" OFFSET %ld", query->timeEnd.value);
+    //         }
+    //
+    //     } else if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
+    //         depthLimit = corto_asprintf(" ORDER BY time DESC LIMIT %ld", query->timeEnd.value);
+    //     }
+    // } else if (query->timeBegin.kind == CORTO_FRAME_TIME) {
+    //     corto_time from = corto_frame_getTime(&query->timeBegin);
+    //     if (query->timeEnd.kind == CORTO_FRAME_TIME) {
+    //         corto_time to = corto_frame_getTime(&query->timeEnd);
+    //         timeLimit = corto_asprintf(" WHERE time < %ds AND time > %ds", from.sec, to.sec);
+    //     } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
+    //         corto_time to = corto_frame_getTime(&query->timeEnd);
+    //         timeLimit = corto_asprintf(" WHERE time < %ds AND time > %ds",
+    //             from.sec,
+    //             from.sec - to.sec);
+    //     } else if (query->timeEnd.kind == CORTO_FRAME_SAMPLE) {
+    //         timeLimit = corto_asprintf(" WHERE time < %ds", from.sec);
+    //         if (query->timeEnd.value) {
+    //             sampleLimit = corto_asprintf(" OFFSET %ld", query->timeEnd.value);
+    //         }
+    //     } else if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
+    //         timeLimit = corto_asprintf(" WHERE time < %ds", from.sec);
+    //         depthLimit = corto_asprintf(" ORDER BY time DESC LIMIT %ld", query->timeEnd.value);
+    //     }
+    // } else if (query->timeBegin.kind == CORTO_FRAME_SAMPLE) {
+    //     if (query->timeEnd.kind == CORTO_FRAME_TIME) {
+    //         corto_time to = corto_frame_getTime(&query->timeEnd);
+    //         timeLimit = corto_asprintf(" WHERE time < %ds", to.sec);
+    //     }
+    // }
+    //
+    // if (timeLimit) {
+    //     corto_buffer_appendstr(&buffer, timeLimit);
+    //     corto_dealloc(timeLimit);
+    // }
+    //
+    // if (sampleLimit) {
+    //     corto_buffer_appendstr(&buffer, sampleLimit);
+    //     corto_dealloc(sampleLimit);
+    // }
+    //
+    // if (depthLimit) {
+    //     corto_buffer_appendstr(&buffer, depthLimit);
+    //     corto_dealloc(depthLimit);
+    // }
 
     return corto_buffer_str(&buffer);
+}
+
+corto_string influxdb_Mount_query_builder_limit(
+    influxdb_Mount this,
+    corto_query *query)
+{
+    corto_string limit = NULL;
+
+    if (query->limit > 0) {
+        limit = corto_asprintf(" LIMIT %llu", query->limit);
+    }
+
+    return limit;
+}
+
+DRIVER_MNT_INFLUXDB_EXPORT
+corto_string influxdb_Mount_query_builder_offset(
+    influxdb_Mount this,
+    corto_query *query)
+{
+    corto_string offset = NULL;
+
+    /* The OFFSET clause requires a LIMIT clause. Using the OFFSET clause
+     * without a LIMIT clause can cause inconsistent query results.
+     */
+
+    if ((query->offset > 0) && (query->limit > 0)) {
+        offset = corto_asprintf(" OFFSET %llu", query->offset);
+    }
+
+    return offset;
 }
 
 corto_string influxdb_Mount_query_builder_regex(

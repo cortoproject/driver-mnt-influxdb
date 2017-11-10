@@ -26,5 +26,14 @@ DRIVER_MNT_INFLUXDB_EXPORT
 corto_string influxdb_Mount_query_builder_regex(
     corto_string pattern);
 
+DRIVER_MNT_INFLUXDB_EXPORT
+corto_string influxdb_Mount_query_builder_limit(
+    influxdb_Mount this,
+    corto_query *query);
+
+DRIVER_MNT_INFLUXDB_EXPORT
+corto_string influxdb_Mount_query_builder_offset(
+    influxdb_Mount this,
+    corto_query *query);
 
 #endif //__DRIVER_MNT_INFLUXDB_QUERY_BUILDER_H__
