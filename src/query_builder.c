@@ -142,7 +142,7 @@ corto_string influxdb_Mount_query_builder_where(
     corto_string type = influxdb_Mount_query_builder_type(this, query);
     corto_string time = influxdb_Mount_query_builder_time(this, query);
 
-    if ((strlen(type) > 0) && (strlen(time) > 0)) {
+    if (time && type) {
         where = corto_asprintf("%s AND %s", time, type);
     } else {
         where = corto_asprintf("%s%s", time, type);
@@ -160,7 +160,7 @@ corto_string influxdb_Mount_query_builder_type(
 {
     corto_string type = NULL;
 
-    if (strlen(query->type) > 0) {
+    if (query->type && strlen(query->type) > 0) {
         type = corto_asprintf(" type = \"%s\"");
     } else {
         type = corto_asprintf("");
@@ -173,8 +173,6 @@ corto_string influxdb_Mount_query_builder_time(
     influxdb_Mount this,
     corto_query *query)
 {
-    corto_buffer buffer = CORTO_BUFFER_INIT;
-
     corto_string timeLimit = NULL;
 
     if (query->timeBegin.kind == CORTO_FRAME_NOW) {
@@ -196,14 +194,11 @@ corto_string influxdb_Mount_query_builder_time(
             timeLimit = corto_asprintf(" WHERE time < %ds AND time > %ds",
                 from.sec, from.sec - to.sec);
         }
+    } else {
+        timeLimit = corto_asprintf("");
     }
-
-    if (timeLimit) {
-        corto_buffer_appendstr(&buffer, timeLimit);
-        corto_dealloc(timeLimit);
-    }
-
-    return corto_buffer_str(&buffer);
+    
+    return timeLimit;
 }
 
 corto_string influxdb_Mount_query_builder_order(
