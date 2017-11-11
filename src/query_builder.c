@@ -143,9 +143,9 @@ corto_string influxdb_Mount_query_builder_where(
     corto_string time = influxdb_Mount_query_builder_time(this, query);
 
     if ((strlen(type) > 0) && (strlen(time) > 0)) {
-        where = corto_asprintf("%s AND %s", type, time);
+        where = corto_asprintf("%s AND %s", time, type);
     } else {
-        where = corto_asprintf("%s%s", type, time);
+        where = corto_asprintf("%s%s", time, type);
     }
 
     SAFE_DEALLOC(time)
@@ -159,6 +159,12 @@ corto_string influxdb_Mount_query_builder_type(
     corto_query *query)
 {
     corto_string type = NULL;
+
+    if (strlen(query->type) > 0) {
+        type = corto_asprintf(" type = \"%s\"");
+    } else {
+        type = corto_asprintf("");
+    }
 
     return type;
 }
