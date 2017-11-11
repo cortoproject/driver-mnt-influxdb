@@ -211,6 +211,10 @@ corto_resultIter influxdb_Mount_onQuery(
     influxdb_Mount this,
     corto_query *query)
 {
+    corto_info("SELECT [%s]", query->select);
+    corto_info("FROM [%s]", query->from);
+    corto_info("TYPE [%s]", query->type);
+    printf("\n\n");
     return influxdb_Mount_onQueryExecute(this, query, false);
 }
 
