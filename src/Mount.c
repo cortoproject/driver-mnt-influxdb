@@ -183,20 +183,12 @@ corto_resultIter influxdb_Mount_onQueryExecute(
         corto_dealloc(order);
     }
 
-    /* LIMIT */
-    corto_string limit = influxdb_Mount_query_builder_limit(this, query);
-    if (limit) {
-        corto_buffer_appendstr(&buffer, limit);
-        corto_dealloc(limit);
+    /* LIMITS (limit & slimit) + OFFSETS (offset + soffset) */
+    corto_string paginate = influxdb_Mount_query_builder_paginate(this, query);
+    if (paginate) {
+        corto_buffer_appendstr(&buffer, paginate);
+        corto_dealloc(paginate);
     }
-
-    /* OFFSET */
-    corto_string offset = influxdb_Mount_query_builder_offset(this, query);
-    if (offset) {
-        corto_buffer_appendstr(&buffer, offset);
-        corto_dealloc(offset);
-    }
-
 
     /* Publish Query */
     corto_string bufferStr = corto_buffer_str(&buffer);

@@ -2,6 +2,30 @@
 
 #define SAFE_DEALLOC(s) if (s) { corto_dealloc(s); s = NULL; }
 
+corto_string influxdb_Mount_query_builder_type(
+    influxdb_Mount this,
+    corto_query *query);
+
+corto_string influxdb_Mount_query_builder_time(
+    influxdb_Mount this,
+    corto_query *query);
+
+corto_string influxdb_Mount_query_builder_limit(
+    influxdb_Mount this,
+    corto_query *query);
+
+corto_string influxdb_Mount_query_builder_slimit(
+    influxdb_Mount this,
+    corto_query *query);
+
+corto_string influxdb_Mount_query_builder_offset(
+    influxdb_Mount this,
+    corto_query *query);
+
+corto_string influxdb_Mount_query_builder_soffset(
+    influxdb_Mount this,
+    corto_query *query);
+
 corto_string influxdb_Mount_query_builder_url(
     influxdb_Mount this)
 {
@@ -113,6 +137,36 @@ corto_string influxdb_Mount_query_builder_where(
     influxdb_Mount this,
     corto_query *query)
 {
+    corto_string where = NULL;
+
+    corto_string type = influxdb_Mount_query_builder_type(this, query);
+    corto_string time = influxdb_Mount_query_builder_time(this, query);
+
+    if ((strlen(type) > 0) && (strlen(time) > 0)) {
+        where = corto_asprintf("%s AND %s", type, time);
+    } else {
+        where = corto_asprintf("%s%s", type, time);
+    }
+
+    SAFE_DEALLOC(time)
+    SAFE_DEALLOC(type)
+
+    return where;
+}
+
+corto_string influxdb_Mount_query_builder_type(
+    influxdb_Mount this,
+    corto_query *query)
+{
+    corto_string type = NULL;
+
+    return type;
+}
+
+corto_string influxdb_Mount_query_builder_time(
+    influxdb_Mount this,
+    corto_query *query)
+{
     corto_buffer buffer = CORTO_BUFFER_INIT;
 
     // corto_string timeLimit = NULL;
@@ -188,21 +242,105 @@ corto_string influxdb_Mount_query_builder_order(
     return order;
 }
 
+corto_string influxdb_Mount_query_builder_paginate(
+    influxdb_Mount this,
+    corto_query *query)
+{
+    corto_string paginate = NULL;
+
+    corto_string limit = influxdb_Mount_query_builder_limit(this, query);
+    corto_string slimit = influxdb_Mount_query_builder_slimit(this, query);
+    corto_string offset = influxdb_Mount_query_builder_offset(this, query);
+    corto_string soffset = influxdb_Mount_query_builder_soffset(this, query);
+
+
+    paginate = corto_asprintf("%s%s%s%s", limit, offset, slimit, soffset);
+
+    SAFE_DEALLOC(limit)
+    SAFE_DEALLOC(slimit)
+    SAFE_DEALLOC(offset)
+    SAFE_DEALLOC(soffset)
+
+    return paginate;
+}
+
+/*
+ * OFFSET <N> paginates N points in the query results.
+ * INFLUXDB POINT: The part of InfluxDB’s data structure that consists of a
+ * single collection of fields in a series. Each point is uniquely identified
+ * by its series and timestamp.
+ *
+ * Mapping To Corto: History samples.
+ */
 corto_string influxdb_Mount_query_builder_limit(
     influxdb_Mount this,
     corto_query *query)
 {
     corto_string limit = NULL;
 
+    /* CORTO_FRAME_DEPTH = a number of samples. This is a relative sample
+     * offset. So for example, give me the last 10 samples starting from NOW
+     */
+     if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
+         if (query->timeEnd.value > 0) {
+             limit = corto_asprintf(" LIMIT %lld", query->timeEnd.value);
+         } else {
+             limit = corto_asprintf("");
+         }
+     }
+
+    return limit;
+}
+
+/*
+ * SOFFSET <N> paginates N series in the query results.
+ * INFLUXDB SERIES: The collection of data in InfluxDB’s data structure that
+ * share a measurement, tag set, and retention policy.
+ *
+ * Mapping To Corto: Object instances
+ */
+corto_string influxdb_Mount_query_builder_slimit(
+    influxdb_Mount this,
+    corto_query *query)
+{
+    corto_string limit = NULL;
+
     if (query->limit > 0) {
-        limit = corto_asprintf(" LIMIT %llu", query->limit);
+        limit = corto_asprintf(" SLIMIT %llu", query->limit);
+    } else {
+        limit = corto_asprintf("");
     }
 
     return limit;
 }
 
-DRIVER_MNT_INFLUXDB_EXPORT
+/* History Samples */
 corto_string influxdb_Mount_query_builder_offset(
+    influxdb_Mount this,
+    corto_query *query)
+{
+    corto_string offset = NULL;
+
+    /* INFLUXDB: The OFFSET clause requires a LIMIT clause. Using the OFFSET clause
+     * without a LIMIT clause can cause inconsistent query results.
+     *
+     * CORTO_FRAME_SAMPLE = an absolute sample identifier, starting from the
+     * first sample written (first sample written for a series is # 0)
+     */
+
+     if (query->timeBegin.kind == CORTO_FRAME_DEPTH) {
+         if (query->timeBegin.value > 0) {
+             offset = corto_asprintf(" OFFSET %lld", query->timeBegin.value);
+         } else {
+             offset = corto_asprintf("");
+         }
+     }
+
+    return offset;
+}
+
+/* Objects */
+corto_string influxdb_Mount_query_builder_soffset(
     influxdb_Mount this,
     corto_query *query)
 {
@@ -213,7 +351,9 @@ corto_string influxdb_Mount_query_builder_offset(
      */
 
     if ((query->offset > 0) && (query->limit > 0)) {
-        offset = corto_asprintf(" OFFSET %llu", query->offset);
+        offset = corto_asprintf(" SOFFSET %llu", query->offset);
+    } else {
+        offset = corto_asprintf("");
     }
 
     return offset;

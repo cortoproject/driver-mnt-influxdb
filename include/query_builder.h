@@ -28,12 +28,7 @@ corto_string influxdb_Mount_query_builder_order(
     corto_query *query);
 
 DRIVER_MNT_INFLUXDB_EXPORT
-corto_string influxdb_Mount_query_builder_limit(
-    influxdb_Mount this,
-    corto_query *query);
-
-DRIVER_MNT_INFLUXDB_EXPORT
-corto_string influxdb_Mount_query_builder_offset(
+corto_string influxdb_Mount_query_builder_paginate(
     influxdb_Mount this,
     corto_query *query);
 
