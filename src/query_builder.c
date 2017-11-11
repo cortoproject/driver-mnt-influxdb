@@ -142,10 +142,14 @@ corto_string influxdb_Mount_query_builder_where(
     corto_string type = influxdb_Mount_query_builder_type(this, query);
     corto_string time = influxdb_Mount_query_builder_time(this, query);
 
-    if (time && type) {
-        where = corto_asprintf("%s AND %s", time, type);
+    int timeLen = strlen(time);
+    int typeLen = strlen(type);
+    if ((timeLen > 0) && (typeLen > 0)) {
+        where = corto_asprintf(" WHERE %s AND %s", time, type);
+    } else if ((timeLen > 0) || (typeLen > 0)) {
+        where = corto_asprintf(" WHERE %s%s", time, type);
     } else {
-        where = corto_asprintf("%s%s", time, type);
+        where = corto_asprintf("");
     }
 
     SAFE_DEALLOC(time)
@@ -160,9 +164,16 @@ corto_string influxdb_Mount_query_builder_type(
 {
     corto_string type = NULL;
 
-    if (query->type && strlen(query->type) > 0) {
-        type = corto_asprintf(" type = \"%s\"");
-    } else {
+    ///TODO Figure out why Corto is recursively querying with type. We may not
+    ///     be able to support type in query, until we can passthrough //
+    ///     (select all) requests.
+    // if (query->type && strlen(query->type) > 0) {
+    //     if (strcmp(query->select, "*") != 0) {
+    //         type = corto_asprintf(" type=\"%s\"", query->type);
+    //     }
+    // }
+
+    if (!type) {
         type = corto_asprintf("");
     }
 
@@ -175,29 +186,30 @@ corto_string influxdb_Mount_query_builder_time(
 {
     corto_string timeLimit = NULL;
 
-    if (query->timeBegin.kind == CORTO_FRAME_NOW) {
-        if (query->timeBegin.kind == CORTO_FRAME_TIME) {
-            corto_time t = corto_frame_getTime(&query->timeBegin);
-            timeLimit = corto_asprintf(" WHERE time > %ds", t.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
-            corto_time t = corto_frame_getTime(&query->timeEnd);
-            timeLimit = corto_asprintf(" WHERE time > (now() - %ds)", t.sec);
-        }
-    } else if (query->timeBegin.kind == CORTO_FRAME_TIME) {
-        corto_time from = corto_frame_getTime(&query->timeBegin);
-        if (query->timeEnd.kind == CORTO_FRAME_TIME) {
-            corto_time to = corto_frame_getTime(&query->timeEnd);
-            timeLimit = corto_asprintf(" WHERE time < %ds AND time > %ds",
-                from.sec, to.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
-            corto_time to = corto_frame_getTime(&query->timeEnd);
-            timeLimit = corto_asprintf(" WHERE time < %ds AND time > %ds",
-                from.sec, from.sec - to.sec);
-        }
-    } else {
-        timeLimit = corto_asprintf("");
-    }
-    
+    // if (query->timeBegin.kind == CORTO_FRAME_TIME) {
+    //     corto_time t = corto_frame_getTime(&query->timeBegin);
+    //     timeLimit = corto_asprintf(" WHERE time > %ds", t.sec);
+    // } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
+    //     corto_time t = corto_frame_getTime(&query->timeEnd);
+    //     timeLimit = corto_asprintf(" WHERE time > (now() - %ds)", t.sec);
+    // }
+    // if (query->timeBegin.kind == CORTO_FRAME_TIME) {
+    //     corto_time from = corto_frame_getTime(&query->timeBegin);
+    //     if (query->timeEnd.kind == CORTO_FRAME_TIME) {
+    //         corto_time to = corto_frame_getTime(&query->timeEnd);
+    //         timeLimit = corto_asprintf(" WHERE time < %ds AND time > %ds",
+    //             from.sec, to.sec);
+    //     } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
+    //         corto_time to = corto_frame_getTime(&query->timeEnd);
+    //         timeLimit = corto_asprintf(" WHERE time < %ds AND time > %ds",
+    //             from.sec, from.sec - to.sec);
+    //     }
+    // } else {
+    //     timeLimit = corto_asprintf("");
+    // }
+
+    timeLimit = corto_asprintf("");
+
     return timeLimit;
 }
 
@@ -254,9 +266,11 @@ corto_string influxdb_Mount_query_builder_limit(
      if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
          if (query->timeEnd.value > 0) {
              limit = corto_asprintf(" LIMIT %lld", query->timeEnd.value);
-         } else {
-             limit = corto_asprintf("");
          }
+     }
+
+     if (!limit) {
+         limit = corto_asprintf("");
      }
 
     return limit;
@@ -301,9 +315,11 @@ corto_string influxdb_Mount_query_builder_offset(
      if (query->timeBegin.kind == CORTO_FRAME_DEPTH) {
          if (query->timeBegin.value > 0) {
              offset = corto_asprintf(" OFFSET %lld", query->timeBegin.value);
-         } else {
-             offset = corto_asprintf("");
          }
+     }
+
+     if (!offset) {
+         offset = corto_asprintf("");
      }
 
     return offset;

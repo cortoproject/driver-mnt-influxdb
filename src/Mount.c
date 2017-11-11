@@ -162,7 +162,9 @@ corto_resultIter influxdb_Mount_onQueryExecute(
     if (from) {
         corto_buffer_appendstr(&buffer, from);
         corto_dealloc(from);
-    } else {
+    }
+
+    else {
         corto_error("Failed to create InfluxDB FROM statement. Error %s",
             corto_lasterr());
     }
@@ -181,7 +183,7 @@ corto_resultIter influxdb_Mount_onQueryExecute(
         corto_dealloc(order);
     }
 
-    /* LIMITS (limit & slimit) + OFFSETS (offset + soffset) */
+    /* LIMITS and Offsets */
     corto_string paginate = influxdb_Mount_query_builder_paginate(this, query);
     if (paginate) {
         corto_buffer_appendstr(&buffer, paginate);
@@ -227,13 +229,6 @@ corto_resultIter influxdb_Mount_onHistoryQuery(
     corto_info("WHERE [%s]", query->where);
     corto_info("LIMIT [%llu]", query->limit);
     corto_info("OFFSET [%llu]", query->offset);
-
-    timeBegin
-    timeEnd
-    struct corto_frame {
-    corto_frameKind kind;
-    int64_t value;
-};
     */
     corto_info("Mount From [%s] Select [%s] From [%s] Type [%s] Member " \
         "[%s] Where [%s] LIMIT [%llu] OFFSET [%llu]",

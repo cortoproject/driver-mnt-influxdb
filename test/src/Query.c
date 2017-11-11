@@ -109,7 +109,7 @@ void test_Query_selectAll(
         corto_release(node);
     }
 
-    corto_trace("Received [%d] nodes", cnt);
+    corto_info("Received [%d] nodes", cnt);
     test_assert(cnt == 4);
     corto_release(weather);
     corto_release(influxdbMount);

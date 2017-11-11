@@ -164,6 +164,8 @@ int16_t influxdb_Mount_query_response_handler(
     httpclient_Result *r,
     bool historical)
 {
+    JSON_Value *response = NULL;
+
     corto_trace("GET Result STATUS [%d] RESPONSE [%s]", r->status, r->response);
 
     if (r->status != 200) {
@@ -178,7 +180,7 @@ int16_t influxdb_Mount_query_response_handler(
         &historical
     };
 
-    JSON_Value *response = json_parse_string(r->response);
+    response = json_parse_string(r->response);
     JSON_PTR_VERIFY(response, "Parson failed to parse Influxdb JSON response")
 
     if (influxdb_Mount_response_parse(response, &result) != 0) {
