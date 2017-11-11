@@ -162,9 +162,7 @@ corto_resultIter influxdb_Mount_onQueryExecute(
     if (from) {
         corto_buffer_appendstr(&buffer, from);
         corto_dealloc(from);
-    }
-
-    else {
+    } else {
         corto_error("Failed to create InfluxDB FROM statement. Error %s",
             corto_lasterr());
     }
