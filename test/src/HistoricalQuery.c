@@ -1,7 +1,6 @@
 /* This is a managed file. Do not delete this comment. */
 
 #include <include/test.h>
-
 void test_HistoricalQuery_select(
     test_HistoricalQuery this)
 {
@@ -21,7 +20,6 @@ void test_HistoricalQuery_select(
     corto_iter it;
     corto_int16 ret = corto_select("//")
         .from("/weather").fromNow().forDepth(10).iter(&it);
-
     if (ret != 0) {
         goto error;
     }
@@ -37,6 +35,7 @@ void test_HistoricalQuery_select(
             //     corto_string value = (corto_string)sample.value;
             //     corto_info("[%s]", value);
             // }
+
             while (corto_iter_hasNext(&result->history)) {
                 cnt++;
                 corto_result *r = corto_iter_next(&result->history);
@@ -46,17 +45,41 @@ void test_HistoricalQuery_select(
                     r->type,
                     corto_result_getText(r));
             }
+
         }
+
     }
 
     test_assert(cnt > 0);
-
     corto_release(weather);
     corto_release(influxdbMount);
-
-
     return;
 error:
     corto_error("%s", corto_lasterr());
     return;
 }
+
+void test_HistoricalQuery_limit(
+    test_HistoricalQuery this)
+{
+    /* Insert implementation */
+}
+
+void test_HistoricalQuery_offset(
+    test_HistoricalQuery this)
+{
+    /* Insert implementation */
+}
+
+void test_HistoricalQuery_timeDuration(
+    test_HistoricalQuery this)
+{
+    /* Insert implementation */
+}
+
+void test_HistoricalQuery_timeFrame(
+    test_HistoricalQuery this)
+{
+    /* Insert implementation */
+}
+

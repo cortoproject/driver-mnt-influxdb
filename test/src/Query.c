@@ -150,7 +150,37 @@ void test_Query_selectChild(
     return;
 }
 
-void test_Query_limit(
+void test_Query_type(
+    test_Query this)
+{
+    corto_object weather = corto_voidCreateChild(root_o, "weather");
+
+    test_assert(CreateManualMount(weather) == 0);
+
+    corto_info("Query for Type [%s]", corto_fullpath(NULL, (corto_type)test_Weather_o));
+
+    corto_iter it;
+    test_assert(corto_select("//")
+        .from("/weather")
+        .type(corto_fullpath(NULL, (corto_type)test_Weather_o))
+        .iter(&it) == 0);
+
+    int cnt = 0;
+    while(corto_iter_hasNext(&it) == 1)
+    {
+        cnt++;
+        corto_result *r = (corto_result*)corto_iter_next(&it);
+        corto_trace("Type Query Parent[%s] ID[%s]", r->parent, r->id);
+    }
+
+    corto_info("Received [%d] nodes", cnt);
+    test_assert(cnt == 4);
+    corto_release(weather);
+    corto_release(influxdbMount);
+    return;
+}
+
+void test_Query_slimit(
     test_Query this)
 {
     corto_object weather = corto_voidCreateChild(root_o, "weather");
@@ -191,7 +221,7 @@ void test_Query_limit(
     corto_release(influxdbMount);
 }
 
-void test_Query_offset(
+void test_Query_soffset(
     test_Query this)
 {
     corto_object weather = corto_voidCreateChild(root_o, "weather");
@@ -233,52 +263,4 @@ void test_Query_offset(
     test_assert(weatherCnt == 0);
     corto_release(weather);
     corto_release(influxdbMount);
-}
-
-void test_Query_type(
-    test_Query this)
-{
-    corto_object weather = corto_voidCreateChild(root_o, "weather");
-
-    test_assert(CreateManualMount(weather) == 0);
-
-    corto_info("Query for Type [%s]", corto_fullpath(NULL, (corto_type)test_Weather_o));
-
-    corto_iter it;
-    test_assert(corto_select("//")
-        .from("/weather")
-        .type(corto_fullpath(NULL, (corto_type)test_Weather_o))
-        .iter(&it) == 0);
-
-    int cnt = 0;
-    while(corto_iter_hasNext(&it) == 1)
-    {
-        corto_result *r = (corto_result*)corto_iter_next(&it);
-        corto_trace("Received: Parent[%s] ID[%s]", r->parent, r->id);
-        corto_string nodePath = corto_asprintf("/weather/%s/%s", r->parent, r->id);
-        corto_object node = corto_lookup(root_o, nodePath);
-        test_assert(node != NULL);
-
-        corto_time now;
-        corto_time epoch;
-        corto_timeGet(&now);
-
-        corto_timeGet(&now);
-        if (corto_instanceof((corto_type)test_Weather_o, node) == true){
-            test_Weather weather = (test_Weather)node;
-            test_assert(corto_time_compare(weather->timestamp, epoch) == 1);
-            test_assert(corto_time_compare(weather->timestamp, now) == -1);
-
-            cnt++;
-        }
-
-        corto_dealloc(nodePath);
-        corto_release(node);
-    }
-
-    corto_info("Received [%d] nodes", cnt);
-    test_assert(cnt == 4);
-    corto_release(weather);
-    corto_release(influxdbMount);
-    return;
 }

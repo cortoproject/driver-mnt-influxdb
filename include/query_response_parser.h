@@ -23,12 +23,17 @@ typedef int16_t (*influxdb_ResultCallback)(
     influxdb_Query_SeriesResult *series,
     void *data);
 
-DRIVER_MNT_INFLUXDB_EXPORT
-struct influxdb_Query_Result {
+typedef struct _influxdb_Query_Result {
     influxdb_ResultCallback callback;
     influxdb_Mount          ctx;
     void                    *data;
-};
+} influxdb_Query_Result;
+
+typedef struct _influxdb_Mount_ResonseFilter {
+    bool historical;
+    uint64_t limit;
+    uint64_t offset;
+} influxdb_Mount_ResonseFilter;
 
 /* Function allocates memory, dest should be NULL (uninitialized) pointer */
 DRIVER_MNT_INFLUXDB_EXPORT
@@ -53,6 +58,6 @@ int influxdb_Mount_response_column_index(
 DRIVER_MNT_INFLUXDB_EXPORT
 int16_t influxdb_Mount_response_parse(
     JSON_Value *responseValue,
-    struct influxdb_Query_Result *result);
+    influxdb_Query_Result *result);
 
 #endif //__DRIVER_MNT_INFLUXDB_QUERY_RESPONSE_PARSER_H__

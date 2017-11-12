@@ -86,7 +86,7 @@ error:
 
 int16_t influxdb_Mount_response_parse_series(
     JSON_Object *series,
-    struct influxdb_Query_Result *result)
+    influxdb_Query_Result *result)
 {
     influxdb_Query_SeriesResult r = {NULL, NULL, NULL, 0, false, NULL};
     corto_string name = (corto_string)json_object_get_string(series, "name");
@@ -125,7 +125,7 @@ error:
 
 int16_t influxdb_Mount_response_parse_results(
     JSON_Object *jsonResult,
-    struct influxdb_Query_Result *result)
+    influxdb_Query_Result *result)
 {
     JSON_Array *series = json_object_get_array(jsonResult, "series");
     if (series == NULL) {
@@ -135,6 +135,29 @@ int16_t influxdb_Mount_response_parse_results(
 
     size_t seriesCount = json_array_get_count(series);
     size_t i;
+
+    influxdb_Mount_ResonseFilter *filter =
+        (influxdb_Mount_ResonseFilter*)result->data;
+
+    /* InfluxDB SLIMIT (Series Limit) and SOFFSET (series offset) to not
+     * map perfectly to Corto's request. We process & filter the full result
+     * set to return only the objects (series) that Corto is interested in */
+     if (filter->limit > 0) {
+         if (filter->offset > seriesCount) {
+             corto_info("Requested Offset [%llu] > Series Results [%zu]",
+                filter->limit, seriesCount);
+             goto empty;
+         }
+         if ((filter->limit + filter->offset) > seriesCount) {
+             i = filter->offset;
+         } else {
+             i = filter->offset;
+             seriesCount = filter->limit + i;
+         }
+     } else {
+         i = 0;
+     }
+
     for (i = 0; i < seriesCount; i++) {
         JSON_Object *o = json_array_get_object(series, i);
         JSON_PTR_VERIFY(o, "Failed to resolve series response JSON object.");
@@ -152,7 +175,7 @@ empty:
 
 int16_t influxdb_Mount_response_parse(
     JSON_Value *responseValue,
-    struct influxdb_Query_Result *result)
+    influxdb_Query_Result *result)
 {
     JSON_Object *response = json_value_get_object(responseValue);
     JSON_PTR_VERIFY(response, "JSON Response is not an object")

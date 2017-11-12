@@ -19,12 +19,16 @@ test/Suite Query:/
     void select()
     void selectAll()
     void selectChild()
-    void limit()
-    void offset()
+    void slimit()
+    void soffset()
     void type()
 
 test/Suite HistoricalQuery:/
     void select()
+    void limit()
+    void offset()
+    void timeDuration()
+    void timeFrame()
 
 test/Suite Tool:/
     void measurements()

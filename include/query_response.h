@@ -7,7 +7,7 @@
 DRIVER_MNT_INFLUXDB_EXPORT
 int16_t influxdb_Mount_response_result_type(
     influxdb_Query_SeriesResult *series);
-    
+
 DRIVER_MNT_INFLUXDB_EXPORT
 int16_t influxdb_Mount_response_result_value(
     corto_result *result,
@@ -26,6 +26,6 @@ DRIVER_MNT_INFLUXDB_EXPORT
 int16_t influxdb_Mount_query_response_handler(
     influxdb_Mount this,
     httpclient_Result *r,
-    bool historical);
+    influxdb_Mount_ResonseFilter *filter);
 
 #endif //__DRIVER_MNT_INFLUXDB_QUERY_RESPONSE_H__
