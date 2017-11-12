@@ -56,7 +56,7 @@ int16_t influxdb_Mount_show_measurements(
         goto error;
     }
 
-    struct influxdb_Query_Result result = {
+    influxdb_Query_Result result = {
         &influxdb_Mount_parse_show_measurements_process,
         this,
         results
@@ -160,7 +160,7 @@ int16_t influxdb_Mount_show_databases(
         goto error;
     }
 
-    struct influxdb_Query_Result result = {
+    influxdb_Query_Result result = {
         &influxdb_Mount_parse_show_databases_process,
         NULL,
         results
@@ -274,7 +274,7 @@ int16_t influxdb_Mount_show_retentionPolicies(
         goto error;
     }
 
-    struct influxdb_Query_Result result = {
+    influxdb_Query_Result result = {
         &influxdb_Mount_show_retentionPolicies_process,
         NULL,
         results

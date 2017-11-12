@@ -131,6 +131,9 @@ int16_t influxdb_Mount_response_process_values(
     if (influxdb_Mount_response_result_type(series)) {
         goto error;
     }
+    influxdb_Mount_ResonseFilter *filter = (influxdb_Mount_ResonseFilter *)data;
+
+    corto_info("\n%s\n", json_serialize_to_string(json_array_get_wrapping_value(series->values)));
 
     JSON_Array *v = json_array_get_array(series->values, 0);
     JSON_PTR_VERIFY(v, "Resolved invalid JSON value.")
@@ -142,8 +145,7 @@ int16_t influxdb_Mount_response_process_values(
         goto error;
     }
 
-    bool *historical = (bool*)data;
-    if (*historical == true) {
+    if (filter->historical == true) {
         if (influxdb_Mount_response_historical(this, series, r) != 0) {
             corto_seterr("Failed to process historical query response. %s",
                 corto_lasterr());
@@ -162,7 +164,7 @@ error:
 int16_t influxdb_Mount_query_response_handler(
     influxdb_Mount this,
     httpclient_Result *r,
-    bool historical)
+    influxdb_Mount_ResonseFilter *filter)
 {
     JSON_Value *response = NULL;
 
@@ -174,10 +176,10 @@ int16_t influxdb_Mount_query_response_handler(
         goto error;
     }
 
-    struct influxdb_Query_Result result = {
+    influxdb_Query_Result result = {
         &influxdb_Mount_response_process_values,
         this,
-        &historical
+        filter
     };
 
     response = json_parse_string(r->response);

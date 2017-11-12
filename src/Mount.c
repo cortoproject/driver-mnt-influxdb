@@ -184,11 +184,17 @@ corto_resultIter influxdb_Mount_onQueryExecute(
     }
 
     /* LIMITS and Offsets */
-    corto_string paginate = influxdb_Mount_query_builder_paginate(this, query);
+    corto_string paginate = influxdb_Mount_query_builder_paginate(
+        this, query, historical);
     if (paginate) {
         corto_buffer_appendstr(&buffer, paginate);
         corto_dealloc(paginate);
     }
+
+
+    influxdb_Mount_ResonseFilter filter =
+        { historical, query->limit, query->offset };
+    corto_info("LIMIT [%llu] offset [%llu]", filter.limit, filter.offset);
 
     /* Publish Query */
     corto_string bufferStr = corto_buffer_str(&buffer);
@@ -203,7 +209,7 @@ corto_resultIter influxdb_Mount_onQueryExecute(
     corto_dealloc(url);
     corto_dealloc(bufferStr);
     corto_dealloc(queryStr);
-    influxdb_Mount_query_response_handler(this, &result, historical);
+    influxdb_Mount_query_response_handler(this, &result, &filter);
     return CORTO_ITER_EMPTY; /* Using corto_mount_return */
 }
 
@@ -211,10 +217,6 @@ corto_resultIter influxdb_Mount_onQuery(
     influxdb_Mount this,
     corto_query *query)
 {
-    corto_info("SELECT [%s]", query->select);
-    corto_info("FROM [%s]", query->from);
-    corto_info("TYPE [%s]", query->type);
-    printf("\n\n");
     return influxdb_Mount_onQueryExecute(this, query, false);
 }
 
