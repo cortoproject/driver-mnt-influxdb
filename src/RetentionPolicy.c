@@ -1,6 +1,7 @@
 /* This is a managed file. Do not delete this comment. */
 
 #include <driver/mnt/influxdb/influxdb.h>
+#include <driver/mnt/influxdb/query_tool.h>
 
 /* Execute checks to ensure a conficting policy does not exist.
  * @return 1 Matching retention policy already exists.
