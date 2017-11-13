@@ -24,7 +24,6 @@
 #include <driver/mnt/influxdb/c/_api.h>
 
 /* $body() */
-#include <driver/mnt/influxdb/query_tool.h>
 /* $end */
 
 #endif
