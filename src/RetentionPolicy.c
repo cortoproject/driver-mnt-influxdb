@@ -117,7 +117,7 @@ int16_t influxdb_RetentionPolicy_construct(
     request = corto_asprintf("CREATE RETENTION POLICY %s ON %s " \
         "DURATION %s REPLICATION %d%s",
         this->name, this->db, this->duration, this->replication, shard);
-    char *encodedBuffer = httpclient_encode_fields(request);
+    char *encodedBuffer = httpclient_encodeFields(request);
     corto_string url = corto_asprintf("%s/query?db=%s", this->host, this->db);
     corto_string queryStr = corto_asprintf("q=%s", encodedBuffer);
     httpclient_Result r = httpclient_post(url, queryStr);
