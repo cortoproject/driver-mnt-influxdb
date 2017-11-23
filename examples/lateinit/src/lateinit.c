@@ -3,12 +3,12 @@
 
 int lateinitMain(int argc, char *argv[]) {
 
-    // /***** UNCOMMENT FOR WORKING
+    /***** UNCOMMENT FOR WORKING
     if (lateinit_createMount() != 0) {
         corto_error("Failed to create mount.");
         goto error;
     }
-    // ******/
+    ******/
 
     if (lateinit_initialize() != 0) {
         corto_error("Failed to initialize.");
@@ -24,10 +24,10 @@ int lateinitMain(int argc, char *argv[]) {
         usleep(50*1000); // 50ms
         if (i  == 6) {
             /*** Comment this out for working */
-            // if (lateinit_createMount() != 0) {
-                // corto_error("Failed to create mount.");
-                // goto error;
-            // }
+            if (lateinit_createMount() != 0) {
+                corto_error("Failed to create mount.");
+                goto error;
+            }
         }
     }
 
