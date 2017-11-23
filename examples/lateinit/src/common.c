@@ -13,6 +13,10 @@ corto_object weather = NULL;
 
 int CreateHistoricalManualMount(void)
 {
+    if (weather == NULL) {
+        corto_voidCreateChild_auto(root_o, data);
+        weather = corto_createChild(data, "weather", corto_void_o);
+    }
     influxdbMount = influxdb_MountDeclareChild(root_o, INFLUX_MOUNT_ID);
 
     corto_string fromPath = corto_fullpath(NULL, weather);
@@ -89,7 +93,10 @@ int16_t UpdateWeather(void)
 
     if (weatherH == NULL) {
         if (weather == NULL) {
-            weather = corto_createChild(root_o, "data/weather", corto_void_o);
+            if (weather == NULL) {
+                corto_voidCreateChild_auto(root_o, data);
+                weather = corto_createChild(data, "weather", corto_void_o);
+            }
         }
         lateinit_State kentucky = lateinit_StateCreateChild(weather, "kentucky", "south", true);
         lateinit_State texas =  lateinit_StateCreateChild(weather, "texas", "southwest", false);
