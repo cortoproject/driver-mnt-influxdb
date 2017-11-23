@@ -133,8 +133,6 @@ int16_t influxdb_Mount_response_process_values(
     }
     influxdb_Mount_ResonseFilter *filter = (influxdb_Mount_ResonseFilter *)data;
 
-    corto_info("\n%s\n", json_serialize_to_string(json_array_get_wrapping_value(series->values)));
-
     JSON_Array *v = json_array_get_array(series->values, 0);
     JSON_PTR_VERIFY(v, "Resolved invalid JSON value.")
 

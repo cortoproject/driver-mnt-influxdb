@@ -1,6 +1,6 @@
 
 COMPONENTS = %W(
-    writer object_writer query
+    writer object_writer query lateinit
 )
 
 require "#{ENV['CORTO_BUILD']}/forward"

@@ -1,0 +1,19 @@
+in package lateinit
+
+class State:/
+    region: string
+    commonwealth: bool
+
+class City:/
+    founded: int32
+    population: int32
+
+class Weather:/
+    temperature: int16
+    humidity:    float32
+    uv_index:    int8
+    timestamp:   time
+
+int16 initialize()
+int16 update()
+int16 createMount()

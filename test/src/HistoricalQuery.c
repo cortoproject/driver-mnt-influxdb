@@ -39,8 +39,7 @@ void test_HistoricalQuery_select(
             while (corto_iter_hasNext(&result->history)) {
                 cnt++;
                 corto_result *r = corto_iter_next(&result->history);
-                corto_info(
-                    "got '%s' with type '%s' and value %s",
+                corto_info("got '%s' with type '%s' and value %s",
                     r->id,
                     r->type,
                     corto_result_getText(r));
@@ -82,4 +81,3 @@ void test_HistoricalQuery_timeFrame(
 {
     /* Insert implementation */
 }
-
