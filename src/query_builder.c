@@ -266,13 +266,9 @@ corto_string influxdb_Mount_query_builder_limit(
     /* CORTO_FRAME_DEPTH = a number of samples. This is a relative sample
      * offset. So for example, give me the last 10 samples starting from NOW
      */
-     if (query->timeEnd.kind == CORTO_FRAME_DEPTH) {
-         if (query->timeEnd.value > 0) {
-             limit = corto_asprintf(" LIMIT %lld", query->timeEnd.value);
-         }
-     }
-
-     if (!limit) {
+     if (query->slimit > 0) {
+         limit = corto_asprintf(" LIMIT %llu", query->slimit);
+     } else {
          limit = corto_asprintf("");
      }
 
@@ -315,13 +311,9 @@ corto_string influxdb_Mount_query_builder_offset(
      * first sample written (first sample written for a series is # 0)
      */
 
-     if (query->timeBegin.kind == CORTO_FRAME_DEPTH) {
-         if (query->timeBegin.value > 0) {
-             offset = corto_asprintf(" OFFSET %lld", query->timeBegin.value);
-         }
-     }
-
-     if (!offset) {
+     if ((query->soffset > 0) && (query->slimit > 0)) {
+         offset = corto_asprintf(" OFFSET %llu", query->soffset);
+     } else {
          offset = corto_asprintf("");
      }
 

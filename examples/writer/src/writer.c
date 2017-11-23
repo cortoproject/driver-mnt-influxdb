@@ -17,20 +17,23 @@ int WriteConfig(float temperature, corto_object t1, corto_object t2)
 int CreateManualMount(corto_object mountPoint)
 {
     influxdbMount = influxdb_MountDeclareChild(root_o, INFLUX_MOUNT_ID);
-    corto_string fromPath = corto_fullpath(NULL, mountPoint);
-    corto_query* query = corto_queryCreate("//", fromPath, NULL, NULL, NULL, 0, 0, NULL, NULL);
-    corto_queuePolicy *queue = corto_queuePolicyCreate(25);
-    corto_mountPolicy *policy = corto_mountPolicyCreate(CORTO_LOCAL_OWNER,
-         CORTO_MOUNT_NOTIFY,
-         1,
-         queue,
-         0,
-         false);
+    corto_query query = {
+        .select = "//",
+        .from = corto_fullpath(NULL, mountPoint)
+    };
 
-    if (influxdb_MountDefine(influxdbMount,
-        query,
+    corto_mountPolicy policy = {
+        .ownership = CORTO_LOCAL_OWNER,
+        .mask = CORTO_MOUNT_NOTIFY,
+        .sampleRate = 2.0,
+        .queue.max = 25
+    };
+
+    if (influxdb_MountDefine(
+        influxdbMount,
+        &query,
         "text/json",
-        policy,
+        &policy,
         INFLUX_DB_HOST,    /* hostname */
         INFLUX_DB_NAME,    /* database name */
         NULL,              /* retention policy */
@@ -40,10 +43,6 @@ int CreateManualMount(corto_object mountPoint)
         corto_error("Failed to define manual mount");
         return -1;
     }
-
-    corto_release(query);
-    corto_release(queue);
-    corto_release(policy);
 
     return 0;
 }
