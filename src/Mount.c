@@ -26,16 +26,11 @@ int16_t influxdb_Mount_construct(
     /* Make sure that database exists */
     corto_string url = corto_asprintf("%s/query", this->host);
     corto_string query = corto_asprintf("q=CREATE DATABASE %s", this->db);
-    httpclient_post(url, query);
+    httpclient_Result result = httpclient_post(url, query);
     corto_dealloc(url);
     corto_dealloc(query);
-
-    corto_info("InfluxDB Contructed.")
-
-    int16_t suRet = corto_super_construct(this);
-
-    corto_info("INFLUXDB SUPER Constructed.");
-    return suRet; //TODO REMOVE DEBUG
+    SAFE_DEALLOC(result.response)
+    return corto_super_construct(this);
 error:
     return -1;
 }
@@ -56,7 +51,7 @@ void influxdb_Mount_onNotify(
     }
 
     corto_string url = influxdb_Mount_query_builder_url(this);
-    corto_info("influxdb NOTIFY: %s: POST %s", url, sample);
+    corto_trace("influxdb NOTIFY: %s: POST %s", url, sample);
     httpclient_Result result = httpclient_post(url, sample);
     if (result.status != 204) {
         corto_seterr("InfluxDB Update Failed. Status [%d] Response:\n%s",
@@ -64,6 +59,7 @@ void influxdb_Mount_onNotify(
     }
     corto_dealloc(url);
     corto_dealloc(sample);
+    SAFE_DEALLOC(result.response)
 }
 
 void influxdb_Mount_onBatchNotify(
@@ -96,7 +92,7 @@ void influxdb_Mount_onBatchNotify(
 
     corto_string bufferStr = corto_buffer_str(&buffer);
     corto_string url = influxdb_Mount_query_builder_url(this);
-    corto_info("influxdb BATCH NOTIFY: %s: POST %s", url, bufferStr);
+    corto_trace("influxdb BATCH NOTIFY: %s: POST %s", url, bufferStr);
     httpclient_Result result = httpclient_post(url, bufferStr);
     if (result.status != 204) {
         corto_seterr("InfluxDB Update Failed. Status [%d] Response:\n%s",
@@ -105,6 +101,7 @@ void influxdb_Mount_onBatchNotify(
 
     corto_dealloc(url);
     corto_dealloc(bufferStr);
+    SAFE_DEALLOC(result.response)
 }
 
 void influxdb_Mount_onHistoryBatchNotify(
@@ -137,17 +134,18 @@ void influxdb_Mount_onHistoryBatchNotify(
 
     corto_string bufferStr = corto_buffer_str(&buffer);
     corto_string url = influxdb_Mount_query_builder_url(this);
-    corto_info("influxdb HISTORY BATCH NOTIFY: %s: POST %s", url, bufferStr);
+    corto_trace("influxdb HISTORY BATCH NOTIFY: %s: POST %s", url, bufferStr);
     httpclient_Result result = httpclient_post(url, bufferStr);
     if (result.status != 204) {
         corto_seterr("InfluxDB Update Failed. Status [%d] Response:\n%s",
             result.status, result.response);
     }
 
-    corto_info("HISTORY BATCH NOTIFY COMPLETE.");
+    corto_trace("HISTORY BATCH NOTIFY COMPLETE.");
 
     corto_dealloc(url);
     corto_dealloc(bufferStr);
+    SAFE_DEALLOC(result.response)
 }
 
 corto_resultIter influxdb_Mount_onQueryExecute(
@@ -219,6 +217,7 @@ corto_resultIter influxdb_Mount_onQueryExecute(
     corto_dealloc(bufferStr);
     corto_dealloc(queryStr);
     influxdb_Mount_query_response_handler(this, &result, &filter);
+    SAFE_DEALLOC(result.response)
     return CORTO_ITER_EMPTY; /* Using corto_mount_return */
 }
 

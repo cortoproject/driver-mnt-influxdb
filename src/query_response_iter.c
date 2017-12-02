@@ -29,7 +29,6 @@ error:
 int influxdb_Mount_iterDataHasNext(corto_iter *iter)
 {
     influxdb_Mount_iterData *data = (influxdb_Mount_iterData*)iter->ctx;
-    corto_info("pos [%d] of [%d]", data->pos+1, data->series->valueCount);
 
     if (data == NULL)
     {
@@ -58,8 +57,6 @@ void influxdb_Mount_iterDataRelease(corto_iter *iter)
         corto_ptr_free(data->result, corto_result_o);
         influxdb_Mount_series_free(data->series);
         free(data);
-
-        corto_info("Released.");
 
         iter->ctx = NULL;
     }

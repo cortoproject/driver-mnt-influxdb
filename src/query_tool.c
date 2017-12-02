@@ -2,6 +2,8 @@
 #include <driver/mnt/influxdb/query_builder.h>
 #include <driver/mnt/influxdb/query_tool.h>
 
+#define SAFE_DEALLOC(p)if (p){ corto_dealloc(p); p = NULL; }
+
 int16_t influxdb_Mount_parse_show_measurements_process(
     influxdb_Mount this,
     influxdb_Query_SeriesResult *series,
@@ -69,6 +71,7 @@ int16_t influxdb_Mount_show_measurements(
     }
 
     JSON_SAFE_FREE(response)
+    SAFE_DEALLOC(r.response)
 
     return 0;
 error:
@@ -173,10 +176,12 @@ int16_t influxdb_Mount_show_databases(
     }
 
     JSON_SAFE_FREE(response)
+    SAFE_DEALLOC(r.response)
 
     return 0;
 error:
     JSON_SAFE_FREE(response)
+    SAFE_DEALLOC(r.response)
     corto_error("Failed to process response. Error: [%s]", corto_lasterr());
     return -1;
 }
@@ -287,10 +292,12 @@ int16_t influxdb_Mount_show_retentionPolicies(
     }
 
     JSON_SAFE_FREE(response)
+    SAFE_DEALLOC(r.response)
 
     return 0;
 error:
     JSON_SAFE_FREE(response)
+    SAFE_DEALLOC(r.response)
     corto_error("Failed to process response. Error: [%s]", corto_lasterr());
     return -1;
 }
