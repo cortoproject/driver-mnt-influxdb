@@ -28,11 +28,13 @@ int16_t influxdb_Mount_show_measurements_free(
 DRIVER_MNT_INFLUXDB_EXPORT
 int16_t influxdb_Mount_create_database(
     corto_string host,
+    int16_t port,
     corto_string db);
 
 DRIVER_MNT_INFLUXDB_EXPORT
 int16_t influxdb_Mount_show_databases(
     corto_string host,
+    int16_t port,
     corto_string db,
     corto_ll results);
 
@@ -46,6 +48,7 @@ int16_t influxdb_Mount_show_databases_free(
 DRIVER_MNT_INFLUXDB_EXPORT
 int16_t influxdb_Mount_show_retentionPolicies(
     corto_string host,
+    int16_t port,
     corto_string db,
     corto_ll results);
 

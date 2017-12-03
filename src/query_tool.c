@@ -40,7 +40,8 @@ int16_t influxdb_Mount_show_measurements(
     corto_string request = corto_asprintf("SHOW MEASUREMENTS " \
         "ON %s WITH MEASUREMENT =~/%s/", this->db, regex);
     char *encodedBuffer = httpclient_encodeFields(request);
-    corto_string url = corto_asprintf("%s/query?db=%s", this->host, this->db);
+    corto_string url = corto_asprintf("http://%s:%d/query?db=%s",
+        this->host, this->port, this->db);
     corto_string queryStr = corto_asprintf("q=%s", encodedBuffer);
     httpclient_Result r = httpclient_get(url, queryStr);
     corto_dealloc(queryStr);
@@ -120,20 +121,23 @@ error:
 
 int16_t influxdb_Mount_create_database(
     corto_string host,
+    int16_t port,
     corto_string db)
 {
-    corto_string url = corto_asprintf("%s/query", host);
+    corto_string url = corto_asprintf("http://%s:%d/query", host, port);
     corto_string query = corto_asprintf("q=CREATE DATABASE %s", db);
     httpclient_Result r = httpclient_post(url, query);
     corto_dealloc(url);
     corto_dealloc(query);
 
     if (r.status != 200) {
-        corto_error("Create database Query failed. Status [%d] Response [%s]",
-            r.status, r.response);
+        corto_error("Create DB Query failed. HTTP [%d] Response [%s]. Error: %s",
+            r.status, r.response, corto_lasterr());
+        SAFE_DEALLOC(r.response);
         goto error;
     }
 
+    SAFE_DEALLOC(r.response);
     return 0;
 error:
     return -1;
@@ -141,12 +145,14 @@ error:
 
 int16_t influxdb_Mount_show_databases(
     corto_string host,
+    int16_t port,
     corto_string db,
     corto_ll results)
 {
     corto_string request = corto_asprintf("SHOW DATABASES");
     char *encodedBuffer = httpclient_encodeFields(request);
-    corto_string url = corto_asprintf("%s/query?db=%s", host, db);
+    corto_string url = corto_asprintf("http://%s:%d/query?db=%s",
+        host, port, db);
     corto_string queryStr = corto_asprintf("q=%s", encodedBuffer);
     httpclient_Result r = httpclient_get(url, queryStr);
     corto_dealloc(queryStr);
@@ -157,9 +163,8 @@ int16_t influxdb_Mount_show_databases(
     JSON_Value *response = NULL;
 
     if (r.status != 200) {
-        corto_error("Show Databases Query failed. Status [%d] Response [%s]",
+        corto_throw("Show Databases Query failed. Status [%d] Response [%s]",
             r.status, r.response);
-        corto_throw("Show DB response Status = [%d]", r.status);
         goto error;
     }
 
@@ -257,12 +262,14 @@ error:
 
 int16_t influxdb_Mount_show_retentionPolicies(
     corto_string host,
+    int16_t port,
     corto_string db,
     corto_ll results)
 {
     corto_string request = corto_asprintf("SHOW RETENTION POLICIES ON %s", db);
     char *encodedBuffer = httpclient_encodeFields(request);
-    corto_string url = corto_asprintf("%s/query?db=%s", host, db);
+    corto_string url = corto_asprintf("http://%s:%d/query?db=%s",
+        host, port, db);
     corto_string queryStr = corto_asprintf("q=%s", encodedBuffer);
     httpclient_Result r = httpclient_get(url, queryStr);
     corto_dealloc(queryStr);
@@ -273,8 +280,6 @@ int16_t influxdb_Mount_show_retentionPolicies(
     JSON_Value *response = NULL;
 
     if (r.status != 200) {
-        corto_error("Show Measurements Query failed. Status [%d] Response [%s]",
-            r.status, r.response);
         corto_throw("Show Retention Policies Response Status = [%d]", r.status);
         goto error;
     }

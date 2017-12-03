@@ -2,6 +2,37 @@
 #include <driver/mnt/influxdb/query_builder.h>
 #include <driver/mnt/influxdb/query_response.h>
 #include <corto/string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
+///TODO REMOVE
+#include <time.h>
+
+// call this function to start a nanosecond-resolution timer
+struct timespec timer_start(void){
+    struct timespec start_time;
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
+    return start_time;
+}
+
+// call this function to end a timer, returning nanoseconds elapsed as a long
+long timer_end(struct timespec start_time){
+    struct timespec end_time;
+    clock_gettime(CLOCK_MONOTONIC, &end_time);
+    long diffInNanos = end_time.tv_nsec - start_time.tv_nsec;
+    return diffInNanos/1000;
+}
+///TODO REMOVE
+
+/* Local Thread Logging Support */
+int16_t influxdb_UdpSend(corto_string buffer);
+static void influxdb_UdpSocketFree(void *o);
+int16_t influxdb_UdpSocketInitialize(corto_string host, int16_t port);
+static corto_threadKey INFLUXDB_MOUNT_KEY_UDP;
+typedef struct influxdb_UdpSocket_s {
+    int     sfd;
+} *influxdb_UdpSocket;
 
 const corto_string INFLUXDB_QUERY_EPOCH = "ns";
 
@@ -10,6 +41,7 @@ const corto_string INFLUXDB_QUERY_EPOCH = "ns";
 bool influxdb_Mount_filterEvent(corto_string type);
 corto_string influxdb_Mount_notifySample(corto_subscriberEvent *event);
 corto_string influxdb_safeString(corto_string source);
+
 int16_t influxdb_Mount_construct(
     influxdb_Mount this)
 {
@@ -24,14 +56,38 @@ int16_t influxdb_Mount_construct(
         goto error;
     }
 
+    if (this->udpEnable) {
+        if (influxdb_UdpSocketInitialize(this->host, this->udpPort)) {
+            corto_error("Failed to Initialize UDP Socket. %s", corto_lasterr());
+            goto error;
+        }
+    }
+
     /* Make sure that database exists */
-    corto_string url = corto_asprintf("%s/query", this->host);
+    corto_string url = corto_asprintf("http://%s:%d/query",
+        this->host, this->port);
     corto_string query = corto_asprintf("q=CREATE DATABASE %s", this->db);
     httpclient_Result result = httpclient_post(url, query);
-    corto_dealloc(url);
-    corto_dealloc(query);
+    SAFE_DEALLOC(url);
+    SAFE_DEALLOC(query);
+
+    if (result.status != 200) {
+        corto_error("InfluxDB Create database Status [%d] Response [%s].\n%s",
+            result.status, result.response, corto_lasterr());
+        SAFE_DEALLOC(result.response)
+        goto error;
+    }
+
+    corto_info("InfluxDB created."); //TODO REMOVE
+
     SAFE_DEALLOC(result.response)
-    return corto_super_construct(this);
+    // return corto_super_construct(this);
+
+    ///TODO REMOVe
+    int ret = corto_super_construct(this);
+
+    corto_info("INFLUXDB SUPER CONSTRUCTED.");
+    return ret;
 error:
     return -1;
 }
@@ -92,14 +148,15 @@ void influxdb_Mount_onBatchNotify(
     corto_string bufferStr = corto_buffer_str(&buffer);
     corto_string url = influxdb_Mount_query_builder_url(this);
     corto_trace("influxdb BATCH NOTIFY: %s: POST %s", url, bufferStr);
+
     httpclient_Result result = httpclient_post(url, bufferStr);
     if (result.status != 204) {
         corto_throw("InfluxDB Update Failed. Status [%d] Response: %s",
             result.status, result.response);
     }
 
-    corto_dealloc(url);
-    corto_dealloc(bufferStr);
+    SAFE_DEALLOC(url);
+    SAFE_DEALLOC(bufferStr);
     SAFE_DEALLOC(result.response)
 }
 
@@ -109,13 +166,18 @@ void influxdb_Mount_onHistoryBatchNotify(
 {
     corto_buffer buffer = CORTO_BUFFER_INIT;
 
+    corto_info("\n\nPROCESS HISTORICAL\n\n");
+    ///TODO REMOVE
+    struct timespec start = timer_start();
+    int cnt = 0;
+    ///TODO REMOVE
     while (corto_iter_hasNext(&events)) {
+        cnt++;
         corto_subscriberEvent *event = corto_iter_next(&events);
 
         if (influxdb_Mount_filterEvent(event->data.type)) {
             continue;
         }
-
         corto_string sample = influxdb_Mount_notifySample(event);
         if (sample == NULL) {
             corto_throw("Failed to build udpate sample.");
@@ -130,20 +192,38 @@ void influxdb_Mount_onHistoryBatchNotify(
 
     }
 
+    long resolve = timer_end(start); //TODO REMOVe
+    struct timespec startPost = timer_start(); ///TODO REMOVE
+
     corto_string bufferStr = corto_buffer_str(&buffer);
-    corto_string url = influxdb_Mount_query_builder_url(this);
-    corto_trace("influxdb HISTORY BATCH NOTIFY: %s: POST %s", url, bufferStr);
-    httpclient_Result result = httpclient_post(url, bufferStr);
-    if (result.status != 204) {
-        corto_throw("InfluxDB Update Failed. Status [%d] Response: %s",
-            result.status, result.response);
+
+    if (this->udpEnable) {
+        corto_info("Send Buffer [%s] Size [%zu]", bufferStr, sizeof(bufferStr));
+        influxdb_UdpSend(bufferStr);
+    } else {
+        corto_string url = influxdb_Mount_query_builder_url(this);
+        corto_info("influxdb HISTORY BATCH NOTIFY: %s: POST %s", url, bufferStr); //TODO TRACE
+
+        httpclient_Result result = httpclient_post(url, bufferStr);
+        if (result.status != 204) {
+            corto_error("InfluxDB HistoryBatchNotify [%d] Response [%s].",
+                result.status, result.response());
+        }
+
+        SAFE_DEALLOC(url);
+        SAFE_DEALLOC(result.response)
     }
+    SAFE_DEALLOC(bufferStr);
 
-    corto_trace("HISTORY BATCH NOTIFY COMPLETE.");
+    //TODO REMOVE
+    long post = timer_end(startPost);
+    long total = timer_end(start);
 
-    corto_dealloc(url);
-    corto_dealloc(bufferStr);
-    SAFE_DEALLOC(result.response)
+    long timePer = resolve/cnt;
+
+    corto_info("Total [%ld]us Buffer [%d][%ld]us Per [%ld]us Post [%ld]us",
+        total, cnt, resolve, timePer, post);
+
 }
 
 corto_resultIter influxdb_Mount_onQueryExecute(
@@ -206,7 +286,8 @@ corto_resultIter influxdb_Mount_onQueryExecute(
     corto_string queryStr = corto_asprintf("epoch=%s&q=SELECT%s",
         INFLUXDB_QUERY_EPOCH, encodedBuffer);
     corto_dealloc(encodedBuffer);
-    corto_string url = corto_asprintf("%s/query?db=%s", this->host, this->db);
+    corto_string url = corto_asprintf("http://%s:%d/query?db=%s",
+        this->host, this->port, this->db);
     corto_trace("Fields to be decoded [%s]", bufferStr);
     corto_trace("influxdb: %s: GET %s", url, queryStr);
     httpclient_Result result = httpclient_get(url, queryStr);
@@ -304,4 +385,101 @@ corto_string influxdb_Mount_retentionPolicy(
     }
 
     return this->rp->name;
+}
+
+int16_t influxdb_UdpSend(corto_string buffer) {
+    influxdb_UdpSocket s = (influxdb_UdpSocket)corto_threadTlsGet(
+        INFLUXDB_MOUNT_KEY_UDP);
+    if (!s) {
+        corto_seterr("Failed to resolve UDP socket.");
+        goto error;
+    }
+
+    size_t len = strlen(buffer) + 1;
+    if (write(s->sfd, buffer, len) != len) {
+        corto_seterr("UDP Write failed.");
+        goto error;
+    }
+
+    return 0;
+error:
+    return -1;
+}
+
+int16_t influxdb_UdpSocketInitialize(corto_string host, int16_t port) {
+    if (port <= 0) {
+        corto_seterr("Invalid port [%d]", port);
+        goto error;
+    }
+
+    if (corto_threadTlsKey(&INFLUXDB_MOUNT_KEY_UDP, influxdb_UdpSocketFree)) {
+        corto_seterr("Failed to initialize UDP Socket key. Error: %s",
+        corto_lasterr());
+        goto error;
+    }
+
+    size_t udpSockLen = sizeof(struct influxdb_UdpSocket_s);
+    influxdb_UdpSocket s = (influxdb_UdpSocket)malloc(udpSockLen);
+
+    struct addrinfo hints;
+    struct addrinfo *result, *rp;
+
+    /* Obtain address(es) matching host/port */
+
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_UNSPEC;        /* Allow IPv4 or IPv6 */
+    hints.ai_socktype = SOCK_DGRAM;     /* Datagram socket */
+    hints.ai_flags = 0;
+    hints.ai_protocol = IPPROTO_UDP;    /* UDP protocol */
+
+    corto_string portStr = corto_asprintf("%d", port);
+    int ret = getaddrinfo(host, portStr, &hints, &result);
+    if (ret) {
+        corto_seterr("getaddrinfo [%s:%s] Error: %s",
+            host, portStr, gai_strerror(ret));
+        corto_dealloc(portStr);
+        goto error;
+    }
+    corto_dealloc(portStr);
+
+    /* getaddrinfo() returns a list of address structures.
+      Try each address until we successfully connect(2).
+      If socket(2) (or connect(2)) fails, we (close the socket
+      and) try the next address. */
+
+    for (rp = result; rp != NULL; rp = rp->ai_next) {
+        s->sfd = socket(rp->ai_family, rp->ai_socktype,
+                    rp->ai_protocol);
+        if (s->sfd == -1)
+           continue;
+
+        if (connect(s->sfd, rp->ai_addr, rp->ai_addrlen) != -1)
+           break;                  /* Success */
+
+        close(s->sfd);
+    }
+
+    if (rp == NULL) {               /* No address succeeded */
+       corto_error("Could not connect to [http://%s:%d]", host, port);
+       goto error;
+    }
+
+    freeaddrinfo(result);           /* No longer needed */
+
+    if (corto_threadTlsSet(INFLUXDB_MOUNT_KEY_UDP, (void *)s)) {
+        corto_seterr("Failed to set TLS UDP connect data. %s", corto_lasterr());
+        goto error;
+    }
+
+    return 0;
+error:
+    return -1;
+}
+
+static void influxdb_UdpSocketFree(void *o) {
+    influxdb_UdpSocket s = (influxdb_UdpSocket)o;
+    if (s) {
+        close(s->sfd);
+        free(s);
+    }
 }
