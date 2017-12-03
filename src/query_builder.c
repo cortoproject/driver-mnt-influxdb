@@ -47,8 +47,8 @@ corto_string influxdb_Mount_query_builder_url(
         passFree = true;
     }
 
-    corto_string url = corto_asprintf("%s/write?db=%s%s%s%s",
-        this->host, this->db, rp, user, pass);
+    corto_string url = corto_asprintf("%s/%d/write?db=%s%s%s%s",
+        this->host, this->port, this->db, rp, user, pass);
 
     corto_dealloc(rp);
 

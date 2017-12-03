@@ -3,6 +3,8 @@
 #include <driver/mnt/influxdb/influxdb.h>
 #include <driver/mnt/influxdb/query_tool.h>
 
+#define SAFE_DEALLOC(s) if (s) { corto_dealloc(s); s = NULL; }
+
 /* Execute checks to ensure a conficting policy does not exist.
  * @return 1 Matching retention policy already exists.
  * @return 0 Retention policy does not exist - Create it
@@ -12,7 +14,8 @@ int16_t influxdb_RetentionPolicy_verify_create(
     influxdb_RetentionPolicy this)
 {
     corto_ll rpList = corto_ll_new();
-    influxdb_Mount_show_retentionPolicies(this->host, this->db, rpList);
+    influxdb_Mount_show_retentionPolicies(
+        this->host, this->port, this->db, rpList);
 
     bool matching = false;
     bool exists = false;
@@ -85,6 +88,11 @@ int16_t influxdb_RetentionPolicy_construct(
         goto error;
     }
 
+    if (this->port <= 0) {
+        corto_seterr("Invalid Port [%d]", this->port);
+        goto error;
+    }
+
     if (!this->db) {
         corto_throw("[db] is required.");
         goto error;
@@ -102,7 +110,7 @@ int16_t influxdb_RetentionPolicy_construct(
         shard = corto_asprintf(" ");
     }
 
-    if (influxdb_Mount_create_database(this->host, this->db)) {
+    if (influxdb_Mount_create_database(this->host, this->port, this->db)) {
         corto_throw("Failed to create database.");
         goto error;
     }
@@ -118,7 +126,8 @@ int16_t influxdb_RetentionPolicy_construct(
         "DURATION %s REPLICATION %d%s",
         this->name, this->db, this->duration, this->replication, shard);
     char *encodedBuffer = httpclient_encodeFields(request);
-    corto_string url = corto_asprintf("%s/query?db=%s", this->host, this->db);
+    corto_string url = corto_asprintf("http://%s:%d/query?db=%s",
+        this->host, this->port, this->db);
     corto_string queryStr = corto_asprintf("q=%s", encodedBuffer);
     httpclient_Result r = httpclient_post(url, queryStr);
     corto_dealloc(queryStr);
@@ -128,12 +137,13 @@ int16_t influxdb_RetentionPolicy_construct(
     corto_dealloc(shard);
 
     if (r.status != 200) {
-        corto_throw("Status [%d] Response [%s]", r.status, r.response);
+        corto_throw("Create RP Status [%d] Response [%s]", r.status, r.response);
         goto error;
     }
 
+    SAFE_DEALLOC(r.response);
     return 0;
 error:
-    corto_error("Failed to create Retention Policy. Error: %s", corto_lasterr());
+    corto_error("Failed to create Retention Policy.");
     return -1;
 }

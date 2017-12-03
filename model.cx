@@ -3,6 +3,7 @@ in package driver/mnt/influxdb
 class RetentionPolicy:/
     name:           string
     host:           string
+    port:           int16
     db:             string
     duration:       string
     replication:    uint16
@@ -12,6 +13,9 @@ class RetentionPolicy:/
 
 class Mount: vstore/mount:/
     host:       string
+    port:       int16
+    udpPort:    int16
+    udpEnable:  bool
     db:         string
     rp:         influxdb/RetentionPolicy
     username:   string
