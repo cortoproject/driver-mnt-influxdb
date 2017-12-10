@@ -1,6 +1,7 @@
 #include <driver/mnt/influxdb/influxdb.h>
 #include <driver/mnt/influxdb/query_builder.h>
 #include <driver/mnt/influxdb/query_response.h>
+#include <corto/string.h>
 
 const corto_string INFLUXDB_QUERY_EPOCH = "ns";
 
@@ -45,8 +46,7 @@ void influxdb_Mount_onNotify(
 
     corto_string sample = influxdb_Mount_notifySample(event);
     if (sample == NULL) {
-        corto_seterr("Failed to build udpate sample. Error: %s",
-            corto_lasterr());
+        corto_throw("Failed to build udpate sample.");
         return;
     }
 
@@ -54,7 +54,7 @@ void influxdb_Mount_onNotify(
     corto_trace("influxdb NOTIFY: %s: POST %s", url, sample);
     httpclient_Result result = httpclient_post(url, sample);
     if (result.status != 204) {
-        corto_seterr("InfluxDB Update Failed. Status [%d] Response:\n%s",
+        corto_error("InfluxDB Update Failed. Status [%d] Response: %s",
             result.status, result.response);
     }
     corto_dealloc(url);
@@ -77,8 +77,7 @@ void influxdb_Mount_onBatchNotify(
 
         corto_string sample = influxdb_Mount_notifySample(event);
         if (sample == NULL) {
-            corto_seterr("Failed to build udpate sample. Error: %s",
-                corto_lasterr());
+            corto_throw("Failed to build udpate sample.");
             continue;
         }
 
@@ -95,7 +94,7 @@ void influxdb_Mount_onBatchNotify(
     corto_trace("influxdb BATCH NOTIFY: %s: POST %s", url, bufferStr);
     httpclient_Result result = httpclient_post(url, bufferStr);
     if (result.status != 204) {
-        corto_seterr("InfluxDB Update Failed. Status [%d] Response:\n%s",
+        corto_throw("InfluxDB Update Failed. Status [%d] Response: %s",
             result.status, result.response);
     }
 
@@ -119,8 +118,7 @@ void influxdb_Mount_onHistoryBatchNotify(
 
         corto_string sample = influxdb_Mount_notifySample(event);
         if (sample == NULL) {
-            corto_seterr("Failed to build udpate sample. Error: %s",
-                corto_lasterr());
+            corto_throw("Failed to build udpate sample.");
             continue;
         }
 
@@ -137,7 +135,7 @@ void influxdb_Mount_onHistoryBatchNotify(
     corto_trace("influxdb HISTORY BATCH NOTIFY: %s: POST %s", url, bufferStr);
     httpclient_Result result = httpclient_post(url, bufferStr);
     if (result.status != 204) {
-        corto_seterr("InfluxDB Update Failed. Status [%d] Response:\n%s",
+        corto_throw("InfluxDB Update Failed. Status [%d] Response: %s",
             result.status, result.response);
     }
 
@@ -171,8 +169,7 @@ corto_resultIter influxdb_Mount_onQueryExecute(
     }
 
     else {
-        corto_error("Failed to create InfluxDB FROM statement. Error %s",
-            corto_lasterr());
+        corto_error("Failed to create InfluxDB FROM statement.");
     }
 
     /* WHERE */
@@ -296,7 +293,7 @@ corto_string influxdb_Mount_notifySample(corto_subscriberEvent *event)
 corto_string influxdb_safeString(corto_string source)
 {
     /* Measurements and Tags names cannot contain non-espaced spaces */
-    return corto_replace(source, " ", "\\ ");
+    return strreplace(source, " ", "\\ ");
 }
 
 corto_string influxdb_Mount_retentionPolicy(

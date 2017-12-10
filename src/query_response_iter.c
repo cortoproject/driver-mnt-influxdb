@@ -7,13 +7,13 @@ void *influxdb_Mount_iterDataNext(corto_iter *iter)
 
     JSON_Array *values = json_array_get_array(data->series->values, data->pos);
     if (!values) {
-        corto_seterr("Resolved invalid JSON value at index [%d]", data->pos);
+        corto_throw("Resolved invalid JSON value at index [%d]", data->pos);
         goto error;
     }
 
     if (influxdb_Mount_response_result_update(
         data->series, values, data->result)) {
-        corto_seterr("Failed to update result for historical index [%d]",
+        corto_throw("Failed to update result for historical index [%d]",
             data->pos);
         goto error;
     }
@@ -26,7 +26,7 @@ error:
     return NULL;
 }
 
-int influxdb_Mount_iterDataHasNext(corto_iter *iter)
+bool influxdb_Mount_iterDataHasNext(corto_iter *iter)
 {
     influxdb_Mount_iterData *data = (influxdb_Mount_iterData*)iter->ctx;
 

@@ -2,7 +2,7 @@
 
 #include <driver/mnt/influxdb/influxdb.h>
 
-int influxdbMain(int argc, char *argv[]) {
+int cortomain(int argc, char *argv[]) {
 
     /* Insert code that must be run when component is loaded */
 

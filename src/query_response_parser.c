@@ -16,7 +16,7 @@ int16_t influxdb_Mount_series_deepCopy(
     JSON_PTR_VERIFY(valuesCopy, "Iterator value data copy.");
     values = json_value_get_array(valuesCopy);
     if (!values) {
-        corto_seterr("Failed to create iterator values.");
+        corto_throw("Failed to create iterator values.");
         goto error;
     }
 
@@ -24,7 +24,7 @@ int16_t influxdb_Mount_series_deepCopy(
     JSON_PTR_VERIFY(columnsCopy, "Iterator column data copy.");
     columns = json_value_get_array(columnsCopy);
     if (!columns) {
-        corto_seterr("Failed to create iterator columns.");
+        corto_throw("Failed to create iterator columns.");
         goto error;
     }
 
@@ -63,19 +63,19 @@ int16_t influxdb_Mount_response_parse_verify_result(
     influxdb_Query_SeriesResult *series)
 {
     if (!series->name) {
-        corto_seterr("Failed to parse [name] in response.");
+        corto_throw("Failed to parse [name] in response.");
         goto error;
     }
     if (!series->values) {
-        corto_seterr("Failed to parse [values] in response.");
+        corto_throw("Failed to parse [values] in response.");
         goto error;
     }
     if (!series->columns) {
-        corto_seterr("Failed to parse [columns] in response.");
+        corto_throw("Failed to parse [columns] in response.");
         goto error;
     }
     if (series->valueCount <= 0) {
-        corto_seterr("Empty value count.");
+        corto_throw("Empty value count.");
         goto error;
     }
 
@@ -113,8 +113,7 @@ int16_t influxdb_Mount_response_parse_series(
         goto error;
     }
     if (result->callback(result->ctx, &r, result->data) != 0) {
-        corto_seterr("Failed to process series response. Callback failed "\
-            "with error [%s]", corto_lasterr());
+        corto_throw("Failed to process series response. Callback Failed.");
         goto error;
     }
 
@@ -205,7 +204,7 @@ int16_t influxdb_Mount_response_parse(
 empty:
     return 0;
 error:
-    corto_seterr("Failed to parse response. Error: [%s]", corto_lasterr());
+    corto_throw("Failed to parse response.");
     return -1;
 }
 

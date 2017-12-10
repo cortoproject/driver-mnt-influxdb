@@ -1,4 +1,5 @@
 #include <driver/mnt/influxdb/query_builder.h>
+#include <corto/string.h>
 
 #define SAFE_DEALLOC(s) if (s) { corto_dealloc(s); s = NULL; }
 
@@ -116,7 +117,7 @@ corto_string influxdb_Mount_query_builder_from(
         corto_buffer_appendstr(&buffer, from);
     }
     else {
-        corto_seterr("Error generating FROM expression for [%s]", query->from);
+        corto_throw("Error generating FROM expression for [%s]", query->from);
         goto error;
     }
 
@@ -349,7 +350,7 @@ corto_string influxdb_Mount_query_builder_regex(
     }
     else {
         /* escape pattern (path) for regex */
-        corto_string escaped = corto_replace(pattern, "/", "\\/");
+        corto_string escaped = strreplace(pattern, "/", "\\/");
         regex = corto_asprintf("^(%s\\/)[^\\/]+$", escaped);
         corto_dealloc(escaped);
     }

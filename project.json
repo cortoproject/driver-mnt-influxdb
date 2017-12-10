@@ -9,8 +9,9 @@
         "lib": [
             "curl"
         ],
-        "dependencies": [
-            "driver/fmt/json",
+        "use": [
+            "parson",
+            "driver/fmt/influxdb",
             "corto/httpclient"
         ]
     }

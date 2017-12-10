@@ -3,7 +3,7 @@
 
 #include <driver/mnt/influxdb/influxdb.h>
 
-#define JSON_PTR_VERIFY(ptr, msg) if (!ptr) { corto_seterr(msg); goto error; }
+#define JSON_PTR_VERIFY(ptr, msg) if (!ptr) { corto_throw(msg); goto error; }
 #define JSON_SAFE_FREE(v) if (v != NULL) { json_value_free(v); v = NULL; }
 
 /* Struct wrapping the current series result to be processed by

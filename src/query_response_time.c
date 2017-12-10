@@ -16,7 +16,7 @@ int16_t influxdb_Mount_response_time(JSON_Object *output, JSON_Value *value)
     if (timeFormat == JSONString) {
         const char *timeStr = json_value_get_string(value);
         if (!timeStr) {
-            corto_seterr("Failed to parse timestamp string.");
+            corto_throw("Failed to parse timestamp string.");
             goto error;
         }
         if (influxdb_Mount_time_rfc3339(timeStr, &ts)) {
@@ -35,7 +35,7 @@ int16_t influxdb_Mount_response_time(JSON_Object *output, JSON_Value *value)
             goto error;
         }
     } else {
-        corto_seterr("Unsupported time format. JSON Type = [%d]", timeFormat);
+        corto_throw("Unsupported time format. JSON Type = [%d]", timeFormat);
         goto error;
     }
 
@@ -48,19 +48,19 @@ int16_t influxdb_Mount_response_time(JSON_Object *output, JSON_Value *value)
 
     s = json_object_set_number(o, "sec", ts.tv_sec);
     if (s != JSONSuccess) {
-        corto_seterr("Failed to set timestamp object seconds");
+        corto_throw("Failed to set timestamp object seconds");
         goto error;
     }
 
     s = json_object_set_number(o, "nanosec", ts.tv_nsec);
     if (s != JSONSuccess) {
-        corto_seterr("Failed to set timestamp object nanoseconds");
+        corto_throw("Failed to set timestamp object nanoseconds");
         goto error;
     }
 
     s = json_object_set_value(output, "timestamp", json_value_deep_copy(v));
     if (s != JSONSuccess) {
-        corto_seterr("Failed to set JSON result value.");
+        corto_throw("Failed to set JSON result value.");
         goto error;
     }
 
@@ -101,7 +101,7 @@ error:
     return -1;
 // invalid:
 //     ///TODO improve format checks
-//     // corto_seterr("RFC3339 String Format Invalid [%s]", timeStr);
+//     // corto_throw("RFC3339 String Format Invalid [%s]", timeStr);
 //     ts->tv_sec = 0;
 //     ts->tv_nsec = 0;
 //     return 0;

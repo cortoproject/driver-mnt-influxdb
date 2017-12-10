@@ -20,7 +20,7 @@ void test_RetentionPolicy_tc_1_create(
     bool foundTest = false;
 
     int i;
-    for (i = 0; i < corto_ll_size(ret); i++) {
+    for (i = 0; i < corto_ll_count(ret); i++) {
         influxdb_Query_RetentionPolicyResult *rp =
             (influxdb_Query_RetentionPolicyResult*)corto_ll_get(ret, i);
         if (strcmp(rp->name, "test_rp") == 0) {
@@ -53,7 +53,7 @@ void test_RetentionPolicy_tc_2_duplicate(
     bool foundTest = false;
 
     int i;
-    for (i = 0; i < corto_ll_size(ret); i++) {
+    for (i = 0; i < corto_ll_count(ret); i++) {
         influxdb_Query_RetentionPolicyResult *rp =
             (influxdb_Query_RetentionPolicyResult*)corto_ll_get(ret, i);
         if (strcmp(rp->name, "test_rp") == 0) {
@@ -85,7 +85,7 @@ void test_RetentionPolicy_tc_2_duplicateConflict(
     bool foundTest = false;
 
     int i;
-    for (i = 0; i < corto_ll_size(ret); i++) {
+    for (i = 0; i < corto_ll_count(ret); i++) {
         influxdb_Query_RetentionPolicyResult *rp =
             (influxdb_Query_RetentionPolicyResult*)corto_ll_get(ret, i);
         if (strcmp(rp->name, "test_rp") == 0) {

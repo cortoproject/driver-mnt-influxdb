@@ -10,7 +10,7 @@ typedef struct _influxdb_Mount_iterData {
 } influxdb_Mount_iterData;
 
 DRIVER_MNT_INFLUXDB_EXPORT
-int influxdb_Mount_iterDataHasNext(
+bool influxdb_Mount_iterDataHasNext(
     corto_iter *iter);
 
 DRIVER_MNT_INFLUXDB_EXPORT

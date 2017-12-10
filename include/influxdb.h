@@ -10,9 +10,11 @@
 #include <corto/corto.h>
 #include <corto/corto.h>
 #include <driver/mnt/influxdb/_project.h>
+#include <corto/httpclient/c/c.h>
 #include <corto/c/c.h>
 #include <corto/httpclient/httpclient.h>
-#include <driver/fmt/json/json.h>
+#include <driver/fmt/influxdb/influxdb.h>
+#include <parson/parson.h>
 
 /* $header() */
 /* Definitions that are required by package headers (native types) go here. */

@@ -54,7 +54,7 @@ int16_t influxdb_Mount_show_measurements(
     if (r.status != 200) {
         corto_error("Show Measurements Query failed. Status [%d] Response [%s]",
             r.status, r.response);
-        corto_seterr("Response Status = 400");
+        corto_throw("Response Status = [%d]", r.status);
         goto error;
     }
 
@@ -83,7 +83,7 @@ error:
 int16_t influxdb_Mount_show_measurements_free(
     corto_ll results)
 {
-    while (corto_ll_size(results) > 0) {
+    while (corto_ll_count(results) > 0) {
         corto_string str = (corto_string)corto_ll_takeFirst(results);
         corto_dealloc(str);
     }
@@ -159,7 +159,7 @@ int16_t influxdb_Mount_show_databases(
     if (r.status != 200) {
         corto_error("Show Databases Query failed. Status [%d] Response [%s]",
             r.status, r.response);
-        corto_seterr("Response Status = 400");
+        corto_throw("Show DB response Status = [%d]", r.status);
         goto error;
     }
 
@@ -189,7 +189,7 @@ error:
 int16_t influxdb_Mount_show_databases_free(
     corto_ll results)
 {
-    while (corto_ll_size(results) > 0) {
+    while (corto_ll_count(results) > 0) {
         corto_string str = (corto_string)corto_ll_takeFirst(results);
         corto_dealloc(str);
     }
@@ -217,14 +217,14 @@ int16_t influxdb_Mount_show_retentionPolicies_process(
             const char* name = influxdb_Mount_response_column_name(
                 series->columns, j);
             if (!name) {
-                corto_seterr("Invalid rp column index [%d]", j);
+                corto_throw("Invalid rp column index [%d]", j);
                 free(rp);
                 goto error;
             }
 
             JSON_Value *v = json_array_get_value(values, j);
             if (!v) {
-                corto_seterr("Invalid rp value index [%d]", j);
+                corto_throw("Invalid rp value index [%d]", j);
                 free(rp);
                 goto error;
             }
@@ -275,7 +275,7 @@ int16_t influxdb_Mount_show_retentionPolicies(
     if (r.status != 200) {
         corto_error("Show Measurements Query failed. Status [%d] Response [%s]",
             r.status, r.response);
-        corto_seterr("Response Status = 400");
+        corto_throw("Show Retention Policies Response Status = [%d]", r.status);
         goto error;
     }
 
@@ -305,7 +305,7 @@ error:
 int16_t influxdb_Mount_show_retentionPolicies_free(
     corto_ll results)
 {
-    while (corto_ll_size(results) > 0) {
+    while (corto_ll_count(results) > 0) {
         influxdb_Query_RetentionPolicyResult *rp =
             (influxdb_Query_RetentionPolicyResult*)corto_ll_takeFirst(results);
         corto_dealloc(rp->name);

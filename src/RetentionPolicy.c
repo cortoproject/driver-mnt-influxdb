@@ -18,32 +18,32 @@ int16_t influxdb_RetentionPolicy_verify_create(
     bool exists = false;
 
     int i;
-    for (i = 0; i < corto_ll_size(rpList); i++) {
+    for (i = 0; i < corto_ll_count(rpList); i++) {
         influxdb_Query_RetentionPolicyResult *rp =
             (influxdb_Query_RetentionPolicyResult*)corto_ll_get(rpList, i);
         if (strcmp(rp->name, this->name) == 0) {
             exists = true;
             /* Matching policy found - verify it is equivalent. If not fail */
             if (rp->replication != this->replication) {
-                corto_seterr("Requested replication [%s] conflicts with [%s]",
+                corto_throw("Requested replication [%s] conflicts with [%s]",
                     this->replication, rp->replication);
                 break;
             }
             if (strcmp(rp->duration, this->duration) != 0) {
-                corto_seterr("Requested Duration [%s] conflicts with [%s]",
+                corto_throw("Requested Duration [%s] conflicts with [%s]",
                     this->duration, rp->duration);
                 break;
             }
             /* Ensure shard group duration is not NULL */
             if (rp->sgDuration && this->shardDuration) {
                 if (strcmp(rp->sgDuration, this->shardDuration) != 0) {
-                    corto_seterr("Shard Duration [%s] conflicts with [%s]",
+                    corto_throw("Shard Duration [%s] conflicts with [%s]",
                         this->shardDuration, rp->sgDuration);
                     break;
                 }
             }
             else if (!rp->sgDuration) {
-                corto_seterr("Error determining existing shard group duration.");
+                corto_throw("Error determining existing shard group duration.");
                 break;
             }
 
@@ -76,22 +76,22 @@ int16_t influxdb_RetentionPolicy_construct(
     corto_string request = NULL;
 
     if (!this->name) {
-        corto_seterr("[name] is required.");
+        corto_throw("[name] is required.");
         goto error;
     }
 
     if (!this->host) {
-        corto_seterr("[host] is required.");
+        corto_throw("[host] is required.");
         goto error;
     }
 
     if (!this->db) {
-        corto_seterr("[db] is required.");
+        corto_throw("[db] is required.");
         goto error;
     }
 
     if (!this->duration) {
-        corto_seterr("[duration] is required.");
+        corto_throw("[duration] is required.");
         goto error;
     }
 
@@ -103,7 +103,7 @@ int16_t influxdb_RetentionPolicy_construct(
     }
 
     if (influxdb_Mount_create_database(this->host, this->db)) {
-        corto_seterr("Failed to create database.");
+        corto_throw("Failed to create database.");
         goto error;
     }
 
@@ -128,7 +128,7 @@ int16_t influxdb_RetentionPolicy_construct(
     corto_dealloc(shard);
 
     if (r.status != 200) {
-        corto_seterr("Status [%d] Response [%s]", r.status, r.response);
+        corto_throw("Status [%d] Response [%s]", r.status, r.response);
         goto error;
     }
 

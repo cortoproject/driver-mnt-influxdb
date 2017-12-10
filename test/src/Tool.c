@@ -12,7 +12,7 @@ bool influxdb_Mount_TestMeasurementQuery(corto_string pattern, int results)
         return false;
     }
 
-    int size = corto_ll_size(list);
+    int size = corto_ll_count(list);
     if (size != results) {
         corto_error("Results [%d] != List Size [%d]", results, size);
         return false;

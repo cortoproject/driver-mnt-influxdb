@@ -41,7 +41,7 @@ int16_t influxdb_Mount_response_result_value(
     JSON_Value *v = json_value_deep_copy(value);
     JSON_Status ret = json_object_set_value(resultJson, name, v);
     if (ret != JSONSuccess) {
-        corto_seterr("Failed to set JSON result value.");
+        corto_throw("Failed to set JSON result value.");
         goto error;
     }
 
@@ -103,12 +103,12 @@ int16_t influxdb_Mount_response_historical(
 {
     influxdb_Mount_iterData *data = influxdb_Mount_iterDataNew(series);
     if (!data) {
-        corto_seterr("Failed to create historical response iterator data.");
+        corto_throw("Failed to create historical response iterator data.");
         goto error;
     }
 
     result->history.ctx = data;
-    result->history.hasNext = influxdb_Mount_iterDataHasNext;
+    result->history.hasNext = &influxdb_Mount_iterDataHasNext;
     result->history.next = influxdb_Mount_iterDataNext;
     result->history.release = influxdb_Mount_iterDataRelease;
 
@@ -139,14 +139,13 @@ int16_t influxdb_Mount_response_process_values(
     corto_result *r = corto_ptr_new(corto_result_o);
 
     if (influxdb_Mount_response_result_update(series, v, r)) {
-        corto_seterr("Failed to process query response. %s", corto_lasterr());
+        corto_throw("Failed to process query response.");
         goto error;
     }
 
     if (filter->historical == true) {
         if (influxdb_Mount_response_historical(this, series, r) != 0) {
-            corto_seterr("Failed to process historical query response. %s",
-                corto_lasterr());
+            corto_throw("Failed to process historical query response.");
             goto error;
         }
     }
@@ -169,7 +168,7 @@ int16_t influxdb_Mount_query_response_handler(
     corto_trace("GET Result STATUS [%d] RESPONSE [%s]", r->status, r->response);
 
     if (r->status != 200) {
-        corto_seterr("Query failed. Status [%d] Response [%s]",
+        corto_throw("Query failed. Status [%d] Response [%s]",
             r->status, r->response);
         goto error;
     }
@@ -192,7 +191,7 @@ int16_t influxdb_Mount_query_response_handler(
     return 0;
 error:
     JSON_SAFE_FREE(response)
-    corto_error("Failed to process response. Error: [%s]", corto_lasterr());
+    corto_error("Failed to process response.");
     return -1;
 }
 
@@ -204,13 +203,13 @@ int16_t influxdb_Mount_response_result_type(
 
     int typePos = influxdb_Mount_response_column_index(series->columns, "type");
     if (typePos == -1) {
-        corto_seterr("Parsing [type] index.");
+        corto_throw("Parsing [type] index.");
         goto error;
     }
 
     corto_string type = (corto_string)json_array_get_string(values, (size_t)typePos);
     if (!type) {
-        corto_seterr("Failed to identify result type. Expected [str] at [%zu].",
+        corto_throw("Failed to identify result type. Expected [str] at [%zu].",
             (size_t)typePos);
         goto error;
     }
@@ -233,8 +232,7 @@ int16_t influxdb_Mount_response_result_type(
 
     return 0;
 error:
-    corto_seterr("Failed to resolve series type. Error: %s",
-        corto_lasterr());
+    corto_throw("Failed to resolve series type.");
     return -1;
 }
 
