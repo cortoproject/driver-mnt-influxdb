@@ -89,7 +89,7 @@ int16_t influxdb_RetentionPolicy_construct(
     }
 
     if (this->port <= 0) {
-        corto_seterr("Invalid Port [%d]", this->port);
+        corto_throw("Invalid Port [%d]", this->port);
         goto error;
     }
 
