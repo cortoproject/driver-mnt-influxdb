@@ -1,8 +1,6 @@
 #include "include/object_writer.h"
 
 int cortomain(int argc, char *argv[]) {
-    // corto_verbosity(CORTO_TRACE);
-
     if (corto_use("config.json", 0, NULL)) {
         corto_error("Failed to load [config.json]");
         goto error;

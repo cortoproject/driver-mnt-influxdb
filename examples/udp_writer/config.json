@@ -1,0 +1,19 @@
+{
+    "id": "udpWriter",
+    "type": "driver/mnt/influxdb/Mount",
+    "value": {
+        "host": "localhost",
+        "port": 8086,
+        "udpPort": 8087,
+        "udpEnable": true,
+        "db": "udp_test",
+        "contentType": "text/json",
+        "query": {
+            "from": "/weather"
+        },
+        "policy": {
+            "sample_rate": 20.0,
+            "mask": "MOUNT_HISTORY_BATCH_NOTIFY"
+        }
+    }
+}
