@@ -206,7 +206,7 @@ void influxdb_Mount_onHistoryBatchNotify(
         influxdb_UdpSend(this, bufferStr);
     } else {
         corto_string url = influxdb_Mount_query_builder_url(this);
-        corto_info("influxdb HISTORY BATCH NOTIFY: %s: POST %s", url, bufferStr); //TODO TRACE
+        corto_trace("influxdb HISTORY BATCH NOTIFY: %s: POST %s", url, bufferStr); //TODO TRACE
 
         httpclient_Result result = httpclient_post(url, bufferStr);
         if (result.status != 204) {
