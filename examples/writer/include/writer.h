@@ -9,6 +9,7 @@
 
 #include <corto/corto.h>
 #include <include/_project.h>
+#include <driver/mnt/influxdb/c/c.h>
 #include <corto/c/c.h>
 #include <driver/mnt/influxdb/influxdb.h>
 

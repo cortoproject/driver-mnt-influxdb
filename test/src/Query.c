@@ -94,9 +94,9 @@ void test_Query_selectAll(
 
         corto_time now;
         corto_time epoch;
-        corto_timeGet(&now);
+        corto_time_get(&now);
 
-        corto_timeGet(&now);
+        corto_time_get(&now);
         if (corto_instanceof((corto_type)test_Weather_o, node) == true){
             test_Weather weather = (test_Weather)node;
             test_assert(corto_time_compare(weather->timestamp, epoch) == 1);

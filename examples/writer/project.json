@@ -9,7 +9,7 @@
         "lib" : [
             "m"
         ],
-        "dependencies": [
+        "use": [
             "driver/mnt/influxdb"
         ]
     }

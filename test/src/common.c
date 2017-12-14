@@ -109,7 +109,7 @@ int DumbRandom(int min, int max){
 
 void QuickWeatherUpdate(test_Weather weather, int temp, int humidity, int uv) {
     corto_time now;
-    corto_timeGet(&now);
+    corto_time_get(&now);
     if (test_WeatherUpdate(
         weather,
         DumbRandom(temp-20, temp+20),
@@ -124,7 +124,7 @@ void QuickWeatherUpdate(test_Weather weather, int temp, int humidity, int uv) {
 int16_t CreateWeatherObjects(corto_object weather)
 {
     corto_time now;
-    corto_timeGet(&now);
+    corto_time_get(&now);
 
     test_State kentucky = test_StateCreateChild(weather, "kentucky", "south", true);
     test_State texas =  test_StateCreateChild(weather, "texas", "southwest", false);

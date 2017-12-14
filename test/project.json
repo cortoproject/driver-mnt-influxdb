@@ -8,7 +8,7 @@
         "language": "c",
         "local": true,
         "coverage": false,
-        "dependencies": [
+        "use": [
             "driver/mnt/influxdb"
         ]
     }

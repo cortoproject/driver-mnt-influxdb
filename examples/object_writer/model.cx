@@ -1,4 +1,4 @@
-in package /driver/mnt/influxdb/object_writer
+in application /driver/mnt/influxdb/object_writer
 
 class Weather:/
     temperature: int16

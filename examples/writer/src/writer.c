@@ -1,11 +1,10 @@
 #include "include/writer.h"
 
 corto_id INFLUX_MOUNT_ID = "influx_manual";
-corto_string INFLUX_DB_HOST = "http://localhost:8086";
+corto_string INFLUX_DB_HOST = "http://localhost";
+uint16_t INFLUX_DB_PORT = 8086;
 corto_string INFLUX_DB_NAME = "writer_demo";
-
 influxdb_Mount influxdbMount = NULL;
-
 int WriteConfig(float temperature, corto_object t1, corto_object t2)
 {
     corto_float32Update(t1, cos(temperature) * 100);
@@ -21,20 +20,21 @@ int CreateManualMount(corto_object mountPoint)
         .select = "//",
         .from = corto_fullpath(NULL, mountPoint)
     };
-
     corto_mountPolicy policy = {
         .ownership = CORTO_LOCAL_OWNER,
         .mask = CORTO_MOUNT_NOTIFY,
         .sampleRate = 2.0,
         .queue.max = 25
     };
-
     if (influxdb_MountDefine(
         influxdbMount,
         &query,
         "text/json",
         &policy,
         INFLUX_DB_HOST,    /* hostname */
+        INFLUX_DB_PORT,
+        0,
+        false,
         INFLUX_DB_NAME,    /* database name */
         NULL,              /* retention policy */
         NULL,              /* username */
@@ -49,16 +49,13 @@ int CreateManualMount(corto_object mountPoint)
 
 int writerMain(int argc, char *argv[])
 {
-    corto_verbosity(CORTO_TRACE);
-
-    if (corto_load("config.json", 0, NULL)) {
+    if (corto_use("config.json", 0, NULL)) {
         goto error;
     }
 
     corto_voidCreateChild_auto(root_o, temperature);
     corto_voidCreateChild_auto(temperature, config);
     corto_object manual = corto_voidCreateChild(temperature, "manual");
-
     if (CreateManualMount(manual))
     {
         goto error;
@@ -73,7 +70,6 @@ int writerMain(int argc, char *argv[])
     corto_string *humidity = corto_stringCreateChild(manual, "humidity", "MISERABLE");
     corto_trace("Created Temperature 3 - [%s]", corto_fullpath(NULL, temp3));
     corto_trace("Created Temperature 4 - [%s]", corto_fullpath(NULL, temp4));
-
     corto_float32 t = 0;
     while (1) {
         t += 0.01;
@@ -91,9 +87,15 @@ int writerMain(int argc, char *argv[])
 
     corto_release(humidity);
     corto_release(influxdbMount);
-
     return 0;
 error:
     corto_error("%s", corto_lasterr());
     return -1;
+}
+
+int cortomain(int argc, char *argv[]) {
+
+    /* Insert implementation */
+
+    return 0;
 }

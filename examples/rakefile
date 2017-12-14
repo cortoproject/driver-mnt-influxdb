@@ -1,6 +1,0 @@
-
-COMPONENTS = %W(
-    writer object_writer query
-)
-
-require "#{ENV['CORTO_BUILD']}/forward"
