@@ -1,6 +1,6 @@
 #include "include/object_writer.h"
 
-int object_writerMain(int argc, char *argv[]) {
+int cortomain(int argc, char *argv[]) {
     // corto_verbosity(CORTO_TRACE);
 
     if (corto_use("config.json", 0, NULL)) {
@@ -22,7 +22,9 @@ int object_writerMain(int argc, char *argv[]) {
         voidTest2, "test3chidl", 95, 78.8, 6, &now
     );
     corto_float32 t = 0;
-    while (1) {
+
+    int i = 0;
+    for (i = 0; i < 5; i++) {
         t += 0.01;
         // corto_float32Update(t1, cos(temperature) * 100);
         // corto_float32Update(t2, sin(temperature) * 100);
@@ -64,14 +66,5 @@ int object_writerMain(int argc, char *argv[]) {
     corto_release(weather);
     return 0;
 error:
-    corto_error("%s", corto_lasterr());
     return -1;
 }
-
-int cortomain(int argc, char *argv[]) {
-
-    /* Insert implementation */
-    
-    return 0;
-}
-

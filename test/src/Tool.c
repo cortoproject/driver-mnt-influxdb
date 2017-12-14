@@ -8,7 +8,6 @@ bool influxdb_Mount_TestMeasurementQuery(corto_string pattern, int results)
     corto_ll list = corto_ll_new();
 
     if (influxdb_Mount_show_measurements(influxdbMount, pattern, list)) {
-        corto_error("Measurement query failed. Error: %s", corto_lasterr());
         return false;
     }
 
@@ -19,7 +18,7 @@ bool influxdb_Mount_TestMeasurementQuery(corto_string pattern, int results)
     }
 
     test_assert(influxdb_Mount_show_measurements_free(list) == 0);
-    
+
     corto_ll_free(list);
 
     return true;
@@ -52,6 +51,5 @@ void test_Tool_measurements(
 
     return;
 error:
-    corto_error("%s", corto_lasterr());
     return;
 }

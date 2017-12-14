@@ -58,7 +58,7 @@ int16_t influxdb_Mount_construct(
 
     if (this->udpEnable) {
         if (influxdb_UdpSocketInitialize(this->host, this->udpPort)) {
-            corto_error("Failed to Initialize UDP Socket. %s", corto_lasterr());
+            corto_error("Failed to Initialize UDP Socket.");
             goto error;
         }
     }
@@ -72,8 +72,8 @@ int16_t influxdb_Mount_construct(
     SAFE_DEALLOC(query);
 
     if (result.status != 200) {
-        corto_error("InfluxDB Create database Status [%d] Response [%s].\n%s",
-            result.status, result.response, corto_lasterr());
+        corto_error("InfluxDB Create database Status [%d] Response [%s].",
+            result.status, result.response);
         SAFE_DEALLOC(result.response)
         goto error;
     }

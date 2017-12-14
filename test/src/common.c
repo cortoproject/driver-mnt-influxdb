@@ -116,7 +116,7 @@ void QuickWeatherUpdate(test_Weather weather, int temp, int humidity, int uv) {
         DumbRandom(humidity-10, humidity+10),
         DumbRandom(uv-3, 12),
         &now)) {
-        corto_error("Weather update failed. Error: %s", corto_lasterr());
+        corto_error("Weather update failed.");
     }
 
 }

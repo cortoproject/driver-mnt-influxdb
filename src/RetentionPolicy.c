@@ -63,8 +63,7 @@ int16_t influxdb_RetentionPolicy_verify_create(
             return 1;
         }
         /* Exists but properties do not match - do not update & fail */
-        corto_error("Policy [%s] exists for DB [%s]. Error: %s",
-            this->db, this->name, corto_lasterr());
+        corto_throw("Policy [%s] exists for DB [%s].", this->db, this->name);
         return -1;
     }
 

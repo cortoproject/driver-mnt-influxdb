@@ -47,7 +47,7 @@ int CreateManualMount(corto_object mountPoint)
     return 0;
 }
 
-int writerMain(int argc, char *argv[])
+int cortomain(int argc, char *argv[])
 {
     if (corto_use("config.json", 0, NULL)) {
         goto error;
@@ -89,13 +89,5 @@ int writerMain(int argc, char *argv[])
     corto_release(influxdbMount);
     return 0;
 error:
-    corto_error("%s", corto_lasterr());
     return -1;
-}
-
-int cortomain(int argc, char *argv[]) {
-
-    /* Insert implementation */
-
-    return 0;
 }

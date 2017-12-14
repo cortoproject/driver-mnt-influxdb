@@ -54,7 +54,6 @@ void test_HistoricalQuery_select(
     corto_release(influxdbMount);
     return;
 error:
-    corto_error("%s", corto_lasterr());
     return;
 }
 

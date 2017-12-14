@@ -77,7 +77,7 @@ int16_t influxdb_Mount_show_measurements(
     return 0;
 error:
     JSON_SAFE_FREE(response)
-    corto_error("Failed to process response. Error: [%s]", corto_lasterr());
+    corto_throw("Failed to process response.");
     return -1;
 }
 
@@ -131,8 +131,8 @@ int16_t influxdb_Mount_create_database(
     corto_dealloc(query);
 
     if (r.status != 200) {
-        corto_error("Create DB Query failed. HTTP [%d] Response [%s]. Error: %s",
-            r.status, r.response, corto_lasterr());
+        corto_throw("Create DB Query failed. HTTP [%d] Response [%s].",
+            r.status, r.response);
         SAFE_DEALLOC(r.response);
         goto error;
     }
@@ -187,7 +187,7 @@ int16_t influxdb_Mount_show_databases(
 error:
     JSON_SAFE_FREE(response)
     SAFE_DEALLOC(r.response)
-    corto_error("Failed to process response. Error: [%s]", corto_lasterr());
+    corto_error("Failed to process response.");
     return -1;
 }
 
@@ -303,7 +303,7 @@ int16_t influxdb_Mount_show_retentionPolicies(
 error:
     JSON_SAFE_FREE(response)
     SAFE_DEALLOC(r.response)
-    corto_error("Failed to process response. Error: [%s]", corto_lasterr());
+    corto_throw("Failed to process response.");
     return -1;
 }
 

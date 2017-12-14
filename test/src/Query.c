@@ -26,7 +26,6 @@ void test_Query_resolve(
     corto_release(influxdbMount);
     return;
 error:
-    corto_error("%s", corto_lasterr());
     return;
 }
 
