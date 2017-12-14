@@ -47,8 +47,7 @@ int CreateManualMount(corto_object mountPoint)
     return 0;
 }
 
-int cortomain(int argc, char *argv[])
-{
+int cortomain(int argc, char *argv[]) {
     if (corto_use("config.json", 0, NULL)) {
         goto error;
     }
@@ -91,3 +90,4 @@ int cortomain(int argc, char *argv[])
 error:
     return -1;
 }
+

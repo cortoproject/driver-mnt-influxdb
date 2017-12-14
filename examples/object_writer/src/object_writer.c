@@ -4,6 +4,7 @@ int cortomain(int argc, char *argv[]) {
     // corto_verbosity(CORTO_TRACE);
 
     if (corto_use("config.json", 0, NULL)) {
+        corto_error("Failed to load [config.json]");
         goto error;
     }
 
@@ -23,6 +24,8 @@ int cortomain(int argc, char *argv[]) {
     );
     corto_float32 t = 0;
 
+
+    corto_info("Update weather.");
     int i = 0;
     for (i = 0; i < 5; i++) {
         t += 0.01;
@@ -59,12 +62,13 @@ int cortomain(int argc, char *argv[]) {
             goto error;
         }
 
-        corto_sleep(0, 200000000); /* Update 5 times a second */
+        corto_sleep(0, 20000000); /* Update 50 times a second */
     }
 
-    corto_release(sanDiego);
-    corto_release(weather);
+    corto_info("object_writer complete.");
+
     return 0;
 error:
+    corto_error("Exit.");
     return -1;
 }

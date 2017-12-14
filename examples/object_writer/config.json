@@ -2,14 +2,14 @@
     "id": "writerDemo",
     "type": "driver/mnt/influxdb/Mount",
     "value": {
-        "host": "http://localhost:8086",
+        "host": "localhost",
+        "port": 8086,
         "db": "writer_demo",
         "contentType": "text/json",
         "query": {
             "from": "/weather"
         },
         "policy": {
-            "sampleRate": 1.0,
             "mask": "MOUNT_NOTIFY"
         }
     }
