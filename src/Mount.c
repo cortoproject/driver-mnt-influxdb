@@ -2,42 +2,6 @@
 #include <driver/mnt/influxdb/query_builder.h>
 #include <driver/mnt/influxdb/query_response.h>
 #include <corto/string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-
-///TODO REMOVE
-#include <time.h>
-
-// call this function to start a nanosecond-resolution timer
-struct timespec timer_start(void){
-    struct timespec start_time;
-    clock_gettime(CLOCK_MONOTONIC, &start_time);
-    return start_time;
-}
-
-// call this function to end a timer, returning nanoseconds elapsed as a long
-long timer_end(struct timespec start_time){
-    struct timespec end_time;
-    clock_gettime(CLOCK_MONOTONIC, &end_time);
-    long diffInNanos = end_time.tv_nsec - start_time.tv_nsec;
-    return diffInNanos/1000;
-}
-///TODO REMOVE
-
-/* Local Thread Logging Support */
-static corto_tls INFLUXDB_MOUNT_KEY_UDP;
-typedef struct influxdb_UdpSocket_s {
-    int     sfd;
-} *influxdb_UdpSocket;
-int16_t influxdb_UdpSend(
-    influxdb_Mount this,
-    corto_string buffer);
-static void influxdb_UdpSocketFree(
-    void *o);
-influxdb_UdpSocket influxdb_UdpSocketInitialize(
-    corto_string host,
-    int16_t port);
 
 const corto_string INFLUXDB_QUERY_EPOCH = "ns";
 
@@ -61,10 +25,13 @@ int16_t influxdb_Mount_construct(
         goto error;
     }
 
-    if (this->udpEnable) {
-        if (!influxdb_UdpSocketInitialize(this->host, this->udpPort)) {
-            corto_error("Failed to Initialize UDP Socket.");
-            goto error;
+    if (this->udp) {
+        /* Verify UDP Socket connection has been initialized. */
+        if (this->udp->socket <= 0) {
+            if (influxdb_UdpConn_construct(this->udp)) {
+                corto_throw("Failed to Initialize UDP Connection.");
+                goto error;
+            }
         }
     }
 
@@ -171,13 +138,7 @@ void influxdb_Mount_onHistoryBatchNotify(
 {
     corto_buffer buffer = CORTO_BUFFER_INIT;
 
-    corto_info("\n\nPROCESS HISTORICAL\n\n");
-    ///TODO REMOVE
-    struct timespec start = timer_start();
-    int cnt = 0;
-    ///TODO REMOVE
     while (corto_iter_hasNext(&events)) {
-        cnt++;
         corto_subscriberEvent *event = corto_iter_next(&events);
 
         if (influxdb_Mount_filterEvent(event->data.type)) {
@@ -196,14 +157,12 @@ void influxdb_Mount_onHistoryBatchNotify(
         }
     }
 
-    long resolve = timer_end(start); //TODO REMOVe
-    struct timespec startPost = timer_start(); ///TODO REMOVE
-
     corto_string bufferStr = corto_buffer_str(&buffer);
 
-    if (this->udpEnable) {
-        corto_info("Send Buffer [\n%s\n] Size [%zu]", bufferStr, strlen(bufferStr));
-        influxdb_UdpSend(this, bufferStr);
+    if (this->udp) {
+        /* UDP is enabled. */
+        corto_info("Send Buffer [\n%s\n] Size [%zu]", bufferStr, strlen(bufferStr)); ///TODO Remove
+        influxdb_UdpConn_send(this->udp, bufferStr);
     } else {
         corto_string url = influxdb_Mount_query_builder_url(this);
         corto_trace("influxdb HISTORY BATCH NOTIFY: %s: POST %s", url, bufferStr); //TODO TRACE
@@ -217,17 +176,8 @@ void influxdb_Mount_onHistoryBatchNotify(
         SAFE_DEALLOC(url);
         SAFE_DEALLOC(result.response)
     }
+
     SAFE_DEALLOC(bufferStr);
-
-    //TODO REMOVE
-    long post = timer_end(startPost);
-    long total = timer_end(start);
-
-    long timePer = resolve/cnt;
-
-    corto_info("Total [%ld]us Buffer [%d][%ld]us Per [%ld]us Post [%ld]us",
-        total, cnt, resolve, timePer, post);
-
 }
 
 corto_resultIter influxdb_Mount_onQueryExecute(
@@ -389,108 +339,4 @@ corto_string influxdb_Mount_retentionPolicy(
     }
 
     return this->rp->name;
-}
-
-int16_t influxdb_UdpSend(
-    influxdb_Mount this,
-    corto_string buffer) {
-    influxdb_UdpSocket s = (influxdb_UdpSocket)corto_tls_get(
-        INFLUXDB_MOUNT_KEY_UDP);
-    if (!s) {
-        s = influxdb_UdpSocketInitialize(this->host, this->udpPort);
-        if (!s) {
-            corto_throw("Failed to resolve UDP socket.");
-            goto error;
-        }
-    }
-
-    size_t len = strlen(buffer) + 1;
-    if (write(s->sfd, buffer, len) != len) {
-        corto_throw("UDP Write failed.");
-        goto error;
-    }
-
-    return 0;
-error:
-    return -1;
-}
-
-influxdb_UdpSocket influxdb_UdpSocketInitialize(
-    corto_string host,
-    int16_t port) {
-    if (port <= 0) {
-        corto_throw("Invalid port [%d]", port);
-        goto error;
-    }
-
-    if (corto_tls_new(&INFLUXDB_MOUNT_KEY_UDP, influxdb_UdpSocketFree)) {
-        corto_throw("Failed to initialize UDP Socket key.");
-        goto error;
-    }
-
-    size_t udpSockLen = sizeof(struct influxdb_UdpSocket_s);
-    influxdb_UdpSocket s = (influxdb_UdpSocket)malloc(udpSockLen);
-
-    struct addrinfo hints;
-    struct addrinfo *result, *rp;
-
-    /* Obtain address(es) matching host/port */
-
-    memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = AF_UNSPEC;        /* Allow IPv4 or IPv6 */
-    hints.ai_socktype = SOCK_DGRAM;     /* Datagram socket */
-    hints.ai_flags = 0;
-    hints.ai_protocol = IPPROTO_UDP;    /* UDP protocol */
-
-    corto_string portStr = corto_asprintf("%d", port);
-    int ret = getaddrinfo(host, portStr, &hints, &result);
-    if (ret) {
-        corto_throw("getaddrinfo [%s:%s] Error: %s",
-            host, portStr, gai_strerror(ret));
-        corto_dealloc(portStr);
-        goto error;
-    }
-    corto_dealloc(portStr);
-
-    /* getaddrinfo() returns a list of address structures.
-      Try each address until we successfully connect(2).
-      If socket(2) (or connect(2)) fails, we (close the socket
-      and) try the next address. */
-
-    for (rp = result; rp != NULL; rp = rp->ai_next) {
-        s->sfd = socket(rp->ai_family, rp->ai_socktype,
-                    rp->ai_protocol);
-        if (s->sfd == -1)
-           continue;
-
-        if (connect(s->sfd, rp->ai_addr, rp->ai_addrlen) != -1)
-           break;                  /* Success */
-
-        close(s->sfd);
-    }
-
-    if (rp == NULL) {               /* No address succeeded */
-       corto_error("Could not connect to [http://%s:%d]", host, port);
-       goto error;
-    }
-
-    freeaddrinfo(result);           /* No longer needed */
-
-    if (corto_tls_set(INFLUXDB_MOUNT_KEY_UDP, s)) {
-        corto_throw("Failed to set TLS UDP connect data.");
-        goto error;
-    }
-
-    return s;
-error:
-    return NULL;
-}
-
-static void influxdb_UdpSocketFree(
-    void *o) {
-    influxdb_UdpSocket s = (influxdb_UdpSocket)o;
-    if (s) {
-        close(s->sfd);
-        free(s);
-    }
 }

@@ -33,8 +33,7 @@ int CreateManualMount(corto_object mountPoint)
         &policy,
         INFLUX_DB_HOST,    /* hostname */
         INFLUX_DB_PORT,
-        0,
-        false,
+        NULL,              /* udp */
         INFLUX_DB_NAME,    /* database name */
         NULL,              /* retention policy */
         NULL,              /* username */
@@ -90,4 +89,3 @@ int cortomain(int argc, char *argv[]) {
 error:
     return -1;
 }
-

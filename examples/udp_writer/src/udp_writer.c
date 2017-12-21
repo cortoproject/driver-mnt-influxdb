@@ -20,15 +20,16 @@ int cortomain(int argc, char *argv[]) {
         .queue = queue
     };
 
+    influxdb_UdpConn udp = influxdb_UdpConnCreate("localhost", "8189");
+
     int ret = influxdb_MountDefine(
         mount,
         &query,
         "text/json",
         &policy,
         "localhost",  /* hostname */
-        8086,         /* Udp Enabled */
-        8189,         /* Udp Port */
-        true,         /* Udp Enabled */
+        8086,
+        udp,
         "udp_test",   /* database name */
         NULL,         /* Retention Policy */
         NULL,         /* username */

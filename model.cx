@@ -11,11 +11,19 @@ class RetentionPolicy:/
 
     int16 construct()
 
+class UdpConn:/
+    host:       string
+    port:       string
+    socket:     int32, local
+
+    int16 send(string buffer)
+    int16 construct()
+    void destruct()
+
 class Mount: vstore/mount:/
     host:       string
     port:       int16
-    udpPort:    int16
-    udpEnable:  bool
+    udp:        influxdb/UdpConn
     db:         string
     rp:         influxdb/RetentionPolicy
     username:   string
