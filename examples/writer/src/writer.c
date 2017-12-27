@@ -21,7 +21,7 @@ int CreateManualMount(corto_object mountPoint)
         .from = corto_fullpath(NULL, mountPoint)
     };
     corto_mountPolicy policy = {
-        .ownership = CORTO_LOCAL_OWNER,
+        .ownership = CORTO_LOCAL_SOURCE,
         .mask = CORTO_MOUNT_NOTIFY,
         .sampleRate = 2.0,
         .queue.max = 25

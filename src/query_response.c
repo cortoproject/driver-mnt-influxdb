@@ -55,7 +55,7 @@ int16_t influxdb_Mount_response_result_update(
     JSON_Array *values,
     corto_result *r)
 {
-    corto_ptr_setstr(&r->type, series->type);
+    corto_set_str(&r->type, series->type);
 
     JSON_Value *jsonValue = json_value_init_object();
     JSON_PTR_VERIFY(jsonValue, "Failed to create result JSON Value.")

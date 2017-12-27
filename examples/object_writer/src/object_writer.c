@@ -30,33 +30,33 @@ int cortomain(int argc, char *argv[]) {
         // corto_float32Update(t1, cos(temperature) * 100);
         // corto_float32Update(t2, sin(temperature) * 100);
         corto_time_get(&now);
-        if (corto_updateBegin(houston) != 0)
+        if (corto_update_begin(houston) != 0)
         {
-            corto_error("corto_updateBegin for houston.");
+            corto_error("corto_update_begin for houston.");
             goto error;
         }
 
         houston->temperature += cos(houston->temperature + 0.1);
         houston->humidity += sin(houston->humidity + 0.1);
         houston->timestamp = now;
-        if (corto_updateEnd(houston) != 0)
+        if (corto_update_end(houston) != 0)
         {
-            corto_error("corto_updateBegin for houston.");
+            corto_error("corto_update_end for houston.");
             goto error;
         }
 
-        if (corto_updateBegin(sanDiego) != 0)
+        if (corto_update_begin(sanDiego) != 0)
         {
-            corto_error("corto_updateBegin for houston.");
+            corto_error("corto_update_begin for houston.");
             goto error;
         }
 
         sanDiego->temperature += cos(sanDiego->temperature + 0.1);
         sanDiego->humidity += sin(sanDiego->humidity + 0.1);
         sanDiego->timestamp = now;
-        if (corto_updateEnd(sanDiego) != 0)
+        if (corto_update_end(sanDiego) != 0)
         {
-            corto_error("corto_updateBegin for houston.");
+            corto_error("corto_update_end for houston.");
             goto error;
         }
 
