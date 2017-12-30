@@ -15,7 +15,7 @@ int CreateManualMount(corto_object mountPoint)
 
     int policyMask = 0;
     policyMask |= CORTO_MOUNT_NOTIFY | CORTO_MOUNT_QUERY;
-    corto_mountPolicy *policy = corto_mountPolicyCreate(CORTO_LOCAL_OWNER,
+    corto_mountPolicy *policy = corto_mountPolicyCreate(CORTO_LOCAL_SOURCE,
          policyMask,
          0,
          queue,
@@ -63,7 +63,7 @@ int CreateHistoricalManualMount(corto_object mountPoint)
     corto_queuePolicy *queue = corto_queuePolicyCreate(25);
     int policyMask = 0;
     policyMask |= CORTO_MOUNT_HISTORY_QUERY;
-    corto_mountPolicy *policy = corto_mountPolicyCreate(CORTO_LOCAL_OWNER,
+    corto_mountPolicy *policy = corto_mountPolicyCreate(CORTO_LOCAL_SOURCE,
          policyMask,
          1,
          queue,

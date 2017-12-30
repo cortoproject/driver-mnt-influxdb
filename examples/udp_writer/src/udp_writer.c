@@ -14,11 +14,13 @@ int cortomain(int argc, char *argv[]) {
     };
 
     corto_mountPolicy policy = {
-        .ownership = CORTO_REMOTE_OWNER,
+        .ownership = CORTO_REMOTE_SOURCE,
         .mask = CORTO_MOUNT_HISTORY_BATCH_NOTIFY,
         .sampleRate = 20.0,
         .queue = queue
     };
+
+    influxdb_UdpConn udp = influxdb_UdpConnCreate("localhost", "8189");
 
     int ret = influxdb_MountDefine(
         mount,
@@ -26,9 +28,8 @@ int cortomain(int argc, char *argv[]) {
         "text/json",
         &policy,
         "localhost",  /* hostname */
-        8086,         /* Udp Enabled */
-        8189,         /* Udp Port */
-        true,         /* Udp Enabled */
+        8086,
+        udp,
         "udp_test",   /* database name */
         NULL,         /* Retention Policy */
         NULL,         /* username */
@@ -57,33 +58,33 @@ int cortomain(int argc, char *argv[]) {
     for (i = 0; i < 5; i++) {
         t += 0.01;
         corto_time_get(&now);
-        if (corto_updateBegin(houston) != 0)
+        if (corto_update_begin(houston) != 0)
         {
-            corto_error("corto_updateBegin for houston.");
+            corto_error("corto_update_begin for houston.");
             goto error;
         }
 
         houston->temperature += cos(houston->temperature + 0.1);
         houston->humidity += sin(houston->humidity + 0.1);
         houston->timestamp = now;
-        if (corto_updateEnd(houston) != 0)
+        if (corto_update_end(houston) != 0)
         {
-            corto_error("corto_updateBegin for houston.");
+            corto_error("corto_update_begin for houston.");
             goto error;
         }
 
-        if (corto_updateBegin(sanDiego) != 0)
+        if (corto_update_begin(sanDiego) != 0)
         {
-            corto_error("corto_updateBegin for houston.");
+            corto_error("corto_update_begin for houston.");
             goto error;
         }
 
         sanDiego->temperature += cos(sanDiego->temperature + 0.1);
         sanDiego->humidity += sin(sanDiego->humidity + 0.1);
         sanDiego->timestamp = now;
-        if (corto_updateEnd(sanDiego) != 0)
+        if (corto_update_end(sanDiego) != 0)
         {
-            corto_error("corto_updateBegin for houston.");
+            corto_error("corto_update_begin for houston.");
             goto error;
         }
         usleep(1000*50);
