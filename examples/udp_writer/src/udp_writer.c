@@ -20,7 +20,7 @@ int cortomain(int argc, char *argv[]) {
         .queue = queue
     };
 
-    influxdb_UdpConn udp = influxdb_UdpConnCreate("localhost", "8189");
+    influxdb_UdpConn udp = influxdb_UdpConnCreate("localhost", "8089", 0);
 
     int ret = influxdb_MountDefine(
         mount,

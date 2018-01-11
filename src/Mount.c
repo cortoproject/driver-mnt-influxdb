@@ -137,6 +137,7 @@ void influxdb_Mount_onHistoryBatchNotify(
     corto_subscriberEventIter events)
 {
     corto_buffer buffer = CORTO_BUFFER_INIT;
+    size_t bufferSize = 0;
 
     while (corto_iter_hasNext(&events)) {
         corto_subscriberEvent *event = corto_iter_next(&events);
@@ -150,18 +151,30 @@ void influxdb_Mount_onHistoryBatchNotify(
             continue;
         }
 
-        corto_buffer_appendstr(&buffer, sample);
-        corto_dealloc(sample);
-        if (corto_iter_hasNext(&events) != 0) {
-            corto_buffer_appendstr(&buffer, "\n");
+        if (this->udp) {
+            /* UDP is enabled. */
+            if (influxdb_UdpConn_write(
+                this->udp,
+                sample,
+                (uintptr_t)&buffer,
+                (uintptr_t)&bufferSize,
+                corto_iter_hasNext(&events)
+            )) {
+                corto_throw("Failed to write UDP sample.");
+            }
+        } else {
+            corto_buffer_appendstr(&buffer, sample);
+            if (corto_iter_hasNext(&events) != 0) {
+                corto_buffer_appendstr(&buffer, "\n");
+            }
         }
+        corto_dealloc(sample);
+
     }
 
     corto_string bufferStr = corto_buffer_str(&buffer);
 
     if (this->udp) {
-        /* UDP is enabled. */
-        corto_info("Send Buffer [\n%s\n] Size [%zu]", bufferStr, strlen(bufferStr)); ///TODO Remove
         influxdb_UdpConn_send(this->udp, bufferStr);
     } else {
         corto_string url = influxdb_Mount_query_builder_url(this);
