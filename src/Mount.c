@@ -50,16 +50,8 @@ int16_t influxdb_Mount_construct(
         goto error;
     }
 
-    corto_info("InfluxDB created."); //TODO REMOVE
-
     SAFE_DEALLOC(result.response)
-    // return corto_super_construct(this);
-
-    ///TODO REMOVe
-    int ret = corto_super_construct(this);
-
-    corto_info("INFLUXDB SUPER CONSTRUCTED.");
-    return ret;
+    return corto_super_construct(this);
 error:
     return -1;
 }
@@ -200,7 +192,7 @@ void influxdb_Mount_onHistoryBatchNotify(
         influxdb_UdpConn_send(this->udp, bufferStr);
     } else {
         corto_string url = influxdb_Mount_query_builder_url(this);
-        corto_trace("influxdb HISTORY BATCH NOTIFY: %s: POST %s", url, bufferStr); //TODO TRACE
+        corto_trace("influxdb HISTORY BATCH NOTIFY: %s: POST %s", url, bufferStr);
 
         httpclient_Result result = httpclient_post(url, bufferStr);
         if (result.status != 204) {
@@ -266,8 +258,6 @@ corto_resultIter influxdb_Mount_onQueryExecute(
 
     influxdb_Mount_ResonseFilter filter =
         { historical, query->limit, query->offset };
-    ///TODO TEST
-    // corto_info("LIMIT [%llu] offset [%llu]", filter.limit, filter.offset);
 
     /* Publish Query */
     corto_string bufferStr = corto_buffer_str(&buffer);
