@@ -4,7 +4,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#define INFLUXDB_UDPCONN_UDP_MAX_BUFFER 65507
+#define INFLUXDB_UDPCONN_UDP_MAX_BUFFER 65255
 #define INFLUXDB_UDPCONN_MAX_BUFFER 500
 
 int16_t influxdb_UdpConn_write(
