@@ -65,8 +65,6 @@ int16_t influxdb_UdpConn_send(
 
     size_t len = strlen(buffer);
 
-    // corto_info("UDP Send Buffer [\n%s\n] Size [%zu]", buffer, len); ///TODO Remove
-
     int sent = write(this->socket, buffer, len);
     if (sent != len) {
         if (sent > 0) {
