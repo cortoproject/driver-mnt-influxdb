@@ -14,8 +14,10 @@ class RetentionPolicy:/
 class UdpConn:/
     host:       string
     port:       string
+    bufferMax:  uint32
     socket:     int32, local
 
+    int16 write(string line, word buffer, word bufferSize, bool hasNext)
     int16 send(string buffer)
     int16 construct()
     void destruct()

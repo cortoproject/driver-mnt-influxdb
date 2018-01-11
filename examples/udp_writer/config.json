@@ -4,8 +4,10 @@
     "value": {
         "host": "localhost",
         "port": 8086,
-        "udpPort": 8087,
-        "udpEnable": true,
+        "udpConn": {
+            "host": "localhost",
+            "port": "8089"
+        },
         "db": "udp_test",
         "contentType": "text/json",
         "query": {

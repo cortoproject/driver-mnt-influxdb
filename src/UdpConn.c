@@ -4,6 +4,52 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+#define INFLUXDB_UDPCONN_UDP_MAX_BUFFER 65507
+#define INFLUXDB_UDPCONN_MAX_BUFFER 500
+
+int16_t influxdb_UdpConn_write(
+    influxdb_UdpConn this,
+    const char *line,
+    uintptr_t buffer,
+    uintptr_t bufferSize,
+    bool hasNext)
+{
+    corto_buffer *b = (corto_buffer*)buffer;
+    size_t *size = (size_t*)bufferSize;
+    size_t len = strlen(line);
+
+    /* Set Buffer Max */
+    size_t max = INFLUXDB_UDPCONN_MAX_BUFFER;
+    if (this->bufferMax > 0) {
+        if (this->bufferMax > INFLUXDB_UDPCONN_UDP_MAX_BUFFER) {
+            max = INFLUXDB_UDPCONN_UDP_MAX_BUFFER;
+        } else {
+            max = this->bufferMax;
+        }
+    }
+
+    if ((len + *size + 2) >= max) { // Account for newline and null term
+        /* Send Current Buffer before UDP max is exceeded */
+        corto_buffer_appendstr(b, "\n\0");
+        corto_string str = corto_buffer_str(b);
+        *size = 0;
+        if (influxdb_UdpConn_send(this, str)) {
+            goto error;
+        }
+    }
+
+    corto_buffer_appendstr(b, (char*)line);
+    *size += len;
+    if (hasNext) {
+        corto_buffer_appendstr(b, "\n");
+        *size += 1;
+    }
+
+    return 0;
+error:
+    return -1;
+}
+
 int16_t influxdb_UdpConn_send(
     influxdb_UdpConn this,
     const char *buffer)
@@ -17,13 +63,23 @@ int16_t influxdb_UdpConn_send(
 
     }
 
-    size_t len = strlen(buffer) + 2;
-    corto_string msg = corto_asprintf("%s\n\0", buffer);
-    if (write(this->socket, msg, len) != len) {
-        corto_throw("UDP Write failed.");
-        goto error;
+    size_t len = strlen(buffer);
+
+    // corto_info("UDP Send Buffer [\n%s\n] Size [%zu]", buffer, len); ///TODO Remove
+
+    int sent = write(this->socket, buffer, len);
+    if (sent != len) {
+        if (sent > 0) {
+            corto_throw("UDP Write Failed. Sent [%d] of [%zu]", sent, len);
+            corto_raise();
+            goto error;
+        } else if (sent < 0) {
+            corto_throw("Write Error [%d]: %s", errno, strerror(errno));
+            corto_raise();
+            goto error;
+        }
+
     }
-    corto_dealloc(msg);
 
     return 0;
 error:
