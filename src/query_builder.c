@@ -3,10 +3,6 @@
 
 #define SAFE_DEALLOC(s) if (s) { corto_dealloc(s); s = NULL; }
 
-corto_string influxdb_Mount_query_builder_type(
-    influxdb_Mount this,
-    corto_query *query);
-
 corto_string influxdb_Mount_query_builder_time(
     influxdb_Mount this,
     corto_query *query);
@@ -140,21 +136,16 @@ corto_string influxdb_Mount_query_builder_where(
 {
     corto_string where = NULL;
 
-    corto_string type = influxdb_Mount_query_builder_type(this, query);
     corto_string time = influxdb_Mount_query_builder_time(this, query);
 
-    int timeLen = strlen(time);
-    int typeLen = strlen(type);
-    if ((timeLen > 0) && (typeLen > 0)) {
-        where = corto_asprintf(" WHERE %s AND %s", time, type);
-    } else if ((timeLen > 0) || (typeLen > 0)) {
-        where = corto_asprintf(" WHERE %s%s", time, type);
-    } else {
+    if (strlen(time) > 0) {
+        where = corto_asprintf(" WHERE %s", time);
+    }
+    else {
         where = corto_asprintf("");
     }
 
     SAFE_DEALLOC(time)
-    SAFE_DEALLOC(type)
 
     return where;
 }
