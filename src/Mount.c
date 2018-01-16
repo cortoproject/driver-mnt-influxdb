@@ -353,7 +353,18 @@ corto_string influxdb_Mount_notifySample(corto_subscriberEvent *event)
 corto_string influxdb_safeString(corto_string source)
 {
     /* Measurements and Tags names cannot contain non-espaced spaces */
-    return strreplace(source, " ", "\\ ");
+    corto_buffer b = CORTO_BUFFER_INIT;
+    char *ptr, ch;
+    for (ptr = source; (ch = *ptr); ptr++) {
+        if (ch == ' ') {
+            corto_buffer_appendstr(&b, "\\ ");
+        } else {
+            corto_buffer_appendstrn(&b, ptr, 1);
+        }
+
+    }
+
+    return corto_buffer_str(&b);
 }
 
 corto_string influxdb_Mount_retentionPolicy(
