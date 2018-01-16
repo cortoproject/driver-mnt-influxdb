@@ -327,27 +327,31 @@ bool influxdb_Mount_filterEvent(corto_string type)
 
 corto_string influxdb_Mount_notifySample(corto_subscriberEvent *event)
 {
-    corto_string sample = NULL;
+    corto_buffer b = CORTO_BUFFER_INIT;
     /* Map measurement & tag to parent and id
      * Format: measurement(path),type dataFields
      */
-    corto_string parent = NULL;
-    corto_string id = influxdb_safeString(event->data.id);
-    corto_string t = event->data.type;
-    corto_string r = corto_result_getText(&event->data);
 
     if (strcmp(".", event->data.parent) == 0) {
-        sample = corto_asprintf("%s,type=%s %s", id, t, r);
+        /* Optimization for "%s,type=%s %s", id, t, r); */
+        corto_buffer_appendstr(&b, influxdb_safeString(event->data.id));
+        corto_buffer_appendstrn(&b, ",type=", 6);
+        corto_buffer_appendstr(&b, event->data.type);
+        corto_buffer_appendstrn(&b, " ", 1);
+        corto_buffer_appendstr(&b, corto_result_getText(&event->data));
     }
-
     else {
-        parent = influxdb_safeString(event->data.parent);
-        sample = corto_asprintf("%s/%s,type=%s %s", parent, id, t, r);
-        SAFE_DEALLOC(parent)
+        /* Optimization for "%s/%s,type=%s %s", parent, id, t, r); */
+        corto_buffer_appendstr(&b, influxdb_safeString(event->data.parent));
+        corto_buffer_appendstrn(&b, "/", 1);
+        corto_buffer_appendstr(&b, influxdb_safeString(event->data.id));
+        corto_buffer_appendstrn(&b, ",type=", 6);
+        corto_buffer_appendstr(&b, event->data.type);
+        corto_buffer_appendstrn(&b, " ", 1);
+        corto_buffer_appendstr(&b, corto_result_getText(&event->data));
     }
 
-    SAFE_DEALLOC(id)
-    return sample;
+    return corto_buffer_str(&b);
 }
 
 corto_string influxdb_safeString(corto_string source)
