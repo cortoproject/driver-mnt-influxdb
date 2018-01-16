@@ -360,7 +360,7 @@ void influxdb_safeString(corto_buffer *b, corto_string source)
     char *ptr, ch;
     for (ptr = source; (ch = *ptr); ptr++) {
         if (ch == ' ') {
-            corto_buffer_append(b, "\\ ");
+            corto_buffer_appendstrn(b, "\\ ", 2);
         } else {
             corto_buffer_appendstrn(b, ptr, 1);
         }
