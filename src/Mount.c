@@ -9,7 +9,7 @@ const corto_string INFLUXDB_QUERY_EPOCH = "ns";
 
 bool influxdb_Mount_filterEvent(corto_string type);
 corto_string influxdb_Mount_notifySample(corto_subscriberEvent *event);
-corto_string influxdb_safeString(corto_string source);
+void influxdb_safeString(corto_buffer *b, corto_string source);
 
 int16_t influxdb_Mount_construct(
     influxdb_Mount this)
@@ -334,7 +334,7 @@ corto_string influxdb_Mount_notifySample(corto_subscriberEvent *event)
 
     if (strcmp(".", event->data.parent) == 0) {
         /* Optimization for "%s,type=%s %s", id, t, r); */
-        corto_buffer_appendstr(&b, influxdb_safeString(event->data.id));
+        influxdb_safeString(&b, event->data.id);
         corto_buffer_appendstrn(&b, ",type=", 6);
         corto_buffer_appendstr(&b, event->data.type);
         corto_buffer_appendstrn(&b, " ", 1);
@@ -342,9 +342,9 @@ corto_string influxdb_Mount_notifySample(corto_subscriberEvent *event)
     }
     else {
         /* Optimization for "%s/%s,type=%s %s", parent, id, t, r); */
-        corto_buffer_appendstr(&b, influxdb_safeString(event->data.parent));
+        influxdb_safeString(&b, event->data.parent);
         corto_buffer_appendstrn(&b, "/", 1);
-        corto_buffer_appendstr(&b, influxdb_safeString(event->data.id));
+        influxdb_safeString(&b, event->data.id);
         corto_buffer_appendstrn(&b, ",type=", 6);
         corto_buffer_appendstr(&b, event->data.type);
         corto_buffer_appendstrn(&b, " ", 1);
@@ -354,21 +354,18 @@ corto_string influxdb_Mount_notifySample(corto_subscriberEvent *event)
     return corto_buffer_str(&b);
 }
 
-corto_string influxdb_safeString(corto_string source)
+void influxdb_safeString(corto_buffer *b, corto_string source)
 {
     /* Measurements and Tags names cannot contain non-espaced spaces */
-    corto_buffer b = CORTO_BUFFER_INIT;
     char *ptr, ch;
     for (ptr = source; (ch = *ptr); ptr++) {
         if (ch == ' ') {
-            corto_buffer_appendstr(&b, "\\ ");
+            corto_buffer_append(b, "\\ ");
         } else {
-            corto_buffer_appendstrn(&b, ptr, 1);
+            corto_buffer_appendstrn(b, ptr, 1);
         }
 
     }
-
-    return corto_buffer_str(&b);
 }
 
 corto_string influxdb_Mount_retentionPolicy(
