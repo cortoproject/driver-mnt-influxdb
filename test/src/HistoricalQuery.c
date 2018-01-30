@@ -6,14 +6,14 @@ void test_HistoricalQuery_select(
 {
     // corto_verbosity(CORTO_TRACE);
 
-    corto_object weather = corto_voidCreateChild(root_o, "weather");
+    corto_object weather = corto_void__create(root_o, "weather");
 
-    if (CreateHistoricalManualMount(weather))
+    if (create_historical_manual_mount(weather))
     {
         goto error;
     }
 
-    if (CreateWeatherObjects(weather) != 0) {
+    if (create_weather_objects(weather) != 0) {
         goto error;
     }
 

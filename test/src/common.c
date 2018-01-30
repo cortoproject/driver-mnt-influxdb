@@ -1,4 +1,4 @@
-#include <include/common.h>
+__create#include <include/common.h>
 
 corto_id INFLUX_MOUNT_ID = "influx_weather";
 corto_string INFLUX_DB_HOST = "http://localhost:8086";
@@ -6,23 +6,23 @@ corto_string INFLUX_DB_NAME = "unit_test";
 
 influxdb_Mount influxdbMount = NULL;
 
-int CreateManualMount(corto_object mountPoint)
+int create_manual_mount(corto_object mountPoint)
 {
     influxdbMount = influxdb_MountDeclareChild(root_o, INFLUX_MOUNT_ID);
     corto_string fromPath = corto_fullpath(NULL, mountPoint);
-    corto_query* query = corto_queryCreate("//", fromPath, NULL, NULL, NULL, 0, 0, NULL, NULL);
-    corto_queuePolicy *queue = corto_queuePolicyCreate(25);
+    corto_query* query = corto_query__create("//", fromPath, NULL, NULL, NULL, 0, 0, NULL, NULL);
+    corto_queuePolicy *queue = corto_queuePolicy__create(25);
 
     int policyMask = 0;
     policyMask |= CORTO_MOUNT_NOTIFY | CORTO_MOUNT_QUERY;
-    corto_mountPolicy *policy = corto_mountPolicyCreate(CORTO_LOCAL_SOURCE,
+    corto_mountPolicy *policy = corto_mountPolicy__create(CORTO_LOCAL_SOURCE,
          policyMask,
          0,
          queue,
          0,
          false);
 
-     influxdb_RetentionPolicy rp = influxdb_RetentionPolicyCreate(
+     influxdb_RetentionPolicy rp = influxdb_RetentionPolicy__create(
          "unit_test",
          INFLUX_DB_HOST,
          INFLUX_DB_NAME,
@@ -32,7 +32,7 @@ int CreateManualMount(corto_object mountPoint)
 
     test_assert(rp != NULL);
 
-    if (influxdb_MountDefine(influxdbMount,
+    if (influxdb_Mount__Define(influxdbMount,
         query,
         "text/json",
         policy,
@@ -55,22 +55,22 @@ error:
     return -1;
 }
 
-int CreateHistoricalManualMount(corto_object mountPoint)
+int create_historical_manual_mount(corto_object mountPoint)
 {
     influxdbMount = influxdb_MountDeclareChild(root_o, INFLUX_MOUNT_ID);
     corto_string fromPath = corto_fullpath(NULL, mountPoint);
-    corto_query* query = corto_queryCreate("//", fromPath, NULL, NULL, NULL, 0, 0, NULL, NULL);
-    corto_queuePolicy *queue = corto_queuePolicyCreate(25);
+    corto_query* query = corto_query__create("//", fromPath, NULL, NULL, NULL, 0, 0, NULL, NULL);
+    corto_queuePolicy *queue = corto_queuePolicy__create(25);
     int policyMask = 0;
     policyMask |= CORTO_MOUNT_HISTORY_QUERY;
-    corto_mountPolicy *policy = corto_mountPolicyCreate(CORTO_LOCAL_SOURCE,
+    corto_mountPolicy *policy = corto_mountPolicy__create(CORTO_LOCAL_SOURCE,
          policyMask,
          1,
          queue,
          0,
          false);
 
-     influxdb_RetentionPolicy rp = influxdb_RetentionPolicyCreate(
+     influxdb_RetentionPolicy rp = influxdb_RetentionPolicy__create(
          "unit_test",
          INFLUX_DB_HOST,
          INFLUX_DB_NAME,
@@ -80,7 +80,7 @@ int CreateHistoricalManualMount(corto_object mountPoint)
 
     test_assert(rp != NULL);
 
-    if (influxdb_MountDefine(influxdbMount,
+    if (influxdb_Mount__Define(influxdbMount,
         query,
         "text/json",
         policy,
@@ -121,23 +121,23 @@ void QuickWeatherUpdate(test_Weather weather, int temp, int humidity, int uv) {
 
 }
 
-int16_t CreateWeatherObjects(corto_object weather)
+int16_t create_weather_objects(corto_object weather)
 {
     corto_time now;
     corto_time_get(&now);
 
-    test_State kentucky = test_StateCreateChild(weather, "kentucky", "south", true);
-    test_State texas =  test_StateCreateChild(weather, "texas", "southwest", false);
-    test_State california =  test_StateCreateChild(weather, "california", "west", false);
-    test_City houston = test_CityCreateChild(texas, "houston", 1837, 8538000);
-    test_City lexington = test_CityCreateChild(kentucky, "lexington", 1782, 318449);
-    test_City nicholasville = test_CityCreateChild(kentucky, "nicholasville", 1798, 30006);
-    test_City sanDiego = test_CityCreateChild(california, "San Diego", 1769, 1407000);
+    test_State kentucky = test_State__create(weather, "kentucky", "south", true);
+    test_State texas =  test_State__create(weather, "texas", "southwest", false);
+    test_State california =  test_State__create(weather, "california", "west", false);
+    test_City houston = test_City__create(texas, "houston", 1837, 8538000);
+    test_City lexington = test_City__create(kentucky, "lexington", 1782, 318449);
+    test_City nicholasville = test_City__create(kentucky, "nicholasville", 1798, 30006);
+    test_City sanDiego = test_City__create(california, "San Diego", 1769, 1407000);
 
-    test_Weather weatherH = test_WeatherCreateChild(houston, "weather", 82, 45.5, 8, &now);
-    test_Weather weatherL = test_WeatherCreateChild(lexington, "weather", 95, 78.8, 6, &now);
-    test_Weather weatherN = test_WeatherCreateChild(nicholasville, "weather", 45, 47, 4, &now);
-    test_Weather weatherS = test_WeatherCreateChild(sanDiego, "weather", 50, 48, 6, &now);
+    test_Weather weatherH = test_Weather__create(houston, "weather", 82, 45.5, 8, &now);
+    test_Weather weatherL = test_Weather__create(lexington, "weather", 95, 78.8, 6, &now);
+    test_Weather weatherN = test_Weather__create(nicholasville, "weather", 45, 47, 4, &now);
+    test_Weather weatherS = test_Weather__create(sanDiego, "weather", 50, 48, 6, &now);
 
     sleep(2);
 

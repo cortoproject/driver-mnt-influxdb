@@ -2,8 +2,8 @@
 
 int cortomain(int argc, char *argv[]) {
 
-    corto_voidCreateChild_auto(root_o, config);
-    influxdb_Mount mount = influxdb_MountDeclareChild(config, "influx");
+    corto_object config = corto_create(root_o, "config", corto_void_o);
+    influxdb_Mount mount = corto_declare(config, "influx", influxdb_Mount_o);
     corto_query query = {
         .select = "//",
         .from = "/weather"
@@ -20,9 +20,14 @@ int cortomain(int argc, char *argv[]) {
         .queue = queue
     };
 
-    influxdb_UdpConn udp = influxdb_UdpConnCreate("localhost", "8089", 0);
+    influxdb_UdpConn udp = influxdb_UdpConn__create(
+        NULL,
+        NULL,
+        "localhost",
+        "8089",
+        0);
 
-    int ret = influxdb_MountDefine(
+    influxdb_Mount__assign(
         mount,
         &query,
         "text/json",
@@ -35,6 +40,8 @@ int cortomain(int argc, char *argv[]) {
         NULL,         /* username */
         NULL);        /* password */
 
+    int ret = corto_define(mount);
+
     if (ret != 0)
     {
         corto_error("Failed to define manual mount.");
@@ -44,12 +51,22 @@ int cortomain(int argc, char *argv[]) {
 
     corto_time now;
     corto_time_get(&now);
-    corto_voidCreateChild_auto(root_o, weather);
-    udp_writer_Weather sanDiego = udp_writer_WeatherCreateChild(
-        weather, "SanDiego", 82, 45.5, 8, &now
+    corto_object weather = corto_create(root_o, "weather", corto_void_o);
+    udp_writer_Weather sanDiego = udp_writer_Weather__create(
+        weather,
+        "San Diego",
+        82,
+        45.5,
+        8,
+        &now
     );
-    udp_writer_Weather houston = udp_writer_WeatherCreateChild(
-        weather, "Houston", 95, 78.8, 6, &now
+    udp_writer_Weather houston = udp_writer_Weather__create(
+        weather,
+        "Houston",
+        95,
+        78.8,
+        6,
+        &now
     );
     corto_float32 t = 0;
 

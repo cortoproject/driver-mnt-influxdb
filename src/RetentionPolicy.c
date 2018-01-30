@@ -7,7 +7,7 @@
 
 /* Execute checks to ensure a conficting policy does not exist.
  * @return 1 Matching retention policy already exists.
- * @return 0 Retention policy does not exist - Create it
+ * @return 0 Retention policy does not exist - create it
  * @return -1 Conflicting retention policy exists, do not create.
  */
 int16_t influxdb_RetentionPolicy_verify_create(
@@ -136,7 +136,7 @@ int16_t influxdb_RetentionPolicy_construct(
     corto_dealloc(shard);
 
     if (r.status != 200) {
-        corto_throw("Create RP Status [%d] Response [%s]", r.status, r.response);
+        corto_throw("create RP Status [%d] Response [%s]", r.status, r.response);
         goto error;
     }
 

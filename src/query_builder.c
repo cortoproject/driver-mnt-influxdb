@@ -32,7 +32,7 @@ corto_string influxdb_Mount_query_builder_url(
     bool passFree = false;
 
     corto_string rp = corto_asprintf("&rp=%s",
-        influxdb_Mount_retentionPolicy(this));
+        influxdb_Mount_retention_policy(this));
 
     if (this->username) {
         user = corto_asprintf("&u=%s", this->username);
@@ -91,7 +91,7 @@ corto_string influxdb_Mount_query_builder_from(
     corto_string from = NULL;
     corto_string db = corto_asprintf("\"%s\"", this->db);
     corto_string rp = corto_asprintf("\"%s\"",
-        influxdb_Mount_retentionPolicy(this));
+        influxdb_Mount_retention_policy(this));
 
     if (strcmp(query->select, "*") == 0) {
         corto_string pattern = influxdb_Mount_query_builder_regex(query->from);

@@ -6,7 +6,7 @@
 void test_RetentionPolicy_tc_1_create(
     test_RetentionPolicy this)
 {
-    influxdb_RetentionPolicy rp = influxdb_RetentionPolicyCreate(
+    influxdb_RetentionPolicy rp = influxdb_RetentionPolicy__create(
         "test_rp",
         INFLUX_DB_HOST,
         INFLUX_DB_NAME,
@@ -39,7 +39,7 @@ void test_RetentionPolicy_tc_1_create(
 void test_RetentionPolicy_tc_2_duplicate(
     test_RetentionPolicy this)
 {
-    influxdb_RetentionPolicy rp = influxdb_RetentionPolicyCreate(
+    influxdb_RetentionPolicy rp = influxdb_RetentionPolicy__create(
         "test_rp",
         INFLUX_DB_HOST,
         INFLUX_DB_NAME,
@@ -71,7 +71,7 @@ void test_RetentionPolicy_tc_2_duplicate(
 void test_RetentionPolicy_tc_2_duplicateConflict(
     test_RetentionPolicy this)
 {
-    influxdb_RetentionPolicy rp = influxdb_RetentionPolicyCreate(
+    influxdb_RetentionPolicy rp = influxdb_RetentionPolicy__create(
         "test_rp",
         INFLUX_DB_HOST,
         INFLUX_DB_NAME,

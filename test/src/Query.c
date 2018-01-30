@@ -7,14 +7,14 @@ void test_Query_resolve(
     test_Query this)
 {
     // corto_verbosity(CORTO_TRACE);
-    corto_object weather = corto_voidCreateChild(root_o, "weather");
+    corto_object weather = corto_void__create(root_o, "weather");
 
-    if (CreateManualMount(weather))
+    if (create_manual_mount(weather))
     {
         goto error;
     }
 
-    if (CreateWeatherObjects(weather) != 0) {
+    if (create_weather_objects(weather) != 0) {
         goto error;
     }
 
@@ -32,11 +32,11 @@ error:
 void test_Query_select(
     test_Query this)
 {
-    corto_object weather = corto_voidCreateChild(root_o, "weather");
+    corto_object weather = corto_void__create(root_o, "weather");
 
-    test_assert(CreateManualMount(weather) == 0);
+    test_assert(create_manual_mount(weather) == 0);
 
-    test_assert(CreateWeatherObjects(weather) == 0);
+    test_assert(create_weather_objects(weather) == 0);
 
     corto_iter it;
     test_assert(corto_select("*").from("/weather").iter(&it) == 0);
@@ -73,11 +73,11 @@ void test_Query_select(
 void test_Query_selectAll(
     test_Query this)
 {
-    corto_object weather = corto_voidCreateChild(root_o, "weather");
+    corto_object weather = corto_void__create(root_o, "weather");
 
-    test_assert(CreateManualMount(weather) == 0);
+    test_assert(create_manual_mount(weather) == 0);
 
-    test_assert(CreateWeatherObjects(weather) == 0);
+    test_assert(create_weather_objects(weather) == 0);
 
     corto_iter it;
     test_assert(corto_select("//").from("/weather").iter(&it) == 0);
@@ -118,11 +118,11 @@ void test_Query_selectAll(
 void test_Query_selectChild(
     test_Query this)
 {
-    corto_object weather = corto_voidCreateChild(root_o, "weather");
+    corto_object weather = corto_void__create(root_o, "weather");
 
-    test_assert(CreateManualMount(weather) == 0);
+    test_assert(create_manual_mount(weather) == 0);
 
-    test_assert(CreateWeatherObjects(weather) == 0);
+    test_assert(create_weather_objects(weather) == 0);
 
     corto_iter it;
     test_assert(corto_select("*").from("/weather/kentucky").iter(&it) == 0);
@@ -152,9 +152,9 @@ void test_Query_selectChild(
 void test_Query_type(
     test_Query this)
 {
-    corto_object weather = corto_voidCreateChild(root_o, "weather");
+    corto_object weather = corto_void__create(root_o, "weather");
 
-    test_assert(CreateManualMount(weather) == 0);
+    test_assert(create_manual_mount(weather) == 0);
 
     corto_info("Query for Type [%s]", corto_fullpath(NULL, (corto_type)test_Weather_o));
 
@@ -182,11 +182,11 @@ void test_Query_type(
 void test_Query_slimit(
     test_Query this)
 {
-    corto_object weather = corto_voidCreateChild(root_o, "weather");
+    corto_object weather = corto_void__create(root_o, "weather");
 
-    test_assert(CreateManualMount(weather) == 0);
+    test_assert(create_manual_mount(weather) == 0);
 
-    test_assert(CreateWeatherObjects(weather) == 0);
+    test_assert(create_weather_objects(weather) == 0);
 
     int limit = 1;
     corto_iter it;
@@ -223,11 +223,11 @@ void test_Query_slimit(
 void test_Query_soffset(
     test_Query this)
 {
-    corto_object weather = corto_voidCreateChild(root_o, "weather");
+    corto_object weather = corto_void__create(root_o, "weather");
 
-    test_assert(CreateManualMount(weather) == 0);
+    test_assert(create_manual_mount(weather) == 0);
 
-    test_assert(CreateWeatherObjects(weather) == 0);
+    test_assert(create_weather_objects(weather) == 0);
 
     int limit = 1;
     int offset = 1;

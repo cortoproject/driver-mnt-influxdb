@@ -4,13 +4,11 @@
 #include <corto/string.h>
 
 const corto_string INFLUXDB_QUERY_EPOCH = "ns";
-
 #define SAFE_DEALLOC(p)if (p){ corto_dealloc(p); p = NULL; }
 
-bool influxdb_Mount_filterEvent(corto_string type);
-corto_string influxdb_Mount_notifySample(corto_subscriberEvent *event);
+bool influxdb_Mount_filter_event(corto_string type);
+corto_string influxdb_Mount_notify_sample(corto_subscriberEvent *event);
 void influxdb_safeString(corto_buffer *b, corto_string source);
-
 int16_t influxdb_Mount_construct(
     influxdb_Mount this)
 {
@@ -32,7 +30,9 @@ int16_t influxdb_Mount_construct(
                 corto_throw("Failed to Initialize UDP Connection.");
                 goto error;
             }
+
         }
+
     }
 
     /* Make sure that database exists */
@@ -42,9 +42,8 @@ int16_t influxdb_Mount_construct(
     httpclient_Result result = httpclient_post(url, query);
     SAFE_DEALLOC(url);
     SAFE_DEALLOC(query);
-
     if (result.status != 200) {
-        corto_error("InfluxDB Create database Status [%d] Response [%s].",
+        corto_error("InfluxDB create database Status [%d] Response [%s].",
             result.status, result.response);
         SAFE_DEALLOC(result.response)
         goto error;
@@ -56,15 +55,15 @@ error:
     return -1;
 }
 
-void influxdb_Mount_onNotify(
+void influxdb_Mount_on_notify(
     influxdb_Mount this,
     corto_subscriberEvent *event)
 {
-    if (influxdb_Mount_filterEvent(event->data.type)) {
+    if (influxdb_Mount_filter_event(event->data.type)) {
         return;
     }
 
-    corto_string sample = influxdb_Mount_notifySample(event);
+    corto_string sample = influxdb_Mount_notify_sample(event);
     if (sample == NULL) {
         corto_throw("Failed to build udpate sample.");
         return;
@@ -80,6 +79,7 @@ void influxdb_Mount_onNotify(
             corto_error("InfluxDB Update Failed. Status [%d] Response: %s",
                 result.status, result.response);
         }
+
         corto_dealloc(url);
         SAFE_DEALLOC(result.response)
     }
@@ -87,7 +87,7 @@ void influxdb_Mount_onNotify(
     corto_dealloc(sample);
 }
 
-void influxdb_Mount_onBatchNotify(
+void influxdb_Mount_on_batch_notify(
     influxdb_Mount this,
     corto_subscriberEventIter events)
 {
@@ -97,11 +97,11 @@ void influxdb_Mount_onBatchNotify(
     while (corto_iter_hasNext(&events)) {
         corto_subscriberEvent *event = corto_iter_next(&events);
 
-        if (influxdb_Mount_filterEvent(event->data.type)) {
+        if (influxdb_Mount_filter_event(event->data.type)) {
             continue;
         }
 
-        corto_string sample = influxdb_Mount_notifySample(event);
+        corto_string sample = influxdb_Mount_notify_sample(event);
         if (sample == NULL) {
             corto_throw("Failed to build udpate sample.");
             continue;
@@ -118,23 +118,24 @@ void influxdb_Mount_onBatchNotify(
             )) {
                 corto_throw("Failed to write UDP sample.");
             }
+
         } else {
             corto_buffer_appendstr(&buffer, sample);
             if (corto_iter_hasNext(&events) != 0) {
                 corto_buffer_appendstr(&buffer, "\n");
             }
+
         }
+
         corto_dealloc(sample);
     }
 
     corto_string bufferStr = corto_buffer_str(&buffer);
-
     if (this->udp) {
         influxdb_UdpConn_send(this->udp, bufferStr);
     } else {
         corto_string url = influxdb_Mount_query_builder_url(this);
         corto_trace("influxdb BATCH NOTIFY: %s: POST %s", url, bufferStr);
-
         httpclient_Result result = httpclient_post(url, bufferStr);
         if (result.status != 204) {
             corto_throw("InfluxDB Update Failed. Status [%d] Response: %s",
@@ -144,10 +145,11 @@ void influxdb_Mount_onBatchNotify(
         SAFE_DEALLOC(url);
         SAFE_DEALLOC(result.response)
     }
+
     SAFE_DEALLOC(bufferStr);
 }
 
-void influxdb_Mount_onHistoryBatchNotify(
+void influxdb_Mount_on_history_batch_notify(
     influxdb_Mount this,
     corto_subscriberEventIter events)
 {
@@ -157,10 +159,11 @@ void influxdb_Mount_onHistoryBatchNotify(
     while (corto_iter_hasNext(&events)) {
         corto_subscriberEvent *event = corto_iter_next(&events);
 
-        if (influxdb_Mount_filterEvent(event->data.type)) {
+        if (influxdb_Mount_filter_event(event->data.type)) {
             continue;
         }
-        corto_string sample = influxdb_Mount_notifySample(event);
+
+        corto_string sample = influxdb_Mount_notify_sample(event);
         if (sample == NULL) {
             corto_throw("Failed to build udpate sample.");
             continue;
@@ -177,23 +180,24 @@ void influxdb_Mount_onHistoryBatchNotify(
             )) {
                 corto_throw("Failed to write UDP sample.");
             }
+
         } else {
             corto_buffer_appendstr(&buffer, sample);
             if (corto_iter_hasNext(&events) != 0) {
                 corto_buffer_appendstr(&buffer, "\n");
             }
+
         }
+
         corto_dealloc(sample);
     }
 
     corto_string bufferStr = corto_buffer_str(&buffer);
-
     if (this->udp) {
         influxdb_UdpConn_send(this->udp, bufferStr);
     } else {
         corto_string url = influxdb_Mount_query_builder_url(this);
         corto_trace("influxdb HISTORY BATCH NOTIFY: %s: POST %s", url, bufferStr);
-
         httpclient_Result result = httpclient_post(url, bufferStr);
         if (result.status != 204) {
             corto_error("InfluxDB HistoryBatchNotify [%d] Response [%s].",
@@ -207,7 +211,7 @@ void influxdb_Mount_onHistoryBatchNotify(
     SAFE_DEALLOC(bufferStr);
 }
 
-corto_resultIter influxdb_Mount_onQueryExecute(
+corto_resultIter influxdb_Mount_on_query_execute(
     influxdb_Mount this,
     corto_query *query,
     bool historical)
@@ -255,10 +259,8 @@ corto_resultIter influxdb_Mount_onQueryExecute(
         corto_dealloc(paginate);
     }
 
-
     influxdb_Mount_ResonseFilter filter =
         { historical, query->limit, query->offset };
-
     /* Publish Query */
     corto_string bufferStr = corto_buffer_str(&buffer);
     char *encodedBuffer = httpclient_encodeFields(bufferStr);
@@ -278,14 +280,14 @@ corto_resultIter influxdb_Mount_onQueryExecute(
     return CORTO_ITER_EMPTY; /* Using corto_mount_return */
 }
 
-corto_resultIter influxdb_Mount_onQuery(
+corto_resultIter influxdb_Mount_on_query(
     influxdb_Mount this,
     corto_query *query)
 {
-    return influxdb_Mount_onQueryExecute(this, query, false);
+    return influxdb_Mount_on_query_execute(this, query, false);
 }
 
-corto_resultIter influxdb_Mount_onHistoryQuery(
+corto_resultIter influxdb_Mount_on_history_query(
     influxdb_Mount this,
     corto_query *query)
 {
@@ -312,10 +314,10 @@ corto_resultIter influxdb_Mount_onHistoryQuery(
         query->limit,
         query->offset);
 
-    return influxdb_Mount_onQueryExecute(this, query, true);
+    return influxdb_Mount_on_query_execute(this, query, true);
 }
 
-bool influxdb_Mount_filterEvent(corto_string type)
+bool influxdb_Mount_filter_event(corto_string type)
 {
     /* Ignore Void Objets */
     if (strcmp(type, "void") == 0) {
@@ -325,7 +327,7 @@ bool influxdb_Mount_filterEvent(corto_string type)
     return false;
 }
 
-corto_string influxdb_Mount_notifySample(corto_subscriberEvent *event)
+corto_string influxdb_Mount_notify_sample(corto_subscriberEvent *event)
 {
     corto_buffer b = CORTO_BUFFER_INIT;
     /* Map measurement & tag to parent and id
@@ -340,6 +342,7 @@ corto_string influxdb_Mount_notifySample(corto_subscriberEvent *event)
         corto_buffer_appendstrn(&b, " ", 1);
         corto_buffer_appendstr(&b, corto_result_getText(&event->data));
     }
+
     else {
         /* Optimization for "%s/%s,type=%s %s", parent, id, t, r); */
         influxdb_safeString(&b, event->data.parent);
@@ -366,9 +369,10 @@ void influxdb_safeString(corto_buffer *b, corto_string source)
         }
 
     }
+
 }
 
-corto_string influxdb_Mount_retentionPolicy(
+corto_string influxdb_Mount_retention_policy(
     influxdb_Mount this)
 {
     if (!this->rp) {

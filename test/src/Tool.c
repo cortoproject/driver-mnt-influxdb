@@ -28,14 +28,14 @@ bool influxdb_Mount_TestMeasurementQuery(corto_string pattern, int results)
 void test_Tool_measurements(
     test_Tool this)
 {
-    corto_object weather = corto_voidCreateChild(root_o, "weather");
+    corto_object weather = corto_void__create(root_o, "weather");
 
-    if (CreateManualMount(weather))
+    if (create_manual_mount(weather))
     {
         goto error;
     }
 
-    if (CreateWeatherObjects(weather))
+    if (create_weather_objects(weather))
     {
         goto error;
     }

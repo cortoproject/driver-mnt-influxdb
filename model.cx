@@ -32,9 +32,9 @@ class Mount: vstore/mount:/
     password:   string
 
     int16 construct()
-    string retentionPolicy()
-    void onNotify(vstore/subscriberEvent event) override
-    void onHistoryBatchNotify(vstore/subscriberEventIter events) override
-    void onBatchNotify(vstore/subscriberEventIter events) override
-    vstore/resultIter onQuery(vstore/query query) override
-    vstore/resultIter onHistoryQuery(vstore/query query) override
+    string retention_policy()
+    void on_notify(vstore/subscriberEvent event) override
+    void on_history_batch_notify(vstore/subscriberEventIter events) override
+    void on_batch_notify(vstore/subscriberEventIter events) override
+    vstore/resultIter on_query(vstore/query query) override
+    vstore/resultIter on_history_query(vstore/query query) override

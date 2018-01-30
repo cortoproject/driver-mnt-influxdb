@@ -8,17 +8,32 @@ int cortomain(int argc, char *argv[]) {
 
     corto_time now;
     corto_time_get(&now);
-    corto_voidCreateChild_auto(root_o, weather);
-    object_writer_Weather sanDiego = object_writer_WeatherCreateChild(
-        weather, "San Diego", 82, 45.5, 8, &now
+    corto_object weather = corto_create(root_o, "weather", corto_void_o);
+    object_writer_Weather sanDiego = object_writer_Weather__create(
+        weather,
+        "San Diego",
+        82,
+        45.5,
+        8,
+        &now
     );
-    object_writer_Weather houston = object_writer_WeatherCreateChild(
-        weather, "Houston", 95, 78.8, 6, &now
+    object_writer_Weather houston = object_writer_Weather__create(
+        weather,
+        "Houston",
+        95,
+        78.8,
+        6,
+        &now
     );
-    corto_voidCreateChild_auto(weather, voidTest);
-    corto_voidCreateChild_auto(weather, voidTest2);
-    object_writer_WeatherCreateChild(
-        voidTest2, "test3chidl", 95, 78.8, 6, &now
+    corto_create(weather, "voidTest", corto_void_o);
+    corto_object voidTest2 = corto_create(weather, "voidTest2", corto_void_o);
+    object_writer_Weather__create(
+        voidTest2,
+        "test3chidl",
+        95,
+        78.8,
+        6,
+        &now
     );
     corto_float32 t = 0;
 

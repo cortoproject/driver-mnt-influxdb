@@ -131,7 +131,7 @@ int16_t influxdb_Mount_create_database(
     corto_dealloc(query);
 
     if (r.status != 200) {
-        corto_throw("Create DB Query failed. HTTP [%d] Response [%s].",
+        corto_throw("create DB Query failed. HTTP [%d] Response [%s].",
             r.status, r.response);
         SAFE_DEALLOC(r.response);
         goto error;
