@@ -8,7 +8,6 @@
 #define DRIVER_MNT_INFLUXDB_H
 
 #include <corto/corto.h>
-#include <corto/corto.h>
 #include <driver/mnt/influxdb/_project.h>
 #include <corto/httpclient/c/c.h>
 #include <corto/c/c.h>

@@ -9,6 +9,7 @@ const corto_string INFLUXDB_QUERY_EPOCH = "ns";
 bool influxdb_Mount_filter_event(corto_string type);
 corto_string influxdb_Mount_notify_sample(corto_subscriberEvent *event);
 void influxdb_safeString(corto_buffer *b, corto_string source);
+
 int16_t influxdb_Mount_construct(
     influxdb_Mount this)
 {
@@ -327,6 +328,20 @@ bool influxdb_Mount_filter_event(corto_string type)
     return false;
 }
 
+corto_resultIter influxdb_Mount_on_query(
+    influxdb_Mount this,
+    corto_query *query)
+{
+    return influxdb_Mount_on_query_execute(this, query, false);
+}
+
+corto_resultIter influxdb_Mount_on_history_query(
+    influxdb_Mount this,
+    corto_query *query)
+{
+    return influxdb_Mount_on_query_execute(this, query, true);
+}
+
 corto_string influxdb_Mount_notify_sample(corto_subscriberEvent *event)
 {
     corto_buffer b = CORTO_BUFFER_INIT;
@@ -341,9 +356,7 @@ corto_string influxdb_Mount_notify_sample(corto_subscriberEvent *event)
         corto_buffer_appendstr(&b, event->data.type);
         corto_buffer_appendstrn(&b, " ", 1);
         corto_buffer_appendstr(&b, corto_result_getText(&event->data));
-    }
-
-    else {
+    } else {
         /* Optimization for "%s/%s,type=%s %s", parent, id, t, r); */
         influxdb_safeString(&b, event->data.parent);
         corto_buffer_appendstrn(&b, "/", 1);
@@ -367,9 +380,7 @@ void influxdb_safeString(corto_buffer *b, corto_string source)
         } else {
             corto_buffer_appendstrn(b, ptr, 1);
         }
-
     }
-
 }
 
 corto_string influxdb_Mount_retention_policy(

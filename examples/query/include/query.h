@@ -8,7 +8,6 @@
 #define QUERY_H
 
 #include <corto/corto.h>
-#include <corto/corto.h>
 #include <query/_project.h>
 #include <corto/c/c.h>
 

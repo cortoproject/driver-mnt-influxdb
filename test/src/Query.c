@@ -190,7 +190,11 @@ void test_Query_slimit(
 
     int limit = 1;
     corto_iter it;
-    test_assert(corto_select("*").from("/weather").limit(0, limit).iter(&it) == 0);
+    corto_select__fluent r = corto_select("*")
+        .from("/weather")
+        .limit(limit)
+        .offset(0);
+    test_assert(r.iter(&it) == 0);
 
     int weatherCnt = 0;
     int stateCnt = 0;
@@ -232,7 +236,12 @@ void test_Query_soffset(
     int limit = 1;
     int offset = 1;
     corto_iter it;
-    test_assert(corto_select("*").from("/weather").limit(offset, limit).iter(&it) == 0);
+
+    corto_select__fluent r = corto_select("*")
+        .from("/weather")
+        .limit(limit)
+        .offset(offset);
+    test_assert(r.iter(&it) == 0);
 
     int weatherCnt = 0;
     int stateCnt = 0;

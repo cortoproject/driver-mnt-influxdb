@@ -8,11 +8,12 @@
 #define TEST_H
 
 #include <corto/corto.h>
-#include <corto/corto.h>
 #include <include/_project.h>
-#include <corto/test/test.h>
+#include <driver/mnt/influxdb/c/c.h>
+#include <corto/test/c/c.h>
 #include <corto/c/c.h>
 #include <driver/mnt/influxdb/influxdb.h>
+#include <corto/test/test.h>
 
 /* $header() */
 #include <include/common.h>

@@ -7,15 +7,22 @@ void test_RetentionPolicy_tc_1_create(
     test_RetentionPolicy this)
 {
     influxdb_RetentionPolicy rp = influxdb_RetentionPolicy__create(
+        NULL,
+        NULL,
         "test_rp",
         INFLUX_DB_HOST,
+        INFLUX_DB_PORT,
         INFLUX_DB_NAME,
         "2h0m0s",
         1,
         NULL);
 
     corto_ll ret = corto_ll_new();
-    influxdb_Mount_show_retentionPolicies(INFLUX_DB_HOST, INFLUX_DB_NAME, ret);
+    influxdb_Mount_show_retentionPolicies(
+        INFLUX_DB_HOST,
+        INFLUX_DB_PORT,
+        INFLUX_DB_NAME,
+        ret);
 
     bool foundTest = false;
 
@@ -40,15 +47,22 @@ void test_RetentionPolicy_tc_2_duplicate(
     test_RetentionPolicy this)
 {
     influxdb_RetentionPolicy rp = influxdb_RetentionPolicy__create(
+        NULL,
+        NULL,
         "test_rp",
         INFLUX_DB_HOST,
+        INFLUX_DB_PORT,
         INFLUX_DB_NAME,
         "2h0m0s",
         1,
         NULL);
 
     corto_ll ret = corto_ll_new();
-    influxdb_Mount_show_retentionPolicies(INFLUX_DB_HOST, INFLUX_DB_NAME, ret);
+    influxdb_Mount_show_retentionPolicies(
+        INFLUX_DB_HOST,
+        INFLUX_DB_PORT,
+        INFLUX_DB_NAME,
+        ret);
 
     bool foundTest = false;
 
@@ -72,15 +86,22 @@ void test_RetentionPolicy_tc_2_duplicateConflict(
     test_RetentionPolicy this)
 {
     influxdb_RetentionPolicy rp = influxdb_RetentionPolicy__create(
+        NULL,
+        NULL,
         "test_rp",
         INFLUX_DB_HOST,
+        INFLUX_DB_PORT,
         INFLUX_DB_NAME,
         "4h0m0s",
         1,
         NULL);
 
     corto_ll ret = corto_ll_new();
-    influxdb_Mount_show_retentionPolicies(INFLUX_DB_HOST, INFLUX_DB_NAME, ret);
+    influxdb_Mount_show_retentionPolicies(
+        INFLUX_DB_HOST,
+        INFLUX_DB_PORT,
+        INFLUX_DB_NAME,
+        ret);
 
     bool foundTest = false;
 

@@ -2,13 +2,9 @@
     "id": "test",
     "type": "package",
     "value": {
-        "description": "Making the world a better place",
-        "author": "Arthur Dent",
-        "version": "1.0.0",
-        "language": "c",
-        "local": true,
-        "coverage": false,
+        "public": false,
         "use": [
+            "corto/test",
             "driver/mnt/influxdb"
         ]
     }

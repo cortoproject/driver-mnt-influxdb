@@ -1,106 +1,122 @@
-__create#include <include/common.h>
+#include <include/common.h>
 
 corto_id INFLUX_MOUNT_ID = "influx_weather";
-corto_string INFLUX_DB_HOST = "http://localhost:8086";
+corto_string INFLUX_DB_HOST = "http://localhost";
 corto_string INFLUX_DB_NAME = "unit_test";
+corto_int16 INFLUX_DB_PORT = 8086;
 
 influxdb_Mount influxdbMount = NULL;
 
 int create_manual_mount(corto_object mountPoint)
 {
-    influxdbMount = influxdb_MountDeclareChild(root_o, INFLUX_MOUNT_ID);
-    corto_string fromPath = corto_fullpath(NULL, mountPoint);
-    corto_query* query = corto_query__create("//", fromPath, NULL, NULL, NULL, 0, 0, NULL, NULL);
-    corto_queuePolicy *queue = corto_queuePolicy__create(25);
+    influxdb_Mount mount = corto_declare(root_o, INFLUX_MOUNT_ID, influxdb_Mount_o);
+    corto_query query = {
+        .select = "//",
+        .from = corto_fullpath(NULL, mountPoint)
+    };
+
+    corto_queuePolicy queue = {
+        .max = 25
+    };
 
     int policyMask = 0;
-    policyMask |= CORTO_MOUNT_NOTIFY | CORTO_MOUNT_QUERY;
-    corto_mountPolicy *policy = corto_mountPolicy__create(CORTO_LOCAL_SOURCE,
-         policyMask,
-         0,
-         queue,
-         0,
-         false);
+    policyMask |= CORTO_MOUNT_NOTIFY | CORTO_MOUNT_QUERY | CORTO_MOUNT_HISTORY_BATCH_NOTIFY;
+    corto_mountPolicy policy = {
+        .ownership = CORTO_REMOTE_SOURCE,
+        .mask = policyMask,
+        .sampleRate = 20.0,
+        .queue = queue
+    };
 
-     influxdb_RetentionPolicy rp = influxdb_RetentionPolicy__create(
-         "unit_test",
-         INFLUX_DB_HOST,
-         INFLUX_DB_NAME,
-         "1h0m0s",
-         1,
-         NULL);
+    influxdb_UdpConn udp = influxdb_UdpConn__create(
+        NULL,
+        NULL,
+        "localhost",
+        "8089",
+        0);
 
+    influxdb_RetentionPolicy rp = influxdb_RetentionPolicy__create(
+        NULL,
+        NULL,
+        "unit_test",
+        INFLUX_DB_HOST,
+        INFLUX_DB_PORT,
+        INFLUX_DB_NAME,
+        "1h0m0s",
+        1,
+        NULL);
     test_assert(rp != NULL);
 
-    if (influxdb_Mount__Define(influxdbMount,
-        query,
+    influxdb_Mount__assign(
+        mount,
+        &query,
         "text/json",
-        policy,
-        INFLUX_DB_HOST,     /* hostname */
-        INFLUX_DB_NAME,    /* database name */
-        rp,                /* retention policy */
-        NULL,              /* username */
-        NULL))             /* password */
-    {
-        corto_error("Failed to define weather mount");
-        goto error;
-    }
+        &policy,
+        "localhost",  /* hostname */
+        8086,
+        udp,
+        "udp_test",   /* database name */
+        rp,         /* Retention Policy */
+        NULL,         /* username */
+        NULL);        /* password */
 
-    corto_release(query);
-    corto_release(queue);
-    corto_release(policy);
-
-    return 0;
-error:
-    return -1;
+    return corto_define(mount);
 }
 
 int create_historical_manual_mount(corto_object mountPoint)
 {
-    influxdbMount = influxdb_MountDeclareChild(root_o, INFLUX_MOUNT_ID);
-    corto_string fromPath = corto_fullpath(NULL, mountPoint);
-    corto_query* query = corto_query__create("//", fromPath, NULL, NULL, NULL, 0, 0, NULL, NULL);
-    corto_queuePolicy *queue = corto_queuePolicy__create(25);
+    influxdb_Mount mount = corto_declare(root_o, INFLUX_MOUNT_ID, influxdb_Mount_o);
+    corto_query query = {
+        .select = "//",
+        .from = corto_fullpath(NULL, mountPoint)
+    };
+
+    corto_queuePolicy queue = {
+        .max = 25
+    };
+
     int policyMask = 0;
     policyMask |= CORTO_MOUNT_HISTORY_QUERY;
-    corto_mountPolicy *policy = corto_mountPolicy__create(CORTO_LOCAL_SOURCE,
-         policyMask,
-         1,
-         queue,
-         0,
-         false);
+    corto_mountPolicy policy = {
+        .ownership = CORTO_REMOTE_SOURCE,
+        .mask = policyMask,
+        .sampleRate = 20.0,
+        .queue = queue
+    };
 
-     influxdb_RetentionPolicy rp = influxdb_RetentionPolicy__create(
-         "unit_test",
-         INFLUX_DB_HOST,
-         INFLUX_DB_NAME,
-         "1h0m0s",
-         1,
-         NULL);
+    influxdb_UdpConn udp = influxdb_UdpConn__create(
+        NULL,
+        NULL,
+        "localhost",
+        "8089",
+        0);
 
+    influxdb_RetentionPolicy rp = influxdb_RetentionPolicy__create(
+        NULL,
+        NULL,
+        "unit_test",
+        INFLUX_DB_HOST,
+        INFLUX_DB_PORT,
+        INFLUX_DB_NAME,
+        "1h0m0s",
+        1,
+        NULL);
     test_assert(rp != NULL);
 
-    if (influxdb_Mount__Define(influxdbMount,
-        query,
+    influxdb_Mount__assign(
+        mount,
+        &query,
         "text/json",
-        policy,
-        INFLUX_DB_HOST,     /* hostname */
-        INFLUX_DB_NAME,    /* database name */
-        rp,                /* retention policy */
-        NULL,              /* username */
-        NULL))             /* password */
-    {
-        corto_error("Failed to define weather mount");
-        goto error;
-    }
+        &policy,
+        "localhost",  /* hostname */
+        8086,
+        udp,
+        "udp_test",   /* database name */
+        rp,         /* Retention Policy */
+        NULL,         /* username */
+        NULL);        /* password */
 
-    corto_release(query);
-    corto_release(queue);
-    corto_release(policy);
-
-    return 0;
-error:
-    return -1;
+    return corto_define(mount);
 }
 
 int DumbRandom(int min, int max){
@@ -110,7 +126,7 @@ int DumbRandom(int min, int max){
 void QuickWeatherUpdate(test_Weather weather, int temp, int humidity, int uv) {
     corto_time now;
     corto_time_get(&now);
-    if (test_WeatherUpdate(
+    if (test_Weather__update(
         weather,
         DumbRandom(temp-20, temp+20),
         DumbRandom(humidity-10, humidity+10),

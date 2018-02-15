@@ -19,7 +19,7 @@ void test_HistoricalQuery_select(
 
     corto_iter it;
     corto_int16 ret = corto_select("//")
-        .from("/weather").fromNow().forDepth(10).iter(&it);
+        .from("/weather").fromNow().limit(10).iter(&it);
     if (ret != 0) {
         goto error;
     }

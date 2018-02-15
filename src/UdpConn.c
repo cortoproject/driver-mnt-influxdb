@@ -6,7 +6,6 @@
 
 #define INFLUXDB_UDPCONN_UDP_MAX_BUFFER 65255
 #define INFLUXDB_UDPCONN_MAX_BUFFER 500
-
 int16_t influxdb_UdpConn_write(
     influxdb_UdpConn this,
     const char *line,
@@ -26,6 +25,7 @@ int16_t influxdb_UdpConn_write(
         } else {
             max = this->bufferMax;
         }
+
     }
 
     if ((len + *size + 2) >= max) { // Account for newline and null term
@@ -36,6 +36,7 @@ int16_t influxdb_UdpConn_write(
         if (influxdb_UdpConn_send(this, str)) {
             goto error;
         }
+
     }
 
     corto_buffer_appendstr(b, (char*)line);
@@ -64,7 +65,6 @@ int16_t influxdb_UdpConn_send(
     }
 
     size_t len = strlen(buffer);
-
     int sent = write(this->socket, buffer, len);
     if (sent != len) {
         if (sent > 0) {
@@ -144,3 +144,33 @@ void influxdb_UdpConn_destruct(
     }
 
 }
+
+int16_t driver_mnt_influxdb_UdpConn_construct(
+    driver_mnt_influxdb_UdpConn this)
+{
+    /* Insert implementation */
+}
+
+void driver_mnt_influxdb_UdpConn_destruct(
+    driver_mnt_influxdb_UdpConn this)
+{
+    /* Insert implementation */
+}
+
+int16_t driver_mnt_influxdb_UdpConn_send(
+    driver_mnt_influxdb_UdpConn this,
+    const char *buffer)
+{
+    /* Insert implementation */
+}
+
+int16_t driver_mnt_influxdb_UdpConn_write(
+    driver_mnt_influxdb_UdpConn this,
+    const char *line,
+    uintptr_t buffer,
+    uintptr_t bufferSize,
+    bool hasNext)
+{
+    /* Insert implementation */
+}
+
