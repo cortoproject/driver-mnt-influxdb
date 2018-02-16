@@ -7,7 +7,7 @@ const corto_string INFLUXDB_QUERY_EPOCH = "ns";
 #define SAFE_DEALLOC(p)if (p){ corto_dealloc(p); p = NULL; }
 
 bool influxdb_Mount_filter_event(corto_string type);
-corto_string influxdb_Mount_notify_sample(corto_subscriberEvent *event);
+corto_string influxdb_Mount_notify_sample(corto_subscriber_event *event);
 void influxdb_safeString(corto_buffer *b, corto_string source);
 
 int16_t influxdb_Mount_construct(
@@ -58,7 +58,7 @@ error:
 
 void influxdb_Mount_on_notify(
     influxdb_Mount this,
-    corto_subscriberEvent *event)
+    corto_subscriber_event *event)
 {
     if (influxdb_Mount_filter_event(event->data.type)) {
         return;
@@ -90,13 +90,13 @@ void influxdb_Mount_on_notify(
 
 void influxdb_Mount_on_batch_notify(
     influxdb_Mount this,
-    corto_subscriberEventIter events)
+    corto_subscriber_eventIter events)
 {
     corto_buffer buffer = CORTO_BUFFER_INIT;
     size_t bufferSize = 0;
 
     while (corto_iter_hasNext(&events)) {
-        corto_subscriberEvent *event = corto_iter_next(&events);
+        corto_subscriber_event *event = corto_iter_next(&events);
 
         if (influxdb_Mount_filter_event(event->data.type)) {
             continue;
@@ -152,13 +152,13 @@ void influxdb_Mount_on_batch_notify(
 
 void influxdb_Mount_on_history_batch_notify(
     influxdb_Mount this,
-    corto_subscriberEventIter events)
+    corto_subscriber_eventIter events)
 {
     corto_buffer buffer = CORTO_BUFFER_INIT;
     size_t bufferSize = 0;
 
     while (corto_iter_hasNext(&events)) {
-        corto_subscriberEvent *event = corto_iter_next(&events);
+        corto_subscriber_event *event = corto_iter_next(&events);
 
         if (influxdb_Mount_filter_event(event->data.type)) {
             continue;
@@ -288,36 +288,6 @@ corto_resultIter influxdb_Mount_on_query(
     return influxdb_Mount_on_query_execute(this, query, false);
 }
 
-corto_resultIter influxdb_Mount_on_history_query(
-    influxdb_Mount this,
-    corto_query *query)
-{
-    corto_info("TimeBegin [%d] [%lld]", query->timeBegin.kind, query->timeBegin.value);
-    corto_info("TimeEnd [%d] [%lld]", query->timeEnd.kind, query->timeBegin.value);
-    /* Uncomment to debug queries
-    corto_info("MOUNT_FROM [%s]", this->super.super.query.from);
-    corto_info("SELECT [%s]", query->select);
-    corto_info("FROM [%s]", query->from);
-    corto_info("TYPE [%s]", query->type);
-    corto_info("MEMBER [%s]", query->member);
-    corto_info("WHERE [%s]", query->where);
-    corto_info("LIMIT [%llu]", query->limit);
-    corto_info("OFFSET [%llu]", query->offset);
-    */
-    corto_info("Mount From [%s] Select [%s] From [%s] Type [%s] Member " \
-        "[%s] Where [%s] LIMIT [%llu] OFFSET [%llu]",
-        this->super.super.query.from,
-        query->select,
-        query->from,
-        query->type,
-        query->member,
-        query->where,
-        query->limit,
-        query->offset);
-
-    return influxdb_Mount_on_query_execute(this, query, true);
-}
-
 bool influxdb_Mount_filter_event(corto_string type)
 {
     /* Ignore Void Objets */
@@ -328,13 +298,6 @@ bool influxdb_Mount_filter_event(corto_string type)
     return false;
 }
 
-corto_resultIter influxdb_Mount_on_query(
-    influxdb_Mount this,
-    corto_query *query)
-{
-    return influxdb_Mount_on_query_execute(this, query, false);
-}
-
 corto_resultIter influxdb_Mount_on_history_query(
     influxdb_Mount this,
     corto_query *query)
@@ -342,7 +305,7 @@ corto_resultIter influxdb_Mount_on_history_query(
     return influxdb_Mount_on_query_execute(this, query, true);
 }
 
-corto_string influxdb_Mount_notify_sample(corto_subscriberEvent *event)
+corto_string influxdb_Mount_notify_sample(corto_subscriber_event *event)
 {
     corto_buffer b = CORTO_BUFFER_INIT;
     /* Map measurement & tag to parent and id

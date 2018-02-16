@@ -33,8 +33,8 @@ class Mount: vstore/mount:/
 
     int16 construct()
     string retention_policy()
-    void on_notify(vstore/subscriberEvent event) override
-    void on_history_batch_notify(vstore/subscriberEventIter events) override
-    void on_batch_notify(vstore/subscriberEventIter events) override
+    void on_notify(vstore/subscriber_event event) override
+    void on_history_batch_notify(vstore/subscriber_eventIter events) override
+    void on_batch_notify(vstore/subscriber_eventIter events) override
     vstore/resultIter on_query(vstore/query query) override
     vstore/resultIter on_history_query(vstore/query query) override

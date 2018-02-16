@@ -144,33 +144,3 @@ void influxdb_UdpConn_destruct(
     }
 
 }
-
-int16_t driver_mnt_influxdb_UdpConn_construct(
-    driver_mnt_influxdb_UdpConn this)
-{
-    /* Insert implementation */
-}
-
-void driver_mnt_influxdb_UdpConn_destruct(
-    driver_mnt_influxdb_UdpConn this)
-{
-    /* Insert implementation */
-}
-
-int16_t driver_mnt_influxdb_UdpConn_send(
-    driver_mnt_influxdb_UdpConn this,
-    const char *buffer)
-{
-    /* Insert implementation */
-}
-
-int16_t driver_mnt_influxdb_UdpConn_write(
-    driver_mnt_influxdb_UdpConn this,
-    const char *line,
-    uintptr_t buffer,
-    uintptr_t bufferSize,
-    bool hasNext)
-{
-    /* Insert implementation */
-}
-
