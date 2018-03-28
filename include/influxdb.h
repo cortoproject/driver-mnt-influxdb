@@ -1,5 +1,4 @@
 /* influxdb.h
- *
  * This is the main package file. Include this file in other projects.
  * Only modify inside the header-end and body-end sections.
  */
@@ -22,6 +21,7 @@
 #include <driver/mnt/influxdb/_type.h>
 #include <driver/mnt/influxdb/_interface.h>
 #include <driver/mnt/influxdb/_load.h>
+#include <driver/mnt/influxdb/_binding.h>
 #include <driver/mnt/influxdb/c/_api.h>
 
 /* $body() */

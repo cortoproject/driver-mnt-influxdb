@@ -39,7 +39,7 @@ int16_t influxdb_Mount_show_measurements(
     corto_string regex = influxdb_Mount_query_builder_regex(pattern);
     corto_string request = corto_asprintf("SHOW MEASUREMENTS " \
         "ON %s WITH MEASUREMENT =~/%s/", this->db, regex);
-    char *encodedBuffer = httpclient_encodeFields(request);
+    char *encodedBuffer = httpclient_encode_fields(request);
     corto_string url = corto_asprintf("http://%s:%d/query?db=%s",
         this->host, this->port, this->db);
     corto_string queryStr = corto_asprintf("q=%s", encodedBuffer);
@@ -150,7 +150,7 @@ int16_t influxdb_Mount_show_databases(
     corto_ll results)
 {
     corto_string request = corto_asprintf("SHOW DATABASES");
-    char *encodedBuffer = httpclient_encodeFields(request);
+    char *encodedBuffer = httpclient_encode_fields(request);
     corto_string url = corto_asprintf("http://%s:%d/query?db=%s",
         host, port, db);
     corto_string queryStr = corto_asprintf("q=%s", encodedBuffer);
@@ -267,7 +267,7 @@ int16_t influxdb_Mount_show_retentionPolicies(
     corto_ll results)
 {
     corto_string request = corto_asprintf("SHOW RETENTION POLICIES ON %s", db);
-    char *encodedBuffer = httpclient_encodeFields(request);
+    char *encodedBuffer = httpclient_encode_fields(request);
     corto_string url = corto_asprintf("http://%s:%d/query?db=%s",
         host, port, db);
     corto_string queryStr = corto_asprintf("q=%s", encodedBuffer);

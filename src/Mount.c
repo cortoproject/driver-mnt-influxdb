@@ -264,7 +264,7 @@ corto_resultIter influxdb_Mount_on_query_execute(
         { historical, query->limit, query->offset };
     /* Publish Query */
     corto_string bufferStr = corto_buffer_str(&buffer);
-    char *encodedBuffer = httpclient_encodeFields(bufferStr);
+    char *encodedBuffer = httpclient_encode_fields(bufferStr);
     corto_string queryStr = corto_asprintf("epoch=%s&q=SELECT%s",
         INFLUXDB_QUERY_EPOCH, encodedBuffer);
     corto_dealloc(encodedBuffer);
