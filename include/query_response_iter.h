@@ -3,26 +3,26 @@
 
 #include <driver/mnt/influxdb/influxdb.h>
 
-typedef struct _influxdb_Mount_iterData {
+typedef struct _influxdb_mount_iterData {
     influxdb_Query_SeriesResult *series;
-    corto_result *result;
+    corto_record *result;
     int pos;
-} influxdb_Mount_iterData;
+} influxdb_mount_iterData;
 
 DRIVER_MNT_INFLUXDB_EXPORT
-bool influxdb_Mount_iterDataHasNext(
+bool influxdb_mount_iterDataHasNext(
     corto_iter *iter);
 
 DRIVER_MNT_INFLUXDB_EXPORT
-void *influxdb_Mount_iterDataNext(
+void *influxdb_mount_iterDataNext(
     corto_iter *iter);
 
 DRIVER_MNT_INFLUXDB_EXPORT
-void influxdb_Mount_iterDataRelease(
+void influxdb_mount_iterDataRelease(
     corto_iter *iter);
 
 DRIVER_MNT_INFLUXDB_EXPORT
-influxdb_Mount_iterData *influxdb_Mount_iterDataNew(
+influxdb_mount_iterData *influxdb_mount_iterDataNew(
     influxdb_Query_SeriesResult *series);
 
 #endif //__DRIVER_MNT_INFLUXDB_QUERY_RESPONSE_ITER_H__

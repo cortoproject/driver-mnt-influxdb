@@ -5,27 +5,27 @@
 #include <driver/mnt/influxdb/query_response_parser.h>
 
 DRIVER_MNT_INFLUXDB_EXPORT
-int16_t influxdb_Mount_response_result_type(
+int16_t influxdb_mount_response_result_type(
     influxdb_Query_SeriesResult *series);
 
 DRIVER_MNT_INFLUXDB_EXPORT
-int16_t influxdb_Mount_response_result_value(
-    corto_result *result,
+int16_t influxdb_mount_response_result_value(
+    corto_record *result,
     JSON_Value *value,
     JSON_Object *resultJson,
     corto_string name,
     bool convertTime);
 
 DRIVER_MNT_INFLUXDB_EXPORT
-int16_t influxdb_Mount_response_result_update(
+int16_t influxdb_mount_response_result_update(
     influxdb_Query_SeriesResult *series,
     JSON_Array *values,
-    corto_result *r);
+    corto_record *r);
 
 DRIVER_MNT_INFLUXDB_EXPORT
-int16_t influxdb_Mount_query_response_handler(
-    influxdb_Mount this,
+int16_t influxdb_mount_query_response_handler(
+    influxdb_mount this,
     httpclient_Result *r,
-    influxdb_Mount_ResonseFilter *filter);
+    influxdb_mount_ResonseFilter *filter);
 
 #endif //__DRIVER_MNT_INFLUXDB_QUERY_RESPONSE_H__

@@ -1,13 +1,13 @@
 #include <driver/mnt/influxdb/query_response_time.h>
 #include <driver/mnt/influxdb/query_response_parser.h>
 
-int16_t influxdb_Mount_time_rfc3339(const char* timeStr, struct timespec *ts);
-int16_t influxdb_Mount_time_epochNano(double nanoseconds, struct timespec *ts);
+int16_t influxdb_mount_time_rfc3339(const char* timeStr, struct timespec *ts);
+int16_t influxdb_mount_time_epochNano(double nanoseconds, struct timespec *ts);
 
 /* InfluxDB returns timestamps as "Time"
  * Format 2017-10-17T02:25:41.60012734Z
  */
-int16_t influxdb_Mount_response_time(JSON_Object *output, JSON_Value *value)
+int16_t influxdb_mount_response_time(JSON_Object *output, JSON_Value *value)
 {
     struct timespec ts;
     JSON_Value *v = NULL;
@@ -19,7 +19,7 @@ int16_t influxdb_Mount_response_time(JSON_Object *output, JSON_Value *value)
             corto_throw("Failed to parse timestamp string.");
             goto error;
         }
-        if (influxdb_Mount_time_rfc3339(timeStr, &ts)) {
+        if (influxdb_mount_time_rfc3339(timeStr, &ts)) {
             corto_error("Failed to parse timestamp.");
             goto error;
         }
@@ -30,7 +30,7 @@ int16_t influxdb_Mount_response_time(JSON_Object *output, JSON_Value *value)
     } else if (timeFormat == JSONNumber) {
         ///TODO Need to check precision - hardcoded to nanoseconds
         double epochNano = json_value_get_number(value);
-        if (influxdb_Mount_time_epochNano(epochNano, &ts)) {
+        if (influxdb_mount_time_epochNano(epochNano, &ts)) {
             corto_error("Failed to parse timestamp.");
             goto error;
         }
@@ -75,7 +75,7 @@ error:
 }
 
 /* https://stackoverflow.com/questions/7114690/how-to-parse-syslog-timestamp */
-int16_t influxdb_Mount_time_rfc3339(const char* timeStr, struct timespec *ts)
+int16_t influxdb_mount_time_rfc3339(const char* timeStr, struct timespec *ts)
 {
     struct tm tm;
     time_t t;
@@ -107,7 +107,7 @@ error:
 //     return 0;
 }
 
-int16_t influxdb_Mount_time_epochNano(double nanoseconds, struct timespec *ts)
+int16_t influxdb_mount_time_epochNano(double nanoseconds, struct timespec *ts)
 {
     uint64_t ns = (uint64_t)nanoseconds;
     ts->tv_nsec = ns % (1000 * 1000 * 1000);

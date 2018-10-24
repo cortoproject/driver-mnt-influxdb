@@ -3,11 +3,11 @@
 #include <include/test.h>
 
 /* $header() */
-bool influxdb_Mount_TestMeasurementQuery(corto_string pattern, int results)
+bool influxdb_mount_TestMeasurementQuery(corto_string pattern, int results)
 {
     corto_ll list = corto_ll_new();
 
-    if (influxdb_Mount_show_measurements(influxdbMount, pattern, list)) {
+    if (influxdb_mount_show_measurements(influxdbMount, pattern, list)) {
         return false;
     }
 
@@ -17,7 +17,7 @@ bool influxdb_Mount_TestMeasurementQuery(corto_string pattern, int results)
         return false;
     }
 
-    test_assert(influxdb_Mount_show_measurements_free(list) == 0);
+    test_assert(influxdb_mount_show_measurements_free(list) == 0);
 
     corto_ll_free(list);
 
@@ -40,11 +40,11 @@ void test_Tool_measurements(
         goto error;
     }
 
-    test_assert(influxdb_Mount_TestMeasurementQuery("kentucky", 2) == true);
-    test_assert(influxdb_Mount_TestMeasurementQuery("kentucky/lexington", 1) == true);
-    test_assert(influxdb_Mount_TestMeasurementQuery(".", 3) == true);
-    test_assert(influxdb_Mount_TestMeasurementQuery("Ohio", 0) == true);
-    test_assert(influxdb_Mount_TestMeasurementQuery("San Diego", 0) == true);
+    test_assert(influxdb_mount_TestMeasurementQuery("kentucky", 2) == true);
+    test_assert(influxdb_mount_TestMeasurementQuery("kentucky/lexington", 1) == true);
+    test_assert(influxdb_mount_TestMeasurementQuery(".", 3) == true);
+    test_assert(influxdb_mount_TestMeasurementQuery("Ohio", 0) == true);
+    test_assert(influxdb_mount_TestMeasurementQuery("San Diego", 0) == true);
 
     corto_release(weather);
     corto_release(influxdbMount);

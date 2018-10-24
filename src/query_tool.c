@@ -4,8 +4,8 @@
 
 #define SAFE_DEALLOC(p)if (p){ corto_dealloc(p); p = NULL; }
 
-int16_t influxdb_Mount_parse_show_measurements_process(
-    influxdb_Mount this,
+int16_t influxdb_mount_parse_show_measurements_process(
+    influxdb_mount this,
     influxdb_Query_SeriesResult *series,
     void* data)
 {
@@ -31,12 +31,12 @@ error:
     return -1;
 }
 
-int16_t influxdb_Mount_show_measurements(
-    influxdb_Mount this,
+int16_t influxdb_mount_show_measurements(
+    influxdb_mount this,
     corto_string pattern,
     corto_ll results)
 {
-    corto_string regex = influxdb_Mount_query_builder_regex(pattern);
+    corto_string regex = influxdb_mount_query_builder_regex(pattern);
     corto_string request = corto_asprintf("SHOW MEASUREMENTS " \
         "ON %s WITH MEASUREMENT =~/%s/", this->db, regex);
     char *encodedBuffer = httpclient_encode_fields(request);
@@ -60,14 +60,14 @@ int16_t influxdb_Mount_show_measurements(
     }
 
     influxdb_Query_Result result = {
-        &influxdb_Mount_parse_show_measurements_process,
+        &influxdb_mount_parse_show_measurements_process,
         this,
         results
     };
 
     response = json_parse_string(r.response);
     JSON_PTR_VERIFY(response, "Parson failed to parse Influxdb JSON response")
-    if (influxdb_Mount_response_parse(response, &result)) {
+    if (influxdb_mount_response_parse(response, &result)) {
         goto error;
     }
 
@@ -81,7 +81,7 @@ error:
     return -1;
 }
 
-int16_t influxdb_Mount_show_measurements_free(
+int16_t influxdb_mount_show_measurements_free(
     corto_ll results)
 {
     while (corto_ll_count(results) > 0) {
@@ -92,8 +92,8 @@ int16_t influxdb_Mount_show_measurements_free(
     return 0;
 }
 
-int16_t influxdb_Mount_parse_show_databases_process(
-    influxdb_Mount this,
+int16_t influxdb_mount_parse_show_databases_process(
+    influxdb_mount this,
     influxdb_Query_SeriesResult *series,
     void* data)
 {
@@ -119,7 +119,7 @@ error:
     return -1;
 }
 
-int16_t influxdb_Mount_create_database(
+int16_t influxdb_mount_create_database(
     corto_string host,
     int16_t port,
     corto_string db)
@@ -143,7 +143,7 @@ error:
     return -1;
 }
 
-int16_t influxdb_Mount_show_databases(
+int16_t influxdb_mount_show_databases(
     corto_string host,
     int16_t port,
     corto_string db,
@@ -169,14 +169,14 @@ int16_t influxdb_Mount_show_databases(
     }
 
     influxdb_Query_Result result = {
-        &influxdb_Mount_parse_show_databases_process,
+        &influxdb_mount_parse_show_databases_process,
         NULL,
         results
     };
 
     response = json_parse_string(r.response);
     JSON_PTR_VERIFY(response, "Parson failed to parse Influxdb JSON response")
-    if (influxdb_Mount_response_parse(response, &result)) {
+    if (influxdb_mount_response_parse(response, &result)) {
         goto error;
     }
 
@@ -191,7 +191,7 @@ error:
     return -1;
 }
 
-int16_t influxdb_Mount_show_databases_free(
+int16_t influxdb_mount_show_databases_free(
     corto_ll results)
 {
     while (corto_ll_count(results) > 0) {
@@ -202,8 +202,8 @@ int16_t influxdb_Mount_show_databases_free(
     return 0;
 }
 
-int16_t influxdb_Mount_show_retentionPolicies_process(
-    influxdb_Mount this,
+int16_t influxdb_mount_show_retentionPolicies_process(
+    influxdb_mount this,
     influxdb_Query_SeriesResult *series,
     void* data)
 {
@@ -219,7 +219,7 @@ int16_t influxdb_Mount_show_retentionPolicies_process(
         influxdb_Query_RetentionPolicyResult *rp =
             malloc(sizeof(influxdb_Query_RetentionPolicyResult));
         for (j = 0; j < cnt; j++) {
-            const char* name = influxdb_Mount_response_column_name(
+            const char* name = influxdb_mount_response_column_name(
                 series->columns, j);
             if (!name) {
                 corto_throw("Invalid rp column index [%d]", j);
@@ -260,7 +260,7 @@ error:
     return -1;
 }
 
-int16_t influxdb_Mount_show_retentionPolicies(
+int16_t influxdb_mount_show_retentionPolicies(
     corto_string host,
     int16_t port,
     corto_string db,
@@ -285,14 +285,14 @@ int16_t influxdb_Mount_show_retentionPolicies(
     }
 
     influxdb_Query_Result result = {
-        &influxdb_Mount_show_retentionPolicies_process,
+        &influxdb_mount_show_retentionPolicies_process,
         NULL,
         results
     };
 
     response = json_parse_string(r.response);
     JSON_PTR_VERIFY(response, "Parson failed to parse Influxdb JSON response")
-    if (influxdb_Mount_response_parse(response, &result)) {
+    if (influxdb_mount_response_parse(response, &result)) {
         goto error;
     }
 
@@ -307,7 +307,7 @@ error:
     return -1;
 }
 
-int16_t influxdb_Mount_show_retentionPolicies_free(
+int16_t influxdb_mount_show_retentionPolicies_free(
     corto_ll results)
 {
     while (corto_ll_count(results) > 0) {

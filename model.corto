@@ -1,0 +1,45 @@
+in driver.mnt.influxdb
+
+class RetentionPolicy {
+    name:           string
+    host:           string
+    port:           int16
+    db:             string
+    duration:       string
+    replication:    uint16
+    shardDuration:  string
+
+    construct() int16
+}
+
+class UdpConn {
+    host:       string
+    port:       string
+    bufferMax:  uint32
+    socket:     int32, local
+
+    write(string line, word buffer, word bufferSize, bool hasNext) int16
+    send(string buffer) int16
+    construct() int16
+    destruct() void
+}
+
+class mount: vstore/mount {
+    host:       string
+    port:       int16
+    udp:        influxdb/UdpConn
+    db:         string
+    rp:         influxdb/RetentionPolicy
+    username:   string
+    password:   string
+
+    construct() int16
+    retention_policy() string
+
+override
+    on_notify(vstore/subscriber_event event) void
+    on_history_batch_notify(uint32 event_count, vstore/subscriber_eventIter events) void
+    on_batch_notify(uint32 event_count, vstore/subscriber_eventIter events) void
+    on_query(vstore/query query) iterator[record]
+    on_history_query(vstore/query query) iterator[record]
+}

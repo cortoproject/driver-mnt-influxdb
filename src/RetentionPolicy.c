@@ -14,7 +14,7 @@ int16_t influxdb_RetentionPolicy_verify_create(
     influxdb_RetentionPolicy this)
 {
     corto_ll rpList = corto_ll_new();
-    influxdb_Mount_show_retentionPolicies(
+    influxdb_mount_show_retentionPolicies(
         this->host, this->port, this->db, rpList);
 
     bool matching = false;
@@ -54,7 +54,7 @@ int16_t influxdb_RetentionPolicy_verify_create(
         }
     }
 
-    influxdb_Mount_show_retentionPolicies_free(rpList);
+    influxdb_mount_show_retentionPolicies_free(rpList);
     corto_ll_free(rpList);
 
     if (exists) {
@@ -109,7 +109,7 @@ int16_t influxdb_RetentionPolicy_construct(
         shard = corto_asprintf(" ");
     }
 
-    if (influxdb_Mount_create_database(this->host, this->port, this->db)) {
+    if (influxdb_mount_create_database(this->host, this->port, this->db)) {
         corto_throw("Failed to create database.");
         goto error;
     }

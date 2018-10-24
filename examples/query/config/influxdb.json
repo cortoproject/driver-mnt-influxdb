@@ -1,9 +1,10 @@
 [
     {
         "id": "config/mounts/historian/example",
-        "type": "driver/mnt/influxdb/Mount",
+        "type": "driver/mnt/influxdb/mount",
         "value": {
-            "host": "http://localhost:8086",
+            "host": "localhost",
+            "port": 8086,
             "db": "writer_demo",
             "contentType": "text/json",
             "query": {

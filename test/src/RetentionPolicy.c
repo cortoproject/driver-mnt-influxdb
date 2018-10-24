@@ -18,7 +18,7 @@ void test_RetentionPolicy_tc_1_create(
         NULL);
 
     corto_ll ret = corto_ll_new();
-    influxdb_Mount_show_retentionPolicies(
+    influxdb_mount_show_retentionPolicies(
         INFLUX_DB_HOST,
         INFLUX_DB_PORT,
         INFLUX_DB_NAME,
@@ -38,7 +38,7 @@ void test_RetentionPolicy_tc_1_create(
     }
 
     test_assert(foundTest == true);
-    influxdb_Mount_show_retentionPolicies_free(ret);
+    influxdb_mount_show_retentionPolicies_free(ret);
     corto_ll_free(ret);
     test_assert(rp != NULL);
 }
@@ -58,7 +58,7 @@ void test_RetentionPolicy_tc_2_duplicate(
         NULL);
 
     corto_ll ret = corto_ll_new();
-    influxdb_Mount_show_retentionPolicies(
+    influxdb_mount_show_retentionPolicies(
         INFLUX_DB_HOST,
         INFLUX_DB_PORT,
         INFLUX_DB_NAME,
@@ -77,7 +77,7 @@ void test_RetentionPolicy_tc_2_duplicate(
     }
 
     test_assert(foundTest == true);
-    influxdb_Mount_show_retentionPolicies_free(ret);
+    influxdb_mount_show_retentionPolicies_free(ret);
     corto_ll_free(ret);
     test_assert(rp != NULL);
 }
@@ -97,7 +97,7 @@ void test_RetentionPolicy_tc_2_duplicateConflict(
         NULL);
 
     corto_ll ret = corto_ll_new();
-    influxdb_Mount_show_retentionPolicies(
+    influxdb_mount_show_retentionPolicies(
         INFLUX_DB_HOST,
         INFLUX_DB_PORT,
         INFLUX_DB_NAME,
@@ -116,7 +116,7 @@ void test_RetentionPolicy_tc_2_duplicateConflict(
     }
 
     test_assert(foundTest == true);
-    influxdb_Mount_show_retentionPolicies_free(ret);
+    influxdb_mount_show_retentionPolicies_free(ret);
     corto_ll_free(ret);
     test_assert(rp == NULL);
 }

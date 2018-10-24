@@ -6,7 +6,6 @@
 #ifndef INFLUXDB_WRITER_H
 #define INFLUXDB_WRITER_H
 
-#include <corto/corto.h>
 #include <include/_project.h>
 #include <driver/mnt/influxdb/c/c.h>
 #include <corto/c/c.h>

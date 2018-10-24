@@ -3,16 +3,24 @@
  * Only modify inside the header-end and body-end sections.
  */
 
-#ifndef QUERY_H
-#define QUERY_H
+#ifndef DRIVER_MNT_INFLUXDB_QUERY_H
+#define DRIVER_MNT_INFLUXDB_QUERY_H
 
 #include <corto/corto.h>
-#include <query/_project.h>
+#include <include/_project.h>
+#include <driver/mnt/influxdb/c/c.h>
 #include <corto/c/c.h>
+#include <driver/mnt/influxdb/influxdb.h>
 
 /* $header() */
 /* Definitions that are required by package headers (native types) go here. */
 /* $end */
+
+#include <include/_type.h>
+#include <include/_interface.h>
+#include <include/_load.h>
+#include <include/_binding.h>
+#include <include/_api.h>
 
 /* $body() */
 /* Definitions here that need your package headers go here. */

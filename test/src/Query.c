@@ -45,7 +45,7 @@ void test_Query_select(
     int stateCnt = 0;
     while(corto_iter_hasNext(&it) == 1)
     {
-        corto_result *r = (corto_result*)corto_iter_next(&it);
+        corto_record *r = (corto_record*)corto_iter_next(&it);
         corto_string nodePath = corto_asprintf("/weather/%s", r->id);
         corto_object node = corto_lookup(root_o, nodePath);
         test_assert(node != NULL);
@@ -85,7 +85,7 @@ void test_Query_selectAll(
     int cnt = 0;
     while(corto_iter_hasNext(&it) == 1)
     {
-        corto_result *r = (corto_result*)corto_iter_next(&it);
+        corto_record *r = (corto_record*)corto_iter_next(&it);
         corto_trace("Received: Parent[%s] ID[%s]", r->parent, r->id);
         corto_string nodePath = corto_asprintf("/weather/%s/%s", r->parent, r->id);
         corto_object node = corto_lookup(root_o, nodePath);
@@ -130,7 +130,7 @@ void test_Query_selectChild(
     int cnt = 0;
     while(corto_iter_hasNext(&it) == 1)
     {
-        corto_result *r = (corto_result*)corto_iter_next(&it);
+        corto_record *r = (corto_record*)corto_iter_next(&it);
         corto_string nodePath = corto_asprintf("/weather/kentucky/%s", r->id);
         corto_object node = corto_lookup(root_o, nodePath);
         test_assert(node != NULL);
@@ -168,7 +168,7 @@ void test_Query_type(
     while(corto_iter_hasNext(&it) == 1)
     {
         cnt++;
-        corto_result *r = (corto_result*)corto_iter_next(&it);
+        corto_record *r = (corto_record*)corto_iter_next(&it);
         corto_trace("Type Query Parent[%s] ID[%s]", r->parent, r->id);
     }
 
@@ -200,7 +200,7 @@ void test_Query_slimit(
     int stateCnt = 0;
     while(corto_iter_hasNext(&it) == 1)
     {
-        corto_result *r = (corto_result*)corto_iter_next(&it);
+        corto_record *r = (corto_record*)corto_iter_next(&it);
         corto_string nodePath = corto_asprintf("/weather/%s", r->id);
         corto_object node = corto_lookup(root_o, nodePath);
         test_assert(node != NULL);
@@ -247,7 +247,7 @@ void test_Query_soffset(
     int stateCnt = 0;
     while(corto_iter_hasNext(&it) == 1)
     {
-        corto_result *r = (corto_result*)corto_iter_next(&it);
+        corto_record *r = (corto_record*)corto_iter_next(&it);
         corto_info("%s", r->id);
         test_assert(strcmp(r->id, "texas") == 0);
         corto_string nodePath = corto_asprintf("/weather/%s", r->id);

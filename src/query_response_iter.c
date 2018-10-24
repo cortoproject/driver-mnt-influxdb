@@ -1,9 +1,9 @@
 #include <driver/mnt/influxdb/query_response.h>
 #include <driver/mnt/influxdb/query_response_iter.h>
 
-void *influxdb_Mount_iterDataNext(corto_iter *iter)
+void *influxdb_mount_iterDataNext(corto_iter *iter)
 {
-    influxdb_Mount_iterData *data = (influxdb_Mount_iterData*)iter->ctx;
+    influxdb_mount_iterData *data = (influxdb_mount_iterData*)iter->ctx;
 
     JSON_Array *values = json_array_get_array(data->series->values, data->pos);
     if (!values) {
@@ -11,7 +11,7 @@ void *influxdb_Mount_iterDataNext(corto_iter *iter)
         goto error;
     }
 
-    if (influxdb_Mount_response_result_update(
+    if (influxdb_mount_response_result_update(
         data->series, values, data->result)) {
         corto_throw("Failed to update result for historical index [%d]",
             data->pos);
@@ -26,9 +26,9 @@ error:
     return NULL;
 }
 
-bool influxdb_Mount_iterDataHasNext(corto_iter *iter)
+bool influxdb_mount_iterDataHasNext(corto_iter *iter)
 {
-    influxdb_Mount_iterData *data = (influxdb_Mount_iterData*)iter->ctx;
+    influxdb_mount_iterData *data = (influxdb_mount_iterData*)iter->ctx;
 
     if (data == NULL)
     {
@@ -44,36 +44,36 @@ nodata:
     return 0;
 }
 
-void influxdb_Mount_iterDataRelease(corto_iter *iter)
+void influxdb_mount_iterDataRelease(corto_iter *iter)
 {
     if (iter->ctx) {
-        influxdb_Mount_iterData *data = (influxdb_Mount_iterData*)iter->ctx;
+        influxdb_mount_iterData *data = (influxdb_mount_iterData*)iter->ctx;
 
         if (!data) {
             iter->ctx = NULL;
             return;
         }
 
-        corto_ptr_free(data->result, corto_result_o);
-        influxdb_Mount_series_free(data->series);
+        corto_ptr_free(data->result, corto_record_o);
+        influxdb_mount_series_free(data->series);
         free(data);
 
         iter->ctx = NULL;
     }
 }
 
-influxdb_Mount_iterData *influxdb_Mount_iterDataNew(
+influxdb_mount_iterData *influxdb_mount_iterDataNew(
     influxdb_Query_SeriesResult *series)
 {
-    influxdb_Mount_iterData *data =
-        (influxdb_Mount_iterData*)calloc(1, sizeof(influxdb_Mount_iterData));
+    influxdb_mount_iterData *data =
+        (influxdb_mount_iterData*)calloc(1, sizeof(influxdb_mount_iterData));
 
     influxdb_Query_SeriesResult *seriesCopy = NULL;
-    if (influxdb_Mount_series_deepCopy(series, seriesCopy)) {
+    if (influxdb_mount_series_deepCopy(series, seriesCopy)) {
         goto error;
     }
 
-    corto_result *result = corto_ptr_new(corto_result_o);
+    corto_record *result = corto_ptr_new(corto_record_o);
     data->pos = 0;
     data->result = result;
     data->series = seriesCopy;

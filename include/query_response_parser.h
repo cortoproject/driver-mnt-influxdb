@@ -19,44 +19,44 @@ typedef struct _influxdb_Query_SeriesResult {
 
 /* Callback used to process response series arrays. */
 typedef int16_t (*influxdb_ResultCallback)(
-    influxdb_Mount ctx,
+    influxdb_mount ctx,
     influxdb_Query_SeriesResult *series,
     void *data);
 
 typedef struct _influxdb_Query_Result {
     influxdb_ResultCallback callback;
-    influxdb_Mount          ctx;
+    influxdb_mount          ctx;
     void                    *data;
 } influxdb_Query_Result;
 
-typedef struct _influxdb_Mount_ResonseFilter {
+typedef struct _influxdb_mount_ResonseFilter {
     bool historical;
     uint64_t limit;
     uint64_t offset;
-} influxdb_Mount_ResonseFilter;
+} influxdb_mount_ResonseFilter;
 
 /* Function allocates memory, dest should be NULL (uninitialized) pointer */
 DRIVER_MNT_INFLUXDB_EXPORT
-int16_t influxdb_Mount_series_deepCopy(
+int16_t influxdb_mount_series_deepCopy(
     influxdb_Query_SeriesResult *src,
     influxdb_Query_SeriesResult *dest);
 
 DRIVER_MNT_INFLUXDB_EXPORT
-void influxdb_Mount_series_free(
+void influxdb_mount_series_free(
     influxdb_Query_SeriesResult *series);
 
 DRIVER_MNT_INFLUXDB_EXPORT
-corto_string influxdb_Mount_response_column_name(
+corto_string influxdb_mount_response_column_name(
     JSON_Array *columns,
     int pos);
 
 DRIVER_MNT_INFLUXDB_EXPORT
-int influxdb_Mount_response_column_index(
+int influxdb_mount_response_column_index(
     JSON_Array *cols,
     corto_string name);
 
 DRIVER_MNT_INFLUXDB_EXPORT
-int16_t influxdb_Mount_response_parse(
+int16_t influxdb_mount_response_parse(
     JSON_Value *responseValue,
     influxdb_Query_Result *result);
 

@@ -1,6 +1,6 @@
 #include <driver/mnt/influxdb/query_response_parser.h>
 
-int16_t influxdb_Mount_series_deepCopy(
+int16_t influxdb_mount_series_deepCopy(
     influxdb_Query_SeriesResult *src,
     influxdb_Query_SeriesResult *dest)
 {
@@ -45,7 +45,7 @@ error:
     return -1;
 }
 
-void influxdb_Mount_series_free(
+void influxdb_mount_series_free(
     influxdb_Query_SeriesResult *series)
 {
     JSON_Value *values = json_array_get_wrapping_value(series->values);
@@ -59,7 +59,7 @@ void influxdb_Mount_series_free(
     free(series);
 }
 
-int16_t influxdb_Mount_response_parse_verify_result(
+int16_t influxdb_mount_response_parse_verify_result(
     influxdb_Query_SeriesResult *series)
 {
     if (!series->name) {
@@ -84,7 +84,7 @@ error:
     return -1;
 }
 
-int16_t influxdb_Mount_response_parse_series(
+int16_t influxdb_mount_response_parse_series(
     JSON_Object *series,
     influxdb_Query_Result *result)
 {
@@ -109,7 +109,7 @@ int16_t influxdb_Mount_response_parse_series(
         goto error;
     }
 
-    if (influxdb_Mount_response_parse_verify_result(&r) != 0) {
+    if (influxdb_mount_response_parse_verify_result(&r) != 0) {
         goto error;
     }
     if (result->callback(result->ctx, &r, result->data) != 0) {
@@ -122,7 +122,7 @@ error:
     return -1;
 }
 
-int16_t influxdb_Mount_response_parse_results(
+int16_t influxdb_mount_response_parse_results(
     JSON_Object *jsonResult,
     influxdb_Query_Result *result)
 {
@@ -135,8 +135,8 @@ int16_t influxdb_Mount_response_parse_results(
     size_t seriesCount = json_array_get_count(series);
     size_t i;
 
-    influxdb_Mount_ResonseFilter *filter =
-        (influxdb_Mount_ResonseFilter*)result->data;
+    influxdb_mount_ResonseFilter *filter =
+        (influxdb_mount_ResonseFilter*)result->data;
 
     /* InfluxDB SLIMIT (Series Limit) and SOFFSET (series offset) to not
      * map perfectly to Corto's request. We process & filter the full result
@@ -160,7 +160,7 @@ int16_t influxdb_Mount_response_parse_results(
     for (i = 0; i < seriesCount; i++) {
         JSON_Object *o = json_array_get_object(series, i);
         JSON_PTR_VERIFY(o, "Failed to resolve series response JSON object.");
-        if (influxdb_Mount_response_parse_series(o, result) != 0) {
+        if (influxdb_mount_response_parse_series(o, result) != 0) {
             goto error;
         }
     }
@@ -172,7 +172,7 @@ empty:
     return 1;
 }
 
-int16_t influxdb_Mount_response_parse(
+int16_t influxdb_mount_response_parse(
     JSON_Value *responseValue,
     influxdb_Query_Result *result)
 {
@@ -190,7 +190,7 @@ int16_t influxdb_Mount_response_parse(
         if (json_value_get_type(resultVal) == JSONObject) {
             JSON_Object *obj = json_value_get_object(resultVal);
             JSON_PTR_VERIFY(obj, "Failed to resolve results object.")
-            int ret = influxdb_Mount_response_parse_results(obj, result);
+            int ret = influxdb_mount_response_parse_results(obj, result);
             if (ret == -1) {
                 goto error;
             }
@@ -208,7 +208,7 @@ error:
     return -1;
 }
 
-corto_string influxdb_Mount_response_column_name(
+corto_string influxdb_mount_response_column_name(
     JSON_Array *cols,
     int pos)
 {
@@ -220,7 +220,7 @@ error:
     return NULL;
 }
 
-int influxdb_Mount_response_column_index(
+int influxdb_mount_response_column_index(
     JSON_Array *columns,
     corto_string name)
 {

@@ -1,10 +1,17 @@
 {
-    "id": "query",
-    "type": "package",
+    "id": "driver/mnt/influxdb/query",
+    "type": "application",
     "value": {
         "description": "Making the world a better place",
         "author": "Arthur Dent",
         "version": "1.0.0",
-        "language": "c"
+        "language": "c",
+        "public": false,
+        "lib" : [
+            "m"
+        ],
+        "use": [
+            "driver/mnt/influxdb"
+        ]
     }
 }

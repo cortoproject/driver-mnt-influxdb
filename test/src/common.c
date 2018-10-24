@@ -5,11 +5,11 @@ corto_string INFLUX_DB_HOST = "http://localhost";
 corto_string INFLUX_DB_NAME = "unit_test";
 corto_int16 INFLUX_DB_PORT = 8086;
 
-influxdb_Mount influxdbMount = NULL;
+influxdb_mount influxdbMount = NULL;
 
 int create_manual_mount(corto_object mountPoint)
 {
-    influxdb_Mount mount = corto_declare(root_o, INFLUX_MOUNT_ID, influxdb_Mount_o);
+    influxdb_mount mount = corto_declare(root_o, INFLUX_MOUNT_ID, influxdb_mount_o);
     corto_query query = {
         .select = "//",
         .from = corto_fullpath(NULL, mountPoint)
@@ -47,7 +47,7 @@ int create_manual_mount(corto_object mountPoint)
         NULL);
     test_assert(rp != NULL);
 
-    influxdb_Mount__assign(
+    influxdb_mount__assign(
         mount,
         &query,
         "text/json",
@@ -65,7 +65,7 @@ int create_manual_mount(corto_object mountPoint)
 
 int create_historical_manual_mount(corto_object mountPoint)
 {
-    influxdb_Mount mount = corto_declare(root_o, INFLUX_MOUNT_ID, influxdb_Mount_o);
+    influxdb_mount mount = corto_declare(root_o, INFLUX_MOUNT_ID, influxdb_mount_o);
     corto_query query = {
         .select = "//",
         .from = corto_fullpath(NULL, mountPoint)
@@ -103,7 +103,7 @@ int create_historical_manual_mount(corto_object mountPoint)
         NULL);
     test_assert(rp != NULL);
 
-    influxdb_Mount__assign(
+    influxdb_mount__assign(
         mount,
         &query,
         "text/json",

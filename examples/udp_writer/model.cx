@@ -1,7 +1,0 @@
-in application /driver/mnt/influxdb/udp_writer
-
-class Weather:/
-    temperature: int16
-    humidity:    float32
-    uv_index:    int8
-    timestamp:   time

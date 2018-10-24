@@ -3,28 +3,28 @@
 
 #define SAFE_DEALLOC(s) if (s) { corto_dealloc(s); s = NULL; }
 
-corto_string influxdb_Mount_query_builder_time(
-    influxdb_Mount this,
+corto_string influxdb_mount_query_builder_time(
+    influxdb_mount this,
     corto_query *query);
 
-corto_string influxdb_Mount_query_builder_limit(
-    influxdb_Mount this,
+corto_string influxdb_mount_query_builder_limit(
+    influxdb_mount this,
     corto_query *query);
 
-corto_string influxdb_Mount_query_builder_slimit(
-    influxdb_Mount this,
+corto_string influxdb_mount_query_builder_slimit(
+    influxdb_mount this,
     corto_query *query);
 
-corto_string influxdb_Mount_query_builder_offset(
-    influxdb_Mount this,
+corto_string influxdb_mount_query_builder_offset(
+    influxdb_mount this,
     corto_query *query);
 
-corto_string influxdb_Mount_query_builder_soffset(
-    influxdb_Mount this,
+corto_string influxdb_mount_query_builder_soffset(
+    influxdb_mount this,
     corto_query *query);
 
-corto_string influxdb_Mount_query_builder_url(
-    influxdb_Mount this)
+corto_string influxdb_mount_query_builder_url(
+    influxdb_mount this)
 {
     corto_string user = "";
     corto_string pass = "";
@@ -32,7 +32,7 @@ corto_string influxdb_Mount_query_builder_url(
     bool passFree = false;
 
     corto_string rp = corto_asprintf("&rp=%s",
-        influxdb_Mount_retention_policy(this));
+        influxdb_mount_retention_policy(this));
 
     if (this->username) {
         user = corto_asprintf("&u=%s", this->username);
@@ -59,8 +59,8 @@ corto_string influxdb_Mount_query_builder_url(
     return url;
 }
 
-corto_string influxdb_Mount_query_builder_select(
-    influxdb_Mount this,
+corto_string influxdb_mount_query_builder_select(
+    influxdb_mount this,
     corto_query *query)
 {
     corto_buffer buffer = CORTO_BUFFER_INIT;
@@ -83,18 +83,18 @@ corto_string influxdb_Mount_query_builder_select(
     return corto_buffer_str(&buffer);
 }
 
-corto_string influxdb_Mount_query_builder_from(
-    influxdb_Mount this,
+corto_string influxdb_mount_query_builder_from(
+    influxdb_mount this,
     corto_query *query)
 {
     corto_buffer buffer = CORTO_BUFFER_INIT;
     corto_string from = NULL;
     corto_string db = corto_asprintf("\"%s\"", this->db);
     corto_string rp = corto_asprintf("\"%s\"",
-        influxdb_Mount_retention_policy(this));
+        influxdb_mount_retention_policy(this));
 
     if (strcmp(query->select, "*") == 0) {
-        corto_string pattern = influxdb_Mount_query_builder_regex(query->from);
+        corto_string pattern = influxdb_mount_query_builder_regex(query->from);
         from = corto_asprintf(" FROM %s.%s./%s/", db, rp, pattern);
         SAFE_DEALLOC(pattern)
     }
@@ -130,13 +130,13 @@ error:
     return NULL;
 }
 
-corto_string influxdb_Mount_query_builder_where(
-    influxdb_Mount this,
+corto_string influxdb_mount_query_builder_where(
+    influxdb_mount this,
     corto_query *query)
 {
     corto_string where = NULL;
 
-    corto_string time = influxdb_Mount_query_builder_time(this, query);
+    corto_string time = influxdb_mount_query_builder_time(this, query);
 
     if (strlen(time) > 0) {
         where = corto_asprintf(" WHERE %s", time);
@@ -150,8 +150,8 @@ corto_string influxdb_Mount_query_builder_where(
     return where;
 }
 
-corto_string influxdb_Mount_query_builder_type(
-    influxdb_Mount this,
+corto_string influxdb_mount_query_builder_type(
+    influxdb_mount this,
     corto_query *query)
 {
     corto_string type = NULL;
@@ -172,26 +172,26 @@ corto_string influxdb_Mount_query_builder_type(
     return type;
 }
 
-corto_string influxdb_Mount_query_builder_time(
-    influxdb_Mount this,
+corto_string influxdb_mount_query_builder_time(
+    influxdb_mount this,
     corto_query *query)
 {
     corto_string clause = NULL;
 
-    corto_time begin = corto_frame_getTime(&query->timeBegin);
-    corto_time end = corto_frame_getTime(&query->timeEnd);
+    corto_time begin = corto_frame_getTime(&query->frame_begin);
+    corto_time end = corto_frame_getTime(&query->frame_end);
 
-    if (query->timeBegin.kind == CORTO_FRAME_TIME) {
-        if (query->timeEnd.kind == CORTO_FRAME_NOW) {
+    if (query->frame_begin.kind == CORTO_FRAME_TIME) {
+        if (query->frame_end.kind == CORTO_FRAME_NOW) {
             clause = corto_asprintf(" WHERE time > %ds", begin.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_TIME) {
+        } else if (query->frame_end.kind == CORTO_FRAME_TIME) {
             clause = corto_asprintf(" WHERE time < %ds AND time > %ds",
                 begin.sec, end.sec);
-        } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
+        } else if (query->frame_end.kind == CORTO_FRAME_DURATION) {
             clause = corto_asprintf(" WHERE time < %ds AND time > %ds",
                 begin.sec, begin.sec - end.sec);
         }
-    } else if (query->timeEnd.kind == CORTO_FRAME_DURATION) {
+    } else if (query->frame_end.kind == CORTO_FRAME_DURATION) {
         clause = corto_asprintf(" WHERE time > (now() - %ds)", end.sec);
     } else {
         clause = corto_asprintf("");
@@ -202,8 +202,8 @@ corto_string influxdb_Mount_query_builder_time(
     return clause;
 }
 
-corto_string influxdb_Mount_query_builder_order(
-    influxdb_Mount this,
+corto_string influxdb_mount_query_builder_order(
+    influxdb_mount this,
     corto_query *query)
 {
     corto_string order = NULL;
@@ -213,8 +213,8 @@ corto_string influxdb_Mount_query_builder_order(
     return order;
 }
 
-corto_string influxdb_Mount_query_builder_paginate(
-    influxdb_Mount this,
+corto_string influxdb_mount_query_builder_paginate(
+    influxdb_mount this,
     corto_query *query,
     bool historical)
 {
@@ -223,10 +223,10 @@ corto_string influxdb_Mount_query_builder_paginate(
     /* InfluxDB pagination shall only be applied to historical queries. Else,
        only return latest sample (LIMIT 1). */
     if (historical) {
-        corto_string limit = influxdb_Mount_query_builder_limit(this, query);
-        corto_string slimit = influxdb_Mount_query_builder_slimit(this, query);
-        corto_string offset = influxdb_Mount_query_builder_offset(this, query);
-        corto_string soffset = influxdb_Mount_query_builder_soffset(this, query);
+        corto_string limit = influxdb_mount_query_builder_limit(this, query);
+        corto_string slimit = influxdb_mount_query_builder_slimit(this, query);
+        corto_string offset = influxdb_mount_query_builder_offset(this, query);
+        corto_string soffset = influxdb_mount_query_builder_soffset(this, query);
 
         paginate = corto_asprintf("%s%s%s%s", limit, offset, slimit, soffset);
 
@@ -249,8 +249,8 @@ corto_string influxdb_Mount_query_builder_paginate(
  *
  * Mapping To Corto: History samples.
  */
-corto_string influxdb_Mount_query_builder_limit(
-    influxdb_Mount this,
+corto_string influxdb_mount_query_builder_limit(
+    influxdb_mount this,
     corto_query *query)
 {
     corto_string limit = NULL;
@@ -274,8 +274,8 @@ corto_string influxdb_Mount_query_builder_limit(
  *
  * Mapping To Corto: Object instances
  */
-corto_string influxdb_Mount_query_builder_slimit(
-    influxdb_Mount this,
+corto_string influxdb_mount_query_builder_slimit(
+    influxdb_mount this,
     corto_query *query)
 {
     corto_string limit = NULL;
@@ -290,8 +290,8 @@ corto_string influxdb_Mount_query_builder_slimit(
 }
 
 /* History Samples */
-corto_string influxdb_Mount_query_builder_offset(
-    influxdb_Mount this,
+corto_string influxdb_mount_query_builder_offset(
+    influxdb_mount this,
     corto_query *query)
 {
     corto_string offset = NULL;
@@ -313,8 +313,8 @@ corto_string influxdb_Mount_query_builder_offset(
 }
 
 /* Objects */
-corto_string influxdb_Mount_query_builder_soffset(
-    influxdb_Mount this,
+corto_string influxdb_mount_query_builder_soffset(
+    influxdb_mount this,
     corto_query *query)
 {
     corto_string offset = NULL;
@@ -332,7 +332,7 @@ corto_string influxdb_Mount_query_builder_soffset(
     return offset;
 }
 
-corto_string influxdb_Mount_query_builder_regex(
+corto_string influxdb_mount_query_builder_regex(
     corto_string pattern)
 {
     corto_string regex = NULL;

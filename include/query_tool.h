@@ -13,8 +13,8 @@ typedef struct _influxdb_Query_RetentionPolicyResult {
 } influxdb_Query_RetentionPolicyResult;
 
 DRIVER_MNT_INFLUXDB_EXPORT
-int16_t influxdb_Mount_show_measurements(
-    influxdb_Mount this,
+int16_t influxdb_mount_show_measurements(
+    influxdb_mount this,
     corto_string pattern,
     corto_ll results);
 
@@ -22,17 +22,17 @@ int16_t influxdb_Mount_show_measurements(
  * NOTE: Does not free the results list - user is responsible for results list.
  */
 DRIVER_MNT_INFLUXDB_EXPORT
-int16_t influxdb_Mount_show_measurements_free(
+int16_t influxdb_mount_show_measurements_free(
     corto_ll results);
 
 DRIVER_MNT_INFLUXDB_EXPORT
-int16_t influxdb_Mount_create_database(
+int16_t influxdb_mount_create_database(
     corto_string host,
     int16_t port,
     corto_string db);
 
 DRIVER_MNT_INFLUXDB_EXPORT
-int16_t influxdb_Mount_show_databases(
+int16_t influxdb_mount_show_databases(
     corto_string host,
     int16_t port,
     corto_string db,
@@ -42,11 +42,11 @@ int16_t influxdb_Mount_show_databases(
  * NOTE: Does not free the results list - user is responsible for results list.
  */
 DRIVER_MNT_INFLUXDB_EXPORT
-int16_t influxdb_Mount_show_databases_free(
+int16_t influxdb_mount_show_databases_free(
     corto_ll results);
 
 DRIVER_MNT_INFLUXDB_EXPORT
-int16_t influxdb_Mount_show_retentionPolicies(
+int16_t influxdb_mount_show_retentionPolicies(
     corto_string host,
     int16_t port,
     corto_string db,
@@ -56,7 +56,7 @@ int16_t influxdb_Mount_show_retentionPolicies(
  * NOTE: Does not free the results list - user is responsible for results list.
  */
 DRIVER_MNT_INFLUXDB_EXPORT
-int16_t influxdb_Mount_show_retentionPolicies_free(
+int16_t influxdb_mount_show_retentionPolicies_free(
     corto_ll results);
 
 #endif //__DRIVER_MNT_INFLUXDB_QUERY_TOOL_H__

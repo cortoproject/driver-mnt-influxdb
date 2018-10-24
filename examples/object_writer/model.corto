@@ -1,0 +1,8 @@
+in driver.mnt.influxdb.object_writer
+
+class Weather {
+    temperature: int16
+    humidity:    float32
+    uv_index:    int8
+    timestamp:   time
+}
