@@ -1,7 +1,7 @@
 #include <include/common.h>
 
 corto_id INFLUX_MOUNT_ID = "influx_weather";
-corto_string INFLUX_DB_HOST = "http://localhost";
+corto_string INFLUX_DB_HOST = "localhost";
 corto_string INFLUX_DB_NAME = "unit_test";
 corto_int16 INFLUX_DB_PORT = 8086;
 

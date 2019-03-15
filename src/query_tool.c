@@ -36,6 +36,11 @@ int16_t influxdb_mount_show_measurements(
     corto_string pattern,
     corto_ll results)
 {
+    if (!this) {
+        corto_error("Invalid mount handle");
+        goto error;
+    }
+
     corto_string regex = influxdb_mount_query_builder_regex(pattern);
     corto_string request = corto_asprintf("SHOW MEASUREMENTS " \
         "ON %s WITH MEASUREMENT =~/%s/", this->db, regex);
@@ -127,15 +132,17 @@ int16_t influxdb_mount_create_database(
     corto_string url = corto_asprintf("http://%s:%d/query", host, port);
     corto_string query = corto_asprintf("q=CREATE DATABASE %s", db);
     httpclient_Result r = httpclient_post(url, query);
-    corto_dealloc(url);
-    corto_dealloc(query);
 
     if (r.status != 200) {
-        corto_throw("create DB Query failed. HTTP [%d] Response [%s].",
-            r.status, r.response);
+        corto_throw("URL [%s] Create DB Query failed. HTTP [%d] Response [%s].",
+            url, r.status, r.response);
         SAFE_DEALLOC(r.response);
+        corto_dealloc(url);
+        corto_dealloc(query);
         goto error;
     }
+    corto_dealloc(url);
+    corto_dealloc(query);
 
     SAFE_DEALLOC(r.response);
     return 0;

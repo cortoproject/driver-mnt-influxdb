@@ -49,14 +49,18 @@ int16_t influxdb_mount_construct(
         this->host, this->port);
     corto_string query = corto_asprintf("q=CREATE DATABASE %s", this->db);
     httpclient_Result result = httpclient_post(url, query);
-    SAFE_DEALLOC(url);
-    SAFE_DEALLOC(query);
+
     if (result.status != 200) {
-        corto_error("InfluxDB create database Status [%d] Response [%s].",
-            result.status, result.response);
+        corto_error("InfluxDB create database [%s] Status [%d] Response [%s].",
+            url, result.status, result.response);
         SAFE_DEALLOC(result.response)
+        SAFE_DEALLOC(url);
+        SAFE_DEALLOC(query);
+
         goto error;
     }
+    SAFE_DEALLOC(url);
+    SAFE_DEALLOC(query);
 
     SAFE_DEALLOC(result.response)
     return corto_super_construct(this);

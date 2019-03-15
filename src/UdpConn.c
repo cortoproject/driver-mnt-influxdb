@@ -55,6 +55,11 @@ int16_t influxdb_UdpConn_send(
     influxdb_UdpConn this,
     const char *buffer)
 {
+    if (buffer == NULL) {
+        corto_warning("UDP Conn: Cannot package empty buffer");
+        goto error;
+    }
+
     /* Verify UDP Socket has been initialized. */
     if (this->socket <= 0) {
         if (influxdb_UdpConn_construct(this)) {
