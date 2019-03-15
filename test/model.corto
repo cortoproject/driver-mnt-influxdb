@@ -1,39 +1,46 @@
 in package test
 
-class State:/
+class State {
     region: string
     commonwealth: bool
+}
 
-class City:/
+class City {
     founded: int32
     population: int32
+}
 
-class Weather:/
+class Weather {
     temperature: int16
     humidity:    float32
     uv_index:    int8
     timestamp:   time
+}
 
-test/Suite Query:/
-    void resolve()
-    void select()
-    void selectAll()
-    void selectChild()
-    void slimit()
-    void soffset()
-    void type()
+test/Suite Query {
+    resolve() void
+    select() void
+    selectAll() void
+    selectChild() void
+    slimit() void
+    soffset() void
+    type() void
+}
 
-test/Suite HistoricalQuery:/
-    void select()
-    void limit()
-    void offset()
-    void timeDuration()
-    void timeFrame()
+test/Suite HistoricalQuery {
+    select() void
+    limit() void
+    offset() void
+    timeDuration() void
+    timeFrame() void
+}
 
-test/Suite Tool:/
-    void measurements()
+test/Suite Tool {
+    measurements() void
+}
 
-test/Suite RetentionPolicy:/
-    void tc_1_create()
-    void tc_2_duplicate()
-    void tc_2_duplicateConflict()
+test/Suite RetentionPolicy {
+    tc_1_create() void
+    tc_2_duplicate() void
+    tc_2_duplicateConflict() void
+}

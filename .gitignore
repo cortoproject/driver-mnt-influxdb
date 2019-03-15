@@ -1,0 +1,10 @@
+test/.bake_cache/
+test/bin/
+test/include/_api.h
+test/include/_binding.h
+test/include/_interface.h
+test/include/_load.h
+test/include/_project.h
+test/include/_type.h
+test/src/main.c
+

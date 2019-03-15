@@ -9,24 +9,25 @@ influxdb_mount influxdbMount = NULL;
 
 int create_manual_mount(corto_object mountPoint)
 {
-    influxdb_mount mount = corto_declare(root_o, INFLUX_MOUNT_ID, influxdb_mount_o);
+    influxdb_mount mount = corto_declare(
+        root_o,
+        INFLUX_MOUNT_ID,
+        influxdb_mount_o);
     corto_query query = {
         .select = "//",
         .from = corto_fullpath(NULL, mountPoint)
     };
 
-    corto_queuePolicy queue = {
-        .max = 25
-    };
+    corto_mountCallbackMask callbacks = 0;
+    callbacks |= CORTO_MOUNT_NOTIFY;
+    callbacks |= CORTO_MOUNT_QUERY;
+    callbacks |= CORTO_MOUNT_HISTORY_BATCH_NOTIFY;
 
-    int policyMask = 0;
-    policyMask |= CORTO_MOUNT_NOTIFY | CORTO_MOUNT_QUERY | CORTO_MOUNT_HISTORY_BATCH_NOTIFY;
-    corto_mountPolicy policy = {
-        .ownership = CORTO_REMOTE_SOURCE,
-        .mask = policyMask,
-        .sampleRate = 20.0,
-        .queue = queue
-    };
+    mount->super.ownership = CORTO_REMOTE_SOURCE;
+    mount->super.callbacks = callbacks;
+    mount->super.super.query = query;
+    mount->super.sample_rate = 20.0;
+    mount->super.queue_max = 25;
 
     influxdb_UdpConn udp = influxdb_UdpConn__create(
         NULL,
@@ -49,9 +50,6 @@ int create_manual_mount(corto_object mountPoint)
 
     influxdb_mount__assign(
         mount,
-        &query,
-        "text/json",
-        &policy,
         "localhost",  /* hostname */
         8086,
         udp,
@@ -71,18 +69,14 @@ int create_historical_manual_mount(corto_object mountPoint)
         .from = corto_fullpath(NULL, mountPoint)
     };
 
-    corto_queuePolicy queue = {
-        .max = 25
-    };
+    corto_mountCallbackMask callbacks = 0;
+    callbacks |= CORTO_MOUNT_HISTORY_QUERY;
 
-    int policyMask = 0;
-    policyMask |= CORTO_MOUNT_HISTORY_QUERY;
-    corto_mountPolicy policy = {
-        .ownership = CORTO_REMOTE_SOURCE,
-        .mask = policyMask,
-        .sampleRate = 20.0,
-        .queue = queue
-    };
+    mount->super.ownership = CORTO_REMOTE_SOURCE;
+    mount->super.callbacks = callbacks;
+    mount->super.super.query = query;
+    mount->super.sample_rate = 20.0;
+    mount->super.queue_max = 10;
 
     influxdb_UdpConn udp = influxdb_UdpConn__create(
         NULL,
@@ -105,9 +99,6 @@ int create_historical_manual_mount(corto_object mountPoint)
 
     influxdb_mount__assign(
         mount,
-        &query,
-        "text/json",
-        &policy,
         "localhost",  /* hostname */
         8086,
         udp,

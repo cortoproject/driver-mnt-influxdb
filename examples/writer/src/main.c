@@ -21,6 +21,9 @@ int create_manual_mount(corto_object mountPoint)
         .from = corto_fullpath(NULL, mountPoint)
     };
 
+    corto_info("Mount Select [%s] from [%s]", "//",
+        corto_fullpath(NULL, mountPoint));
+
     corto_mountCallbackMask callbacks = 0;
     callbacks |= CORTO_MOUNT_NOTIFY;
 
@@ -29,7 +32,6 @@ int create_manual_mount(corto_object mountPoint)
     mount->super.super.query = query;
     mount->super.sample_rate = 2.0;
     mount->super.queue_max = 25;
-
 
     if (influxdb_mount__assign(
         mount,
@@ -42,6 +44,7 @@ int create_manual_mount(corto_object mountPoint)
         NULL))             /* password */
     {
         corto_error("Failed to define manual mount");
+        corto_release(mount);
         return -1;
     }
 
@@ -51,9 +54,9 @@ int create_manual_mount(corto_object mountPoint)
 }
 
 int cortomain(int argc, char *argv[]) {
-    if (corto_use("config.json", 0, NULL)) {
-        goto error;
-    }
+    // if (corto_use("config.json", 0, NULL)) {
+    //     goto error;
+    // }
 
     corto_object temperature = corto_create(root_o, "temperature", corto_void_o);
     corto_object config = corto_create(temperature, "config", corto_void_o);
