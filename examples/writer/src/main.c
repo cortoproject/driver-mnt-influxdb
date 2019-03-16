@@ -1,12 +1,14 @@
 #include "include/writer.h"
 
 corto_id INFLUX_MOUNT_ID = "influx_manual";
-corto_string INFLUX_DB_HOST = "http://localhost";
+corto_string INFLUX_DB_HOST = "localhost";
 uint16_t INFLUX_DB_PORT = 8086;
 corto_string INFLUX_DB_NAME = "writer_demo";
 influxdb_mount mount = NULL;
+
 int WriteConfig(float temperature, corto_object t1, corto_object t2)
 {
+
     corto_float32__update(t1, cos(temperature) * 100);
     corto_float32__update(t2, sin(temperature) * 100);
 
@@ -15,25 +17,27 @@ int WriteConfig(float temperature, corto_object t1, corto_object t2)
 
 int create_manual_mount(corto_object mountPoint)
 {
-    mount = corto_declare(root_o, INFLUX_MOUNT_ID, influxdb_mount_o);
+    mount = corto_declare(config_o, INFLUX_MOUNT_ID, influxdb_mount_o);
     corto_query query = {
         .select = "//",
         .from = corto_fullpath(NULL, mountPoint)
     };
 
-    corto_info("Mount Select [%s] from [%s]", "//",
+    corto_info("Mount [%s] Select [%s] from [%s]",
+        corto_fullpath(NULL, mount),
+        "//",
         corto_fullpath(NULL, mountPoint));
 
     corto_mountCallbackMask callbacks = 0;
     callbacks |= CORTO_MOUNT_NOTIFY;
 
-    mount->super.ownership = CORTO_LOCAL_SOURCE;
+    // mount->super.ownership = CORTO_REMOTE_SOURCE;
     mount->super.callbacks = callbacks;
     mount->super.super.query = query;
     mount->super.sample_rate = 2.0;
     mount->super.queue_max = 25;
 
-    if (influxdb_mount__assign(
+    if (!influxdb_mount__assign(
         mount,
         INFLUX_DB_HOST,    /* hostname */
         INFLUX_DB_PORT,
@@ -44,11 +48,12 @@ int create_manual_mount(corto_object mountPoint)
         NULL))             /* password */
     {
         corto_error("Failed to define manual mount");
-        corto_release(mount);
         return -1;
     }
 
     corto_define(mount);
+
+    corto_info("InfluxDB Mount Constructed");
 
     return 0;
 }
@@ -72,7 +77,8 @@ int cortomain(int argc, char *argv[]) {
     corto_object temp4 = corto_float32__create(manual, "temp4", 0.0);
     corto_string *humidity = corto_string__create(manual, "humidity", "MISERABLE");
     corto_float32 t = 0;
-    while (1) {
+
+    for (int i = 0; i < 5*5; i++) {
         t += 0.01;
         if (WriteConfig(t, temp1, temp2)) {
             corto_error("Failed to write 1 and 2");
@@ -85,6 +91,8 @@ int cortomain(int argc, char *argv[]) {
 
         corto_sleep(0, 200000000); /* Update 5 times a second */
     }
+
+    corto_info("Close writer");
 
     corto_release(humidity);
     corto_release(mount);

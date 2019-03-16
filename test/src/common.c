@@ -52,7 +52,7 @@ int create_manual_mount(corto_object mountPoint)
         mount,
         "localhost",  /* hostname */
         8086,
-        udp,
+        NULL,
         "udp_test",   /* database name */
         rp,         /* Retention Policy */
         NULL,         /* username */
@@ -63,7 +63,10 @@ int create_manual_mount(corto_object mountPoint)
 
 int create_historical_manual_mount(corto_object mountPoint)
 {
-    influxdb_mount mount = corto_declare(root_o, INFLUX_MOUNT_ID, influxdb_mount_o);
+    influxdb_mount mount = corto_declare(
+        root_o,
+        INFLUX_MOUNT_ID,
+        influxdb_mount_o);
     corto_query query = {
         .select = "//",
         .from = corto_fullpath(NULL, mountPoint)
