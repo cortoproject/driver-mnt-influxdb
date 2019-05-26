@@ -365,7 +365,7 @@ void influxdb_mount_write_sample(
         influxdb_UdpConn_send(this->udp, data);
     } else {
         corto_string url = influxdb_mount_query_builder_url(this);
-        corto_info("influxdb Write Sample: %s: POST %s", url, data);
+        corto_trace("influxdb Write Sample: %s: POST %s", url, data);
         httpclient_Result result = httpclient_post(url, data);
         if (result.status != 204) {
             corto_throw("InfluxDB Update Failed. Status [%d] Response: %s",
