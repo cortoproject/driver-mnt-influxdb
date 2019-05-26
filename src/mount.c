@@ -12,9 +12,6 @@ bool influxdb_mount_filter_event(
     corto_string type);
 corto_string influxdb_mount_notify_sample(
     corto_subscriber_event *event);
-void influxdb_safeString(
-    corto_buffer *b,
-    corto_string source);
 corto_recordIter influxdb_mount_on_query_execute(
     influxdb_mount this,
     corto_query *query,
@@ -350,19 +347,6 @@ corto_string influxdb_mount_notify_sample(corto_subscriber_event *event)
     return corto_buffer_str(&b);
 }
 
-void influxdb_safeString(corto_buffer *b, corto_string source)
-{
-    /* Measurements and Tags names cannot contain non-espaced spaces */
-    char *ptr, ch;
-    for (ptr = source; (ch = *ptr); ptr++) {
-        if (ch == ' ') {
-            corto_buffer_appendstrn(b, "\\ ", 2);
-        } else {
-            corto_buffer_appendstrn(b, ptr, 1);
-        }
-    }
-}
-
 bool influxdb_mount_filter_event(corto_string type)
 {
     /* Ignore Void Objets */
@@ -371,4 +355,24 @@ bool influxdb_mount_filter_event(corto_string type)
     }
 
     return false;
+}
+
+void influxdb_mount_write_sample(
+    influxdb_mount this,
+    const char *data)
+{
+    if (this->udp) {
+        influxdb_UdpConn_send(this->udp, data);
+    } else {
+        corto_string url = influxdb_mount_query_builder_url(this);
+        corto_info("influxdb Write Sample: %s: POST %s", url, data);
+        httpclient_Result result = httpclient_post(url, data);
+        if (result.status != 204) {
+            corto_throw("InfluxDB Update Failed. Status [%d] Response: %s",
+                result.status, result.response);
+        }
+
+        SAFE_DEALLOC(url);
+        SAFE_DEALLOC(result.response)
+    }
 }

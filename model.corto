@@ -36,6 +36,8 @@ class mount: vstore/mount {
     construct() int16
     retention_policy() string
 
+    write_sample(string data) void
+
 override
     on_notify(vstore/subscriber_event event) void
     on_history_batch_notify(uint32 event_count, vstore/subscriber_eventIter events) void
@@ -43,3 +45,5 @@ override
     on_query(vstore/query query) iterator[record]
     on_history_query(vstore/query query) iterator[record]
 }
+
+sample(string measurement_id, string type, string data) string

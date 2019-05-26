@@ -25,7 +25,21 @@
 #include <driver/mnt/influxdb/c/_api.h>
 
 /* $body() */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+bool influxdb_serialize_scalar(
+    corto_buffer *buffer,
+    corto_string member,
+    corto_object o);
+void influxdb_safeString(
+    corto_buffer *b,
+    char* source);
+
+#ifdef __cplusplus
+}
+#endif
 /* $end */
 
 #endif
-
